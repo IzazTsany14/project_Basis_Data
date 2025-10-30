@@ -83,8 +83,19 @@ def login(request):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
+@csrf_exempt
 def registrasi_pelanggan(request):
+    """Render registration page on GET, accept JSON POST to create Pelanggan.
+
+    GET: returns register.html
+    POST: expects JSON with fields: nama_lengkap, email, password, alamat_pemasangan, no_telepon
+    """
+    # Render template for browser
+    if request.method == 'GET':
+        return render(request, 'register.html')
+
+    # POST: handle JSON payload (API client)
     import json
     try:
         data = json.loads(request.body)
@@ -100,19 +111,28 @@ def registrasi_pelanggan(request):
     if Pelanggan.objects.filter(email=data['email']).exists():
         return Response({'error': 'Email sudah terdaftar'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Prefer using serializer if available
     try:
-        # Buat password hash sesuai format database
-        email_username = data['email'].split('@')[0]
-        password_hash = f"hasil_pw_{email_username}"
+        # If serializer exists, use it to properly set password hash
+        try:
+            serializer = PelangganRegistrasiSerializer(data=data)
+            if serializer.is_valid():
+                pelanggan = serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            # Fallback to manual creation (maintain previous behavior)
+            email_username = data['email'].split('@')[0]
+            password_hash = f"hasil_pw_{email_username}"
 
-        pelanggan = Pelanggan(
-            nama_lengkap=data['nama_lengkap'],
-            email=data['email'],
-            password_hash=password_hash,
-            alamat_pemasangan=data['alamat_pemasangan'],
-            no_telepon=data['no_telepon']
-        )
-        pelanggan.save()
+            pelanggan = Pelanggan(
+                nama_lengkap=data['nama_lengkap'],
+                email=data['email'],
+                password_hash=password_hash,
+                alamat_pemasangan=data['alamat_pemasangan'],
+                no_telepon=data['no_telepon']
+            )
+            pelanggan.save()
 
         return Response({
             'message': 'Registrasi berhasil',

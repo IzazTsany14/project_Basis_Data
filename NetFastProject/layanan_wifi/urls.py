@@ -11,6 +11,7 @@ urlpatterns = [
     path('auth/registrasi/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
 
     # Endpoint User
+    path('user/dashboard/', views.dashboard_pelanggan_view, name='dashboard_pelanggan'),
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
     path('user/langganan/', views.user_langganan, name='user_langganan'),
     path('user/riwayat-testing/', views.user_riwayat_testing, name='user_riwayat_testing'),

@@ -1,13 +1,15 @@
-<!DOCTYPE html>
+{% load static %}
 
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NetFast - Login</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- local stylesheet -->
-    <link rel="stylesheet" href="{% static 'style.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -16,44 +18,21 @@
             align-items: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .login-container {
-            max-width: 450px;
-            margin: auto;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        }
+        .login-container { max-width: 450px; margin: auto; }
+        .card { border: none; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .card-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 30px;
-            text-align: center;
+            color: white; border-radius: 15px 15px 0 0 !important;
+            padding: 30px; text-align: center;
         }
-        .logo {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
+        .logo { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 12px;
-            font-weight: 600;
+            border: none; padding: 12px; font-weight: 600;
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .nav-pills .nav-link {
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        .nav-pills .nav-link.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .nav-pills .nav-link { border-radius: 10px; font-weight: 600; }
+        .nav-pills .nav-link.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     </style>
 </head>
 <body>
@@ -64,7 +43,6 @@
                 <p class="mb-0">Layanan Internet Cepat & Terpercaya</p>
             </div>
             <div class="card-body p-4">
-                <!-- Tab Navigation -->
                 <ul class="nav nav-pills mb-4 justify-content-center" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="pelanggan-tab" data-bs-toggle="pill" 
@@ -76,9 +54,7 @@
                     </li>
                 </ul>
 
-                <!-- Tab Content -->
                 <div class="tab-content">
-                    <!-- Login Pelanggan -->
                     <div class="tab-pane fade show active" id="pelanggan">
                         <form id="loginPelangganForm">
                             <div class="mb-3">
@@ -96,7 +72,6 @@
                         </form>
                     </div>
 
-                    <!-- Login Staf -->
                     <div class="tab-pane fade" id="staf">
                         <form id="loginStafForm">
                             <div class="mb-3">
@@ -111,15 +86,15 @@
                         </form>
                     </div>
                 </div>
-
                 <div id="alertMessage" class="alert d-none mt-3"></div>
             </div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <!-- local script -->
-    <script src="{% static 'script.js' %}"></script>
+    
+    <script src="{% static 'js/auth.js' %}"></script>
+    
     <script>
         function getCookie(name) {
             let cookieValue = null;
@@ -147,17 +122,19 @@
         // Event listeners
         document.getElementById('loginPelangganForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData();
-            formData.append('login_id', document.getElementById('emailPelanggan').value);
-            formData.append('password', document.getElementById('passwordPelanggan').value);
+            const formData = {
+                email: document.getElementById('emailPelanggan').value,
+                password: document.getElementById('passwordPelanggan').value
+            };
             
             try {
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken'),
                     },
-                    body: formData
+                    body: JSON.stringify(formData)
                 });
                 
                 const data = await response.json();
@@ -165,7 +142,7 @@
                     showAlert('Login berhasil! Mengalihkan...', 'success');
                     window.location.href = '/user/dashboard/';
                 } else {
-                    showAlert(data.message || 'Login gagal');
+                    showAlert(data.error || 'Login gagal');
                 }
             } catch (error) {
                 showAlert('Terjadi kesalahan. Silakan coba lagi.');
@@ -174,29 +151,31 @@
 
         document.getElementById('loginStafForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData();
-            formData.append('login_id', document.getElementById('usernameStaf').value);
-            formData.append('password', document.getElementById('passwordStaf').value);
+            const formData = {
+                username: document.getElementById('usernameStaf').value,
+                password: document.getElementById('passwordStaf').value
+            };
             
             try {
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken'),
                     },
-                    body: formData
+                    body: JSON.stringify(formData)
                 });
                 
                 const data = await response.json();
                 if (response.ok) {
                     showAlert('Login berhasil! Mengalihkan...', 'success');
-                    if (data.role === 'admin') {
+                    if (data.user.role_akses === 'Admin') {
                         window.location.href = '/admin/dashboard/';
                     } else {
                         window.location.href = '/teknisi/dashboard/';
                     }
                 } else {
-                    showAlert(data.message || 'Login gagal');
+                    showAlert(data.error || 'Login gagal');
                 }
             } catch (error) {
                 showAlert('Terjadi kesalahan. Silakan coba lagi.');

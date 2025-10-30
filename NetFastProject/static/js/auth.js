@@ -1,5 +1,5 @@
 // NetFast - Authentication Logic
-const API_BASE_URL = 'http://localhost:8000/api'; // Adjust this to your Django API URL
+const API_BASE_URL = 'http://http://127.0.0.1:8000//api'; // Adjust this to your Django API URL
 
 // Login functionality for customers
 document.addEventListener('DOMContentLoaded', function() {

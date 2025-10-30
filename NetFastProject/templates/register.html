@@ -1,0 +1,137 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetFast - Registrasi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <h1>🌐 NetFast</h1>
+            <p>Daftar Akun Pelanggan Baru</p>
+        </div>
+        
+        <form class="register-form" id="registerForm">
+            <h2>Registrasi Pelanggan</h2>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nama_lengkap">Nama Lengkap</label>
+                    <input type="text" id="nama_lengkap" name="nama_lengkap" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Konfirmasi Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="alamat_pemasangan">Alamat Pemasangan</label>
+                <textarea id="alamat_pemasangan" name="alamat_pemasangan" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="no_telepon">Nomor Telepon</label>
+                <input type="tel" id="no_telepon" name="no_telepon" required>
+            </div>
+            
+            <button type="submit" class="btn-primary">Daftar Sekarang</button>
+            
+            <div class="form-links">
+                <a href="{% url 'login_page' %}">Sudah punya akun? Login disini</a>
+            </div>
+            
+            <div id="alertMessage" class="alert d-none mt-3"></div>
+        </form>
+        
+        <div class="register-footer">
+            <p>&copy; 2024 NetFast. Semua hak cipta dilindungi.</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/script.js' %}"></script>
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function showAlert(message, type = 'danger') {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.classList.remove('d-none');
+            setTimeout(() => alertDiv.classList.add('d-none'), 5000);
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                showAlert('Password dan konfirmasi password tidak cocok.');
+                return;
+            }
+            
+            const formData = {
+                nama_lengkap: document.getElementById('nama_lengkap').value,
+                email: document.getElementById('email').value,
+                password: password,
+                alamat_pemasangan: document.getElementById('alamat_pemasangan').value,
+                no_telepon: document.getElementById('no_telepon').value
+            };
+            
+            try {
+                const response = await fetch('/auth/registrasi/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken'),
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showAlert('Registrasi berhasil! Mengalihkan ke halaman login...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showAlert(data.error || 'Registrasi gagal');
+                }
+            } catch (error) {
+                showAlert('Terjadi kesalahan. Silakan coba lagi.');
+            }
+        });
+    </script>
+</body>
+</html>

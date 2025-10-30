@@ -69,8 +69,14 @@ def login(request):
         }, status=status.HTTP_401_UNAUTHORIZED)
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
+@csrf_exempt
 def registrasi_pelanggan(request):
+    # GET -> render halaman registrasi (template)
+    if request.method == 'GET':
+        return render(request, 'register.html')
+
+    # POST -> terima data registrasi (JSON) dan simpan ke DB
     serializer = PelangganRegistrasiSerializer(data=request.data)
     if serializer.is_valid():
         pelanggan = serializer.save()
