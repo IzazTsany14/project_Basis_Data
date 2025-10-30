@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class LayananWifiConfig(AppConfig):
+class WifiServiceConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'layanan_wifi'
+    name = 'wifi_service'

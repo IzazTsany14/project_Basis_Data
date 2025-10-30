@@ -6,8 +6,10 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # BARIS INI TELAH DIPERBAIKI (menghapus 'NetFastProject.')
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
+    # Pastikan Django memuat settings sebagai paket project
+    # Gunakan 'NetFastProject.settings' sehingga modul dapat diimport
+    # ketika menjalankan `python NetFastProject\manage.py ...` dari root repo
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'NetFastProject.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

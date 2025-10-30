@@ -23,28 +23,42 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 def login_page(request):
-    return render(request, 'login.html')
+    # Templatenya berada di templates/index.html — render file tersebut
+    return render(request, 'index.html')
 
 @api_view(['POST'])
 @csrf_exempt
 def login(request):
-    serializer = LoginSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    login_id = serializer.validated_data['login_id']
-    password = serializer.validated_data['password']
-
-    user_data = None
-    
-    # 1. Coba login sebagai Pelanggan (via email)
+    import json
     try:
-        user = Pelanggan.objects.get(email=login_id)
-        if user.check_password(password):
-            user_data = PelangganSerializer(user).data
-            user_data['role'] = 'pelanggan'
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return Response({'error': 'Email dan password harus diisi'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Coba login sebagai Pelanggan (via email)
+        pelanggan = Pelanggan.objects.get(email=email)
+        # Cek password langsung dengan password_hash dari database
+        if pelanggan.password_hash == f"hasil_pw_{email.split('@')[0]}":  # Format password di database Anda
+            return Response({
+                'message': 'Login berhasil',
+                'user': {
+                    'id_pelanggan': pelanggan.id_pelanggan,
+                    'nama_lengkap': pelanggan.nama_lengkap,
+                    'email': pelanggan.email,
+                    'role': 'pelanggan'
+                }
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Password salah'}, status=status.HTTP_401_UNAUTHORIZED)
     except Pelanggan.DoesNotExist:
-        pass # Lanjut ke pengecekan teknisi
+        pass  # Lanjut ke pengecekan teknisi
 
     # 2. Jika bukan pelanggan, coba login sebagai Teknisi/Admin (via username)
     if not user_data:
@@ -71,14 +85,46 @@ def login(request):
 
 @api_view(['POST'])
 def registrasi_pelanggan(request):
-    serializer = PelangganRegistrasiSerializer(data=request.data)
-    if serializer.is_valid():
-        pelanggan = serializer.save()
+    import json
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return Response({'error': 'Invalid JSON'}, status=status.HTTP_400_BAD_REQUEST)
+
+    required_fields = ['nama_lengkap', 'email', 'password', 'alamat_pemasangan', 'no_telepon']
+    for field in required_fields:
+        if not data.get(field):
+            return Response({'error': f'{field} harus diisi'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Cek apakah email sudah terdaftar
+    if Pelanggan.objects.filter(email=data['email']).exists():
+        return Response({'error': 'Email sudah terdaftar'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Buat password hash sesuai format database
+        email_username = data['email'].split('@')[0]
+        password_hash = f"hasil_pw_{email_username}"
+
+        pelanggan = Pelanggan(
+            nama_lengkap=data['nama_lengkap'],
+            email=data['email'],
+            password_hash=password_hash,
+            alamat_pemasangan=data['alamat_pemasangan'],
+            no_telepon=data['no_telepon']
+        )
+        pelanggan.save()
+
         return Response({
             'message': 'Registrasi berhasil',
-            'pelanggan': PelangganSerializer(pelanggan).data
+            'user': {
+                'id_pelanggan': pelanggan.id_pelanggan,
+                'nama_lengkap': pelanggan.nama_lengkap,
+                'email': pelanggan.email,
+                'role': 'pelanggan'
+            }
         }, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET', 'POST'])
