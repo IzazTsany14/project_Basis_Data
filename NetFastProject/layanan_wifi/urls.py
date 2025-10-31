@@ -12,9 +12,9 @@ urlpatterns = [
         path('auth/logout/', views.logout, name='logout'),
     
     # Dashboard dan Halaman User
-    path('user/dashboard/', views.dashboard_pelanggan_view, name='dashboard'),
+    path('user/dashboard/', views.dashboard, name='dashboard'),
     # convenience alias so /user/index.html (if typed in browser) shows the dashboard
-    path('user/index.html', views.dashboard_pelanggan_view, name='user_index'),
+    path('user/index.html', views.dashboard, name='user_index'),
     path('user/pemesanan/', views.user_pemesanan, name='pemesanan'),
     # alias used in templates
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),

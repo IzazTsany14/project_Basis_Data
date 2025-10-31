@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>NetFast - Speed Test</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>🌐 NetFast</h2>
+                <p id="user-name">Loading...</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="pemesanan-jasa.html">🛠️ Pemesanan Jasa</a></li>
+                <li><a href="speed-test.html" class="active">⚡ Speed Test</a></li>
+                <li><a href="riwayat-pesanan.html">📋 Riwayat Pesanan</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Speed Test WiFi</h1>
+                <p>Tes kecepatan internet Anda dan simpan hasilnya</p>
+            </header>
+
+            <div class="speed-test-container">
+                <!-- Speed Test Main Card -->
+                <div class="card speed-test-card">
+                    <div class="card-header">
+                        <h3>⚡ Tes Kecepatan Internet</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="speed-test-interface">
+                            <!-- Test Button -->
+                            <div class="test-button-container">
+                                <button id="start-test-btn" class="btn-speed-test" onclick="startSpeedTest()">
+                                    <span class="btn-icon">▶️</span>
+                                    <span class="btn-text">Mulai Tes</span>
+                                </button>
+                            </div>
+
+                            <!-- Progress Indicator -->
+                            <div id="test-progress" class="test-progress hidden">
+                                <div class="progress-bar">
+                                    <div id="progress-fill" class="progress-fill"></div>
+                                </div>
+                                <p id="progress-text">Memulai tes...</p>
+                            </div>
+
+                            <!-- Results Display -->
+                            <div id="test-results" class="test-results hidden">
+                                <div class="result-grid">
+                                    <div class="result-item">
+                                        <div class="result-icon">⬇️</div>
+                                        <div class="result-label">Download</div>
+                                        <div class="result-value" id="download-speed">0 Mbps</div>
+                                    </div>
+                                    <div class="result-item">
+                                        <div class="result-icon">⬆️</div>
+                                        <div class="result-label">Upload</div>
+                                        <div class="result-value" id="upload-speed">0 Mbps</div>
+                                    </div>
+                                    <div class="result-item">
+                                        <div class="result-icon">📡</div>
+                                        <div class="result-label">Ping</div>
+                                        <div class="result-value" id="ping-value">0 ms</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="result-actions">
+                                    <button id="save-result-btn" class="btn-primary" onclick="saveTestResult()">
+                                        💾 Simpan Hasil
+                                    </button>
+                                    <button class="btn-outline" onclick="resetTest()">
+                                        🔄 Tes Ulang
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test History Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📊 Riwayat Tes Terakhir</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="test-history">
+                            <p>Belum ada riwayat tes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tips Card -->
+                <div class="card info-card">
+                    <div class="card-header">
+                        <h3>💡 Tips untuk Tes Akurat</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>Pastikan tidak ada aplikasi lain yang menggunakan internet</li>
+                            <li>Tutup semua tab browser yang tidak perlu</li>
+                            <li>Gunakan koneksi WiFi, bukan data seluler</li>
+                            <li>Lakukan tes di beberapa waktu berbeda untuk hasil yang lebih akurat</li>
+                            <li>Pastikan perangkat dekat dengan router WiFi</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/speed-test.js"></script>
+    <script src="../js/user.js"></script>
+    <script>
+        // Load user info and test history when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserName();
+            loadTestHistory();
+        });
+
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('userToken');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userRole');
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
+</body>
+</html>

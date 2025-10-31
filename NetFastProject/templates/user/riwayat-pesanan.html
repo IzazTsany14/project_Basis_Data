@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>NetFast - Riwayat Pesanan</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>🌐 NetFast</h2>
+                <p id="user-name">Loading...</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="pemesanan-jasa.html">🛠️ Pemesanan Jasa</a></li>
+                <li><a href="speed-test.html">⚡ Speed Test</a></li>
+                <li><a href="riwayat-pesanan.html" class="active">📋 Riwayat Pesanan</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Riwayat Pesanan & Pembayaran</h1>
+                <p>Lihat semua pesanan layanan dan riwayat pembayaran Anda</p>
+            </header>
+
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-controls">
+                    <select id="filter-status" onchange="filterOrders()">
+                        <option value="">Semua Status</option>
+                        <option value="Menunggu Penugasan">Menunggu Penugasan</option>
+                        <option value="Ditugaskan">Ditugaskan</option>
+                        <option value="Dalam Proses">Dalam Proses</option>
+                        <option value="Selesai">Selesai</option>
+                        <option value="Dibatalkan">Dibatalkan</option>
+                    </select>
+                    <input type="date" id="filter-date" onchange="filterOrders()" placeholder="Filter tanggal">
+                    <button class="btn-outline" onclick="clearFilters()">🔄 Reset Filter</button>
+                </div>
+            </div>
+
+            <!-- Orders History -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 Riwayat Pesanan Jasa</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table id="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Pesanan</th>
+                                    <th>Jenis Jasa</th>
+                                    <th>Tanggal Pesanan</th>
+                                    <th>Jadwal Layanan</th>
+                                    <th>Status</th>
+                                    <th>Teknisi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-tbody">
+                                <tr>
+                                    <td colspan="7" class="no-data">Memuat data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>💰 Riwayat Pembayaran</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <table id="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Pembayaran</th>
+                                    <th>Tanggal</th>
+                                    <th>Jumlah</th>
+                                    <th>Metode</th>
+                                    <th>Status</th>
+                                    <th>Periode</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payments-tbody">
+                                <tr>
+                                    <td colspan="7" class="no-data">Memuat data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detail Pesanan</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="order-detail-content">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/user.js"></script>
+    <script>
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserName();
+            loadOrdersHistory();
+            loadPaymentsHistory();
+        });
+
+        function filterOrders() {
+            const status = document.getElementById('filter-status').value;
+            const date = document.getElementById('filter-date').value;
+            
+            // Apply filters to the orders table
+            const rows = document.querySelectorAll('#orders-tbody tr');
+            rows.forEach(row => {
+                const statusCell = row.cells[4]?.textContent || '';
+                const dateCell = row.cells[2]?.textContent || '';
+                
+                let showRow = true;
+                
+                if (status && !statusCell.includes(status)) {
+                    showRow = false;
+                }
+                
+                if (date && !dateCell.includes(date)) {
+                    showRow = false;
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-date').value = '';
+            filterOrders();
+        }
+
+        function viewOrderDetail(orderId) {
+            // Load and display order details in modal
+            loadOrderDetail(orderId);
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+        }
+
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('userToken');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userRole');
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
+</body>
+</html>

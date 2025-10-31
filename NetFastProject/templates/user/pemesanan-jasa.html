@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>NetFast - Pemesanan Jasa</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>🌐 NetFast</h2>
+                <p id="user-name">Loading...</p>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html">📊 Dashboard</a></li>
+                <li><a href="pemesanan-jasa.html" class="active">🛠️ Pemesanan Jasa</a></li>
+                <li><a href="speed-test.html">⚡ Speed Test</a></li>
+                <li><a href="riwayat-pesanan.html">📋 Riwayat Pesanan</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Pemesanan Jasa</h1>
+                <p>Pesan layanan instalasi atau perbaikan internet</p>
+            </header>
+
+            <div class="form-container">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🛠️ Form Pemesanan Jasa</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="pemesanan-form">
+                            <div class="form-group">
+                                <label for="jenis-jasa">Jenis Jasa:</label>
+                                <select id="jenis-jasa" name="jenis_jasa" required>
+                                    <option value="">Pilih Jenis Jasa</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tanggal-jadwal">Tanggal Jadwal:</label>
+                                    <input type="date" id="tanggal-jadwal" name="tanggal_jadwal" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="waktu-jadwal">Waktu Preferensi:</label>
+                                    <select id="waktu-jadwal" name="waktu_jadwal" required>
+                                        <option value="">Pilih Waktu</option>
+                                        <option value="08:00-12:00">Pagi (08:00 - 12:00)</option>
+                                        <option value="13:00-17:00">Siang (13:00 - 17:00)</option>
+                                        <option value="18:00-21:00">Sore (18:00 - 21:00)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="alamat-layanan">Alamat Layanan:</label>
+                                <textarea id="alamat-layanan" name="alamat_layanan" rows="3" placeholder="Masukkan alamat lengkap untuk layanan" required></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="catatan">Catatan Tambahan:</label>
+                                <textarea id="catatan" name="catatan" rows="4" placeholder="Jelaskan detail masalah atau kebutuhan khusus..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kontak-darurat">Kontak Darurat:</label>
+                                <input type="tel" id="kontak-darurat" name="kontak_darurat" placeholder="Nomor telepon yang dapat dihubungi">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">📋 Kirim Pesanan</button>
+                                <button type="reset" class="btn-outline">🔄 Reset Form</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="card info-card">
+                    <div class="card-header">
+                        <h3>ℹ️ Informasi Layanan</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><strong>Instalasi Baru:</strong> Pemasangan internet untuk lokasi baru</li>
+                            <li><strong>Perbaikan:</strong> Perbaikan gangguan atau masalah teknis</li>
+                            <li><strong>Upgrade Paket:</strong> Peningkatan kecepatan atau paket layanan</li>
+                            <li><strong>Maintenance:</strong> Perawatan rutin perangkat</li>
+                        </ul>
+                        <p><strong>Catatan:</strong> Teknisi akan menghubungi Anda 1 hari sebelum jadwal layanan.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/user.js"></script>
+    <script>
+        // Load service types and initialize form
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserName();
+            loadJenisJasa();
+            
+            // Set minimum date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggal-jadwal').min = today;
+        });
+
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                localStorage.removeItem('userToken');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userRole');
+                window.location.href = '../index.html';
+            }
+        }
+    </script>
+</body>
+</html>
