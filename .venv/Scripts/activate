@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="C:\Users\IDEAPAD SLIM 5\Downloads\project-bolt-sb1-z1iymjnj\project\.venv"
+VIRTUAL_ENV="C:\Users\IDEAPAD SLIM 5\Downloads\project-basis\project\.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

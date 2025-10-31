@@ -63,3 +63,31 @@ Proyek ini merupakan tugas dari mata kuliah **Basis Data**, dengan fokus pada pe
 🔜 Fitur berikutnya: Integrasi *API Speedtest* & *Notifikasi Real-Time*
 
 ---
+
+## Setup Project
+
+Perama pastikan anda ada pada folder project ini yang telah berhasil anda klon
+jika belum silahkan clone dengan command
+```bash
+git clone --depth=1 https://github.com/IzazTsany14/project-basis-data
+
+# masuk kedalam folder clone
+cd project-basis-data
+
+# buat virtual environment python
+python -m venv .venv
+
+# atifkan venv python
+## powershell
+## windows
+.venv/Scrips/activate.ps1
+## bash
+## non windows
+source .venv/bin/activate.sh
+
+# install package yang diperlukan
+pip install -r requirements.txt
+
+# jalanin server
+python NetFastProject/manage.py runserver
+```
