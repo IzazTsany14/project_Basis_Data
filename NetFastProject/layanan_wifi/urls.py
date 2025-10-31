@@ -5,14 +5,15 @@ from . import views
 
 urlpatterns = [
     # Halaman Utama dan Autentikasi
-    path('', views.login_page, name='login_page'),
+    path('', views.login_page, name='login'),
     path('auth/login/', views.login, name='api_login'),
     path('auth/registrasi/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
     path('auth/logout/', views.logout, name='logout'),
     
     # Dashboard dan Halaman User
     path('user/dashboard/', views.dashboard_pelanggan_view, name='dashboard'),
-    path('user/index.html', views.dashboard_pelanggan_view, name='user_index'),
+    path('user/dashboard/', views.dashboard_pelanggan_view, name='user_index'),
+    # path('user/index.html', views.dashboard_pelanggan_view, name='user_index'),
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
     path('user/langganan/', views.user_langganan, name='langganan'),
     path('user/riwayat-testing/', views.user_riwayat_testing, name='riwayat_testing'),

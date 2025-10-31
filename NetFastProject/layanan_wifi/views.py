@@ -49,12 +49,12 @@ def dashboard_pelanggan_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login_page')
+        return redirect('login')
 
     try:
         pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
     except Pelanggan.DoesNotExist:
-        return redirect('login_page')
+        return redirect('login')
 
     langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
     riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
@@ -458,3 +458,59 @@ def admin_dashboard_stats(request):
         'pemesanan_menunggu': pemesanan_menunggu,
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
+
+
+# def dashboard_pelanggan_view(request):
+#     """Session-aware dashboard view for pelanggan.
+#     The login() view sets request.session['pelanggan_id'] on successful login.
+#     """
+#     pelanggan_id = request.session.get('pelanggan_id')
+#     if not pelanggan_id:
+#         return redirect('login')
+
+#     try:
+#         pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
+#     except Pelanggan.DoesNotExist:
+#         return redirect('login')
+
+#     langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
+#     riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
+#     pemesanan_terakhir = PemesananJasa.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_pemesanan')[:5]
+
+#     # Build context matching template variable names
+#     user_ctx = {
+#         'nama': getattr(pelanggan, 'nama_lengkap', '') or getattr(pelanggan, 'nama', ''),
+#         'email': getattr(pelanggan, 'email', ''),
+#         'no_telp': getattr(pelanggan, 'no_telepon', '') or getattr(pelanggan, 'no_telp', ''),
+#         'alamat': getattr(pelanggan, 'alamat_pemasangan', '') or getattr(pelanggan, 'alamat', ''),
+#     }
+
+#     paket = None
+#     if langganan and hasattr(langganan, 'id_paket'):
+#         paket = langganan.id_paket
+
+#     subscription_ctx = {
+#         'paket_name': getattr(paket, 'nama_paket', '') if paket else 'Belum berlangganan',
+#         'kecepatan': f"{getattr(paket, 'kecepatan_mbps', '-') } Mbps" if paket else '-',
+#         'status': 'Aktif' if langganan and getattr(langganan, 'status_langganan', '').lower() == 'aktif' else 'Tidak Aktif'
+#     }
+
+#     recent_services = []
+#     for s in pemesanan_terakhir:
+#         jenis = ''
+#         try:
+#             jenis = s.id_jenis_jasa.nama_jasa
+#         except Exception:
+#             jenis = getattr(s, 'jenis_jasa', '') or ''
+#         recent_services.append({
+#             'jenis_jasa': jenis,
+#             'tanggal_pemesanan': getattr(s, 'tanggal_pemesanan', None),
+#             'status_pemesanan': getattr(s, 'status_pemesanan', '')
+#         })
+
+#     context = {
+#         'user': user_ctx,
+#         'subscription': subscription_ctx,
+#         'recent_services': recent_services,
+#     }
+#     return render(request, 'user/dashboard.html', context)
