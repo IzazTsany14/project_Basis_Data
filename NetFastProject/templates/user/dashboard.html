@@ -55,10 +55,10 @@
                         <h5 class="mb-0"><i class="fas fa-user-circle me-2 text-primary"></i> Informasi Akun</h5>
                     </div>
                     <div class="card-body" id="userInfo">
-                        <p><strong>Nama:</strong> <span id="infoNama">-</span></p>
-                        <p><strong>Email:</strong> <span id="infoEmail">-</span></p>
-                        <p><strong>No. Telepon:</strong> <span id="infoTelepon">-</span></p>
-                        <p><strong>Alamat Pemasangan:</strong><br> <span id="infoAlamat">-</span></p>
+                        <p><strong>Nama:</strong> <span>{{ user.nama }}</span></p>
+                        <p><strong>Email:</strong> <span>{{ user.email }}</span></p>
+                        <p><strong>No. Telepon:</strong> <span>{{ user.no_telp }}</span></p>
+                        <p><strong>Alamat Pemasangan:</strong><br> <span>{{ user.alamat }}</span></p>
                         <button class="btn btn-outline-primary btn-sm">Edit Profil</button>
                     </div>
                 </div>
@@ -97,25 +97,38 @@
                         <h5 class="mb-0"><i class="fas fa-wifi me-2 text-primary"></i> Paket Aktif</h5>
                     </div>
                     <div class="card-body" id="paketInfo">
-                        <h4 class="text-primary" id="paketNama">...</h4>
-                        <p>Kecepatan: <strong id="paketKecepatan">... Mbps</strong></p>
-                        <p>Status: <span id="paketStatus" class="badge bg-success">...</span></p>
-                        <p class="text-muted small">Berlangganan sejak: <span id="paketMulai">...</span></T>
+                        <h4 class="text-primary">{{ subscription.paket_name }}</h4>
+                        <p>Kecepatan: <strong>{{ subscription.kecepatan }}</strong></p>
+                        <p>Status: <span class="badge bg-{% if subscription.status == 'Aktif' %}success{% else %}warning{% endif %}">{{ subscription.status }}</span></p>
                         <a href="#" class="btn btn-outline-primary btn-sm">Ganti Paket</a>
                     </div>
                 </div>
 
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i> Riwayat Tagihan</h5>
+                        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i> Riwayat Layanan</h5>
                     </div>
-                    <div class="card-body" id="billingHistory">
+                    <div class="card-body" id="serviceHistory">
                         <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>Loading...</span>
-                            </li>
+                            {% if recent_services %}
+                                {% for service in recent_services %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="fw-bold">{{ service.jenis_jasa }}</span><br>
+                                        <small class="text-muted">{{ service.tanggal_pemesanan|date:"d/m/Y" }}</small>
+                                    </div>
+                                    <span class="badge bg-{% if service.status_pemesanan == 'Selesai' %}success{% else %}warning{% endif %} rounded-pill">
+                                        {{ service.status_pemesanan }}
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="list-group-item text-center text-muted">
+                                    Belum ada riwayat layanan
+                                </li>
+                            {% endif %}
                         </ul>
-                        <a href="#" class="btn btn-link btn-sm mt-2">Lihat Semua Tagihan</a>
+                        <a href="{% url 'user_pemesanan' %}" class="btn btn-link btn-sm mt-2">Lihat Semua Layanan</a>
                     </div>
                 </div>
             </div>

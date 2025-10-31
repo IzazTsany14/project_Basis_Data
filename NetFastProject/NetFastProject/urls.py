@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('wifi_service.urls')),  
+    path('', include('layanan_wifi.urls')),  # Untuk halaman login dan dashboard
 ]
 
 # --- ⬇️ PERBAIKAN ADA DI SINI ⬇️ ---

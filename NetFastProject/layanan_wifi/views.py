@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Q
 from datetime import datetime, date
+import hashlib
 
 from .models import (
     Pelanggan, Teknisi, PaketLayanan, Langganan,
@@ -19,54 +20,198 @@ from .serializers import (
 )
 
 # --- LOGIKA BARU UNTUK LOGIN ---
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 
 def login_page(request):
-    return render(request, 'login.html')
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    return render(request, 'index.html')
+
+def logout(request):
+    # Clear custom session flags and Django auth
+    request.session.pop('pelanggan_id', None)
+    request.session.pop('teknisi_id', None)
+    request.session.pop('user_role', None)
+    try:
+        auth_logout(request)
+    except Exception:
+        pass
+    return redirect('login')
+
+@login_required
+def dashboard_pelanggan_view(request):
+    # Ambil data pelanggan
+    try:
+        pelanggan = Pelanggan.objects.get(user=request.user)
+        # Ambil data langganan aktif
+        langganan_aktif = Langganan.objects.filter(
+            pelanggan=pelanggan,
+            status='aktif'
+        ).first()
+        
+        # Ambil riwayat speed test terakhir
+        riwayat_test = RiwayatTestingWifi.objects.filter(
+            pelanggan=pelanggan
+        ).order_by('-waktu_testing')[:5]
+        
+        # Ambil pemesanan jasa terakhir
+        pemesanan_terakhir = PemesananJasa.objects.filter(
+            pelanggan=pelanggan
+        ).order_by('-waktu_pemesanan')[:3]
+        
+        context = {
+            'pelanggan': pelanggan,
+            'langganan': langganan_aktif,
+            'riwayat_test': riwayat_test,
+            'pemesanan_terakhir': pemesanan_terakhir
+        }
+        return render(request, 'user/dashboard.html', context)
+    except Pelanggan.DoesNotExist:
+        return redirect('login')
+    return render(request, 'index.html')
+
+@login_required(login_url='login')
+def dashboard_pelanggan_view(request):
+    try:
+        if not hasattr(request.user, 'pelanggan'):
+            return redirect('login')
+            
+        pelanggan = request.user.pelanggan
+        langganan = Langganan.objects.filter(id_pelanggan=pelanggan.id_pelanggan).first()
+        paket = langganan.id_paket if langganan else None
+        
+        context = {
+            'user': {
+                'nama': pelanggan.nama,
+                'email': pelanggan.email,
+                'no_telp': pelanggan.no_telp,
+                'alamat': pelanggan.alamat
+            },
+            'subscription': {
+                'paket_name': paket.nama_paket if paket else 'Belum berlangganan',
+                'kecepatan': f"{paket.kecepatan_mbps} Mbps" if paket else '-',
+                'status': 'Aktif' if langganan and langganan.status_berlangganan == 'AKTIF' else 'Tidak Aktif',
+            },
+            'recent_services': PemesananJasa.objects.filter(
+                id_pelanggan=pelanggan.id_pelanggan
+            ).order_by('-tanggal_pemesanan')[:5]
+        }
+        return render(request, 'user/dashboard.html', context)
+    except Exception as e:
+        print(f"Error in dashboard view: {str(e)}")
+        return render(request, 'user/dashboard.html', {'error': 'Terjadi kesalahan saat memuat data'})
+
+@login_required
+def dashboard(request):
+    if hasattr(request.user, 'pelanggan'):
+        try:
+            pelanggan = request.user.pelanggan
+            langganan = Langganan.objects.filter(id_pelanggan=pelanggan.id_pelanggan).first()
+            paket = langganan.id_paket if langganan else None
+            
+            context = {
+                'user': {
+                    'nama': pelanggan.nama,
+                    'email': pelanggan.email,
+                    'no_telp': pelanggan.no_telp,
+                    'alamat': pelanggan.alamat
+                },
+                'subscription': {
+                    'paket_name': paket.nama_paket if paket else 'Belum berlangganan',
+                    'kecepatan': f"{paket.kecepatan_mbps} Mbps" if paket else '-',
+                    'status': 'Aktif' if langganan and langganan.status_berlangganan == 'AKTIF' else 'Tidak Aktif',
+                },
+                'recent_services': PemesananJasa.objects.filter(
+                    id_pelanggan=pelanggan.id_pelanggan
+                ).order_by('-tanggal_pemesanan')[:5]
+            }
+            return render(request, 'user/dashboard.html', context)
+        except Exception as e:
+            print(f"Error loading dashboard: {str(e)}")
+            return render(request, 'user/dashboard.html', {'error': 'Terjadi kesalahan saat memuat data'})
+    return redirect('login')
 
 @api_view(['POST'])
 @csrf_exempt
 def login(request):
-    serializer = LoginSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # Accept either {email,password} or {username,password} or {login_id,password}
+    data = request.data if isinstance(request.data, dict) else {}
+    password = data.get('password')
+    login_id = data.get('login_id') or data.get('email') or data.get('username')
 
-    login_id = serializer.validated_data['login_id']
-    password = serializer.validated_data['password']
+    if not login_id or not password:
+        return Response({'error': 'login_id/email/username dan password diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user_data = None
-    
-    # 1. Coba login sebagai Pelanggan (via email)
+    # Try Pelanggan (by email)
     try:
-        user = Pelanggan.objects.get(email=login_id)
-        if user.check_password(password):
-            user_data = PelangganSerializer(user).data
-            user_data['role'] = 'pelanggan'
+        pelanggan = Pelanggan.objects.get(email=login_id)
+        # Normal Django-hashed password
+        if pelanggan.check_password(password):
+            request.session['pelanggan_id'] = pelanggan.id_pelanggan
+            request.session['user_role'] = 'pelanggan'
+            return Response({'message': 'Login berhasil', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=status.HTTP_200_OK)
+
+        # Legacy fallbacks: plaintext or MD5 stored passwords
+        legacy_ok = False
+        # plaintext stored in 'password' field
+        if hasattr(pelanggan, 'password') and getattr(pelanggan, 'password'):
+            if getattr(pelanggan, 'password') == password:
+                legacy_ok = True
+
+        # password_hash stored as raw (not Django hash) or MD5
+        ph = getattr(pelanggan, 'password_hash', None)
+        if not legacy_ok and ph:
+            if ph == password:
+                legacy_ok = True
+            else:
+                try:
+                    if hashlib.md5(password.encode('utf-8')).hexdigest() == ph:
+                        legacy_ok = True
+                except Exception:
+                    pass
+
+        if legacy_ok:
+            # Upgrade to Django hash for future logins
+            try:
+                pelanggan.set_password(password)
+                pelanggan.save()
+            except Exception as e:
+                print(f"Warning: couldn't upgrade legacy password for pelanggan {getattr(pelanggan,'id_pelanggan',None)}: {e}")
+            request.session['pelanggan_id'] = pelanggan.id_pelanggan
+            request.session['user_role'] = 'pelanggan'
+            return Response({'message': 'Login berhasil (legacy) - password upgraded', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=status.HTTP_200_OK)
     except Pelanggan.DoesNotExist:
-        pass # Lanjut ke pengecekan teknisi
+        pass
 
-    # 2. Jika bukan pelanggan, coba login sebagai Teknisi/Admin (via username)
-    if not user_data:
-        try:
-            user = Teknisi.objects.get(username=login_id)
-            if user.check_password(password):
-                user_data = TeknisiSerializer(user).data
-                user_data['role'] = user.role_akses # 'Teknisi' atau 'Admin'
-        except Teknisi.DoesNotExist:
-            pass # Tidak ditemukan
+    # Try Teknisi (by username)
+    try:
+        teknisi = Teknisi.objects.get(username=login_id)
+        if teknisi.check_password(password):
+            request.session['teknisi_id'] = teknisi.id_teknisi
+            request.session['user_role'] = teknisi.role_akses or 'teknisi'
+            return Response({'message': 'Login berhasil', 'user': {'role': teknisi.role_akses, 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=status.HTTP_200_OK)
 
-    # 3. Evaluasi hasil
-    if user_data:
-        return Response({
-            'message': 'Login berhasil',
-            'user': user_data
-        }, status=status.HTTP_200_OK)
-    else:
-        # Jika user_data masih None, berarti login_id atau password salah
-        return Response({
-            'error': 'Kombinasi ID Login (email/username) dan password salah.'
-        }, status=status.HTTP_401_UNAUTHORIZED)
+        # Teknisi legacy fallbacks
+        tph = getattr(teknisi, 'password_hash', None)
+        if tph:
+            if tph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == tph:
+                try:
+                    teknisi.set_password(password)
+                    teknisi.save()
+                except Exception:
+                    pass
+                request.session['teknisi_id'] = teknisi.id_teknisi
+                request.session['user_role'] = teknisi.role_akses or 'teknisi'
+                return Response({'message': 'Login berhasil (legacy)', 'user': {'role': teknisi.role_akses, 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=status.HTTP_200_OK)
+    except Teknisi.DoesNotExist:
+        pass
+
+    return Response({'error': 'Email/username atau password salah'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['GET', 'POST'])
@@ -127,6 +272,37 @@ def save_speed_test(request):
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['GET'])
+def user_dashboard(request):
+    id_pelanggan = request.GET.get('id_pelanggan')
+    if not id_pelanggan:
+        return Response({'error': 'id_pelanggan diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        pelanggan = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
+        langganan = Langganan.objects.filter(id_pelanggan=id_pelanggan).first()
+        paket = PaketLayanan.objects.filter(id_paket=langganan.id_paket).first() if langganan else None
+
+        data = {
+            'user': PelangganSerializer(pelanggan).data,
+            'subscription': {
+                'paket_name': paket.nama_paket if paket else 'Belum berlangganan',
+                'kecepatan': f"{paket.kecepatan_mbps} Mbps" if paket else '-',
+                'status': 'Aktif' if langganan and langganan.status_berlangganan == 'AKTIF' else 'Tidak Aktif',
+                'tanggal_berakhir': langganan.tanggal_berakhir.strftime('%d/%m/%Y') if langganan else '-'
+            },
+            'recent_services': PemesananJasaSerializer(
+                PemesananJasa.objects.filter(id_pelanggan=id_pelanggan).order_by('-tanggal_pemesanan')[:5],
+                many=True
+            ).data
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    except Pelanggan.DoesNotExist:
+        return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def teknisi_tugas(request):
@@ -320,3 +496,59 @@ def admin_dashboard_stats(request):
         'pemesanan_menunggu': pemesanan_menunggu,
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
+
+
+def dashboard_pelanggan_view(request):
+    """Session-aware dashboard view for pelanggan.
+    The login() view sets request.session['pelanggan_id'] on successful login.
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+
+    try:
+        pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
+    except Pelanggan.DoesNotExist:
+        return redirect('login')
+
+    langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
+    riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
+    pemesanan_terakhir = PemesananJasa.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_pemesanan')[:5]
+
+    # Build context matching template variable names
+    user_ctx = {
+        'nama': getattr(pelanggan, 'nama_lengkap', '') or getattr(pelanggan, 'nama', ''),
+        'email': getattr(pelanggan, 'email', ''),
+        'no_telp': getattr(pelanggan, 'no_telepon', '') or getattr(pelanggan, 'no_telp', ''),
+        'alamat': getattr(pelanggan, 'alamat_pemasangan', '') or getattr(pelanggan, 'alamat', ''),
+    }
+
+    paket = None
+    if langganan and hasattr(langganan, 'id_paket'):
+        paket = langganan.id_paket
+
+    subscription_ctx = {
+        'paket_name': getattr(paket, 'nama_paket', '') if paket else 'Belum berlangganan',
+        'kecepatan': f"{getattr(paket, 'kecepatan_mbps', '-') } Mbps" if paket else '-',
+        'status': 'Aktif' if langganan and getattr(langganan, 'status_langganan', '').lower() == 'aktif' else 'Tidak Aktif'
+    }
+
+    recent_services = []
+    for s in pemesanan_terakhir:
+        jenis = ''
+        try:
+            jenis = s.id_jenis_jasa.nama_jasa
+        except Exception:
+            jenis = getattr(s, 'jenis_jasa', '') or ''
+        recent_services.append({
+            'jenis_jasa': jenis,
+            'tanggal_pemesanan': getattr(s, 'tanggal_pemesanan', None),
+            'status_pemesanan': getattr(s, 'status_pemesanan', '')
+        })
+
+    context = {
+        'user': user_ctx,
+        'subscription': subscription_ctx,
+        'recent_services': recent_services,
+    }
+    return render(request, 'user/dashboard.html', context)

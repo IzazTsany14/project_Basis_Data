@@ -1,6 +1,38 @@
 // NetFast - User Module Logic
 const API_BASE_URL = 'http://localhost:8000/api';
 
+// Check authentication on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const token = localStorage.getItem('userToken');
+    const userId = localStorage.getItem('userId');
+    const userRole = localStorage.getItem('userRole');
+
+    // If no token or not a customer, redirect to login
+    if (!token || !userId || userRole !== 'PELANGGAN') {
+        window.location.href = '../index.html';
+        return;
+    }
+
+    // Setup logout button
+    const logoutButton = document.getElementById('logoutButton');
+    if (logoutButton) {
+        logoutButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.clear();
+            window.location.href = '../index.html';
+        });
+    }
+
+    // Load dashboard data
+    loadDashboardData();
+
+    // Set up speed test if on speed test page
+    const startSpeedTest = document.getElementById('startSpeedTest');
+    if (startSpeedTest) {
+        startSpeedTest.addEventListener('click', runSpeedTest);
+    }
+});
+
 // Load user name for sidebar
 async function loadUserName() {
     const userName = localStorage.getItem('userName');
@@ -16,13 +48,51 @@ async function loadUserName() {
 // Load dashboard data
 async function loadDashboardData() {
     try {
-        await loadUserName();
-        await loadSubscriptionInfo();
-        await loadPaymentInfo();
-        await loadRecentServices();
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            window.location.href = '../index.html';
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/user/data/?id_pelanggan=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            // Update user info
+            document.getElementById('welcomeName').textContent = `Selamat Datang, ${data.user.nama}`;
+            document.getElementById('infoNama').textContent = data.user.nama;
+            document.getElementById('infoEmail').textContent = data.user.email;
+            document.getElementById('infoTelepon').textContent = data.user.no_telp;
+            document.getElementById('infoAlamat').textContent = data.user.alamat;
+
+            // Update package info
+            document.getElementById('paketNama').textContent = data.subscription.paket_name;
+            document.getElementById('paketKecepatan').textContent = data.subscription.kecepatan;
+            document.getElementById('paketStatus').textContent = data.subscription.status;
+            document.getElementById('paketMulai').textContent = data.subscription.tanggal_berakhir;
+
+            // Update billing history if exists
+            if (data.recent_services && data.recent_services.length > 0) {
+                const billingList = document.getElementById('billingHistory').querySelector('.list-group');
+                billingList.innerHTML = data.recent_services.map(service => `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="fw-bold">${service.jenis_jasa}</span><br>
+                            <small class="text-muted">Tanggal: ${new Date(service.tanggal_pemesanan).toLocaleDateString('id-ID')}</small>
+                        </div>
+                        <span class="badge bg-${service.status_pemesanan === 'Selesai' ? 'success' : 'warning'} rounded-pill">
+                            ${service.status_pemesanan}
+                        </span>
+                    </li>
+                `).join('');
+            }
+
+        } else {
+            throw new Error(data.error || 'Gagal memuat data');
+        }
     } catch (error) {
         console.error('Error loading dashboard data:', error);
-        NetFastAuth.showAlert('Gagal memuat data dashboard', 'error');
+        showAlert('Gagal memuat data dashboard: ' + error.message, 'error');
     }
 }
 

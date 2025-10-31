@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'wifi_service', # atau 'layanan_wifi' tergantung nama folder app kamu
+    'layanan_wifi',
     'django_extensions',
 ]
 
@@ -35,7 +35,10 @@ ROOT_URLCONF = 'NetFastProject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], # Ini sudah benar
+        'DIRS': [
+            BASE_DIR / 'templates',
+            BASE_DIR / 'NetFastProject' / 'templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

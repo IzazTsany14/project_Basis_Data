@@ -1,28 +1,42 @@
 // NetFast - Authentication Logic
-const API_BASE_URL = 'http://http://127.0.0.1:8000//api'; // Adjust this to your Django API URL
-
-// Login functionality for customers
 document.addEventListener('DOMContentLoaded', function() {
-    // Customer login form
-    const customerLoginForm = document.getElementById('login-pelanggan-form');
+    // Helper: get CSRF token from cookie if no hidden input is present
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    const csrftoken = csrftokenInput ? csrftokenInput.value : getCookie('csrftoken');
+
+    // Support both ID variants used in templates to avoid mismatch
+    const customerLoginForm = document.getElementById('login-pelanggan-form') || document.getElementById('loginPelangganForm') || document.getElementById('loginPelangganForm') || document.getElementById('loginPelangganForm');
     if (customerLoginForm) {
         customerLoginForm.addEventListener('submit', handleCustomerLogin);
     }
 
-    // Staff login form
-    const staffLoginForm = document.getElementById('login-staf-form');
+    const staffLoginForm = document.getElementById('login-staf-form') || document.getElementById('loginStafForm') || document.getElementById('loginStafForm');
     if (staffLoginForm) {
         staffLoginForm.addEventListener('submit', handleStaffLogin);
     }
 
-    // Registration form
-    const registerForm = document.getElementById('register-form');
+    const registerForm = document.getElementById('register-form') || document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegistration);
     }
 
-    // Check if user is already logged in
-    checkAuthStatus();
+    // Expose csrftoken to handlers via closure
+    window.__NETFAST_CSRF = csrftoken;
 });
 
 // Handle customer login
@@ -30,40 +44,40 @@ async function handleCustomerLogin(event) {
     event.preventDefault();
     
     const formData = new FormData(event.target);
-    const loginData = {
-        email: formData.get('email'),
-        password: formData.get('password'),
-        user_type: 'PELANGGAN'
-    };
-
+    
     try {
         showLoading(event.target.querySelector('button[type="submit"]'));
         
-        const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+        const response = await fetch('/auth/login/', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
+                'X-CSRFToken': window.__NETFAST_CSRF || '',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(loginData)
+            body: JSON.stringify({
+                email: formData.get('email'),
+                password: formData.get('password')
+            })
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            // Store user data in localStorage
-            localStorage.setItem('userToken', result.token || result.access_token);
-            localStorage.setItem('userId', result.user.id);
+            // Backend returns { message, user }
+            const user = result.user || {};
+            // Save minimal info locally to control SPA behavior
+            localStorage.setItem('userId', user.id || user.id_pelanggan || '');
             localStorage.setItem('userRole', 'PELANGGAN');
-            localStorage.setItem('userName', result.user.nama);
+            localStorage.setItem('userName', user.nama || user.nama_lengkap || '');
 
             showAlert('Login berhasil! Mengalihkan ke dashboard...', 'success');
-            
-            // Redirect to user dashboard
+            // Redirect to canonical dashboard URL
             setTimeout(() => {
-                window.location.href = 'user/dashboard.html';
-            }, 1500);
+                window.location.href = '/user/dashboard/';
+            }, 800);
         } else {
-            showAlert(result.message || 'Login gagal. Periksa email dan password Anda.', 'error');
+            showAlert(result.error || result.message || 'Login gagal. Periksa email dan password Anda.', 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
@@ -87,35 +101,35 @@ async function handleStaffLogin(event) {
     try {
         showLoading(event.target.querySelector('button[type="submit"]'));
         
-        const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+        // Staff login should call same backend endpoint; include credentials
+        const response = await fetch('/auth/login/', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
+                'X-CSRFToken': window.__NETFAST_CSRF || '',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(loginData)
+            body: JSON.stringify({ login_id: formData.get('email') || formData.get('username'), password: formData.get('password') })
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            // Store user data in localStorage
-            localStorage.setItem('userToken', result.token || result.access_token);
-            localStorage.setItem('userId', result.user.id);
-            localStorage.setItem('userRole', loginData.user_type);
-            localStorage.setItem('userName', result.user.nama);
+            const user = result.user || {};
+            localStorage.setItem('userId', user.id || user.id_teknisi || '');
+            localStorage.setItem('userRole', user.role_akses || loginData.user_type || 'TEKNISI');
+            localStorage.setItem('userName', user.nama || user.nama_teknisi || '');
 
             showAlert('Login berhasil! Mengalihkan ke dashboard...', 'success');
-            
-            // Redirect based on role
             setTimeout(() => {
-                if (loginData.user_type === 'ADMIN') {
-                    window.location.href = 'admin/dashboard.html';
-                } else if (loginData.user_type === 'TEKNISI') {
-                    window.location.href = 'teknisi/dashboard.html';
+                if ((user.role_akses || loginData.user_type || '').toUpperCase() === 'ADMIN') {
+                    window.location.href = '/admin/dashboard/';
+                } else {
+                    window.location.href = '/teknisi/dashboard/';
                 }
-            }, 1500);
+            }, 800);
         } else {
-            showAlert(result.message || 'Login gagal. Periksa kredensial Anda.', 'error');
+            showAlert(result.error || result.message || 'Login gagal. Periksa kredensial Anda.', 'error');
         }
     } catch (error) {
         console.error('Login error:', error);
