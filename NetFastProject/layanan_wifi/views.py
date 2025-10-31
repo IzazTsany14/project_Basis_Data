@@ -41,100 +41,62 @@ def logout(request):
         auth_logout(request)
     except Exception:
         pass
-    return redirect('login')
-
-@login_required
+    
 def dashboard_pelanggan_view(request):
-    # Ambil data pelanggan
+    print("Dashboard view called")
+    """Session-aware dashboard view for pelanggan.
+    The login() view sets request.session['pelanggan_id'] on successful login.
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login_page')
+
     try:
-        pelanggan = Pelanggan.objects.get(user=request.user)
-        # Ambil data langganan aktif
-        langganan_aktif = Langganan.objects.filter(
-            pelanggan=pelanggan,
-            status='aktif'
-        ).first()
-        
-        # Ambil riwayat speed test terakhir
-        riwayat_test = RiwayatTestingWifi.objects.filter(
-            pelanggan=pelanggan
-        ).order_by('-waktu_testing')[:5]
-        
-        # Ambil pemesanan jasa terakhir
-        pemesanan_terakhir = PemesananJasa.objects.filter(
-            pelanggan=pelanggan
-        ).order_by('-waktu_pemesanan')[:3]
-        
-        context = {
-            'pelanggan': pelanggan,
-            'langganan': langganan_aktif,
-            'riwayat_test': riwayat_test,
-            'pemesanan_terakhir': pemesanan_terakhir
-        }
-        return render(request, 'user/dashboard.html', context)
+        pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
     except Pelanggan.DoesNotExist:
-        return redirect('login')
-    return render(request, 'index.html')
+        return redirect('login_page')
 
-@login_required(login_url='login')
-def dashboard_pelanggan_view(request):
-    try:
-        if not hasattr(request.user, 'pelanggan'):
-            return redirect('login')
-            
-        pelanggan = request.user.pelanggan
-        langganan = Langganan.objects.filter(id_pelanggan=pelanggan.id_pelanggan).first()
-        paket = langganan.id_paket if langganan else None
-        
-        context = {
-            'user': {
-                'nama': pelanggan.nama,
-                'email': pelanggan.email,
-                'no_telp': pelanggan.no_telp,
-                'alamat': pelanggan.alamat
-            },
-            'subscription': {
-                'paket_name': paket.nama_paket if paket else 'Belum berlangganan',
-                'kecepatan': f"{paket.kecepatan_mbps} Mbps" if paket else '-',
-                'status': 'Aktif' if langganan and langganan.status_berlangganan == 'AKTIF' else 'Tidak Aktif',
-            },
-            'recent_services': PemesananJasa.objects.filter(
-                id_pelanggan=pelanggan.id_pelanggan
-            ).order_by('-tanggal_pemesanan')[:5]
-        }
-        return render(request, 'user/dashboard.html', context)
-    except Exception as e:
-        print(f"Error in dashboard view: {str(e)}")
-        return render(request, 'user/dashboard.html', {'error': 'Terjadi kesalahan saat memuat data'})
+    langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
+    riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
+    pemesanan_terakhir = PemesananJasa.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_pemesanan')[:5]
 
-@login_required
-def dashboard(request):
-    if hasattr(request.user, 'pelanggan'):
+    # Build context matching template variable names
+    user_ctx = {
+        'nama': getattr(pelanggan, 'nama_lengkap', '') or getattr(pelanggan, 'nama', ''),
+        'email': getattr(pelanggan, 'email', ''),
+        'no_telp': getattr(pelanggan, 'no_telepon', '') or getattr(pelanggan, 'no_telp', ''),
+        'alamat': getattr(pelanggan, 'alamat_pemasangan', '') or getattr(pelanggan, 'alamat', ''),
+    }
+
+    paket = None
+    if langganan and hasattr(langganan, 'id_paket'):
+        paket = langganan.id_paket
+
+    subscription_ctx = {
+        'paket_name': getattr(paket, 'nama_paket', '') if paket else 'Belum berlangganan',
+        'kecepatan': f"{getattr(paket, 'kecepatan_mbps', '-') } Mbps" if paket else '-',
+        'status': 'Aktif' if langganan and getattr(langganan, 'status_langganan', '').lower() == 'aktif' else 'Tidak Aktif'
+    }
+
+    recent_services = []
+    for s in pemesanan_terakhir:
+        jenis = ''
         try:
-            pelanggan = request.user.pelanggan
-            langganan = Langganan.objects.filter(id_pelanggan=pelanggan.id_pelanggan).first()
-            paket = langganan.id_paket if langganan else None
-            
-            context = {
-                'user': {
-                    'nama': pelanggan.nama,
-                    'email': pelanggan.email,
-                    'no_telp': pelanggan.no_telp,
-                    'alamat': pelanggan.alamat
-                },
-                'subscription': {
-                    'paket_name': paket.nama_paket if paket else 'Belum berlangganan',
-                    'kecepatan': f"{paket.kecepatan_mbps} Mbps" if paket else '-',
-                    'status': 'Aktif' if langganan and langganan.status_berlangganan == 'AKTIF' else 'Tidak Aktif',
-                },
-                'recent_services': PemesananJasa.objects.filter(
-                    id_pelanggan=pelanggan.id_pelanggan
-                ).order_by('-tanggal_pemesanan')[:5]
-            }
-            return render(request, 'user/dashboard.html', context)
-        except Exception as e:
-            print(f"Error loading dashboard: {str(e)}")
-            return render(request, 'user/dashboard.html', {'error': 'Terjadi kesalahan saat memuat data'})
-    return redirect('login')
+            jenis = s.id_jenis_jasa.nama_jasa
+        except Exception:
+            jenis = getattr(s, 'jenis_jasa', '') or ''
+        recent_services.append({
+            'jenis_jasa': jenis,
+            'tanggal_pemesanan': getattr(s, 'tanggal_pemesanan', None),
+            'status_pemesanan': getattr(s, 'status_pemesanan', '')
+        })
+
+    context = {
+        'user': user_ctx,
+        'subscription': subscription_ctx,
+        'recent_services': recent_services,
+    }
+    return render(request, 'user/dashboard.html', context)
 
 @api_view(['POST'])
 @csrf_exempt
@@ -496,59 +458,3 @@ def admin_dashboard_stats(request):
         'pemesanan_menunggu': pemesanan_menunggu,
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
-
-
-def dashboard_pelanggan_view(request):
-    """Session-aware dashboard view for pelanggan.
-    The login() view sets request.session['pelanggan_id'] on successful login.
-    """
-    pelanggan_id = request.session.get('pelanggan_id')
-    if not pelanggan_id:
-        return redirect('login')
-
-    try:
-        pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
-    except Pelanggan.DoesNotExist:
-        return redirect('login')
-
-    langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
-    riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
-    pemesanan_terakhir = PemesananJasa.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_pemesanan')[:5]
-
-    # Build context matching template variable names
-    user_ctx = {
-        'nama': getattr(pelanggan, 'nama_lengkap', '') or getattr(pelanggan, 'nama', ''),
-        'email': getattr(pelanggan, 'email', ''),
-        'no_telp': getattr(pelanggan, 'no_telepon', '') or getattr(pelanggan, 'no_telp', ''),
-        'alamat': getattr(pelanggan, 'alamat_pemasangan', '') or getattr(pelanggan, 'alamat', ''),
-    }
-
-    paket = None
-    if langganan and hasattr(langganan, 'id_paket'):
-        paket = langganan.id_paket
-
-    subscription_ctx = {
-        'paket_name': getattr(paket, 'nama_paket', '') if paket else 'Belum berlangganan',
-        'kecepatan': f"{getattr(paket, 'kecepatan_mbps', '-') } Mbps" if paket else '-',
-        'status': 'Aktif' if langganan and getattr(langganan, 'status_langganan', '').lower() == 'aktif' else 'Tidak Aktif'
-    }
-
-    recent_services = []
-    for s in pemesanan_terakhir:
-        jenis = ''
-        try:
-            jenis = s.id_jenis_jasa.nama_jasa
-        except Exception:
-            jenis = getattr(s, 'jenis_jasa', '') or ''
-        recent_services.append({
-            'jenis_jasa': jenis,
-            'tanggal_pemesanan': getattr(s, 'tanggal_pemesanan', None),
-            'status_pemesanan': getattr(s, 'status_pemesanan', '')
-        })
-
-    context = {
-        'user': user_ctx,
-        'subscription': subscription_ctx,
-        'recent_services': recent_services,
-    }
-    return render(request, 'user/dashboard.html', context)

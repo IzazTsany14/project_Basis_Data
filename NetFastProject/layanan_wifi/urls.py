@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     # Halaman Utama dan Autentikasi
-    path('', views.login_page, name='login'),
+    path('', views.login_page, name='login_page'),
     path('auth/login/', views.login, name='api_login'),
     path('auth/registrasi/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
     path('auth/logout/', views.logout, name='logout'),

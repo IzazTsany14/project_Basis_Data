@@ -181,7 +181,7 @@ async function handleRegistration(event) {
             
             // Redirect to login page
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = '/';
             }, 2000);
         } else {
             const errorMessage = result.message || 'Registrasi gagal. Silakan periksa data Anda.';
@@ -216,7 +216,7 @@ function checkAuthStatus() {
                    window.location.pathname.includes('user/') || 
                    window.location.pathname.includes('admin/') || 
                    window.location.pathname.includes('teknisi/'))) {
-        window.location.href = '../index.html';
+        window.location.href = '/';
     }
 }
 
@@ -290,7 +290,7 @@ async function apiCall(endpoint, options = {}) {
         // Handle unauthorized access
         if (response.status === 401) {
             localStorage.clear();
-            window.location.href = '../index.html';
+            window.location.href = '/';
             return;
         }
         

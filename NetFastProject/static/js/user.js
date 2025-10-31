@@ -3,15 +3,7 @@ const API_BASE_URL = 'http://localhost:8000/api';
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const token = localStorage.getItem('userToken');
-    const userId = localStorage.getItem('userId');
-    const userRole = localStorage.getItem('userRole');
-
-    // If no token or not a customer, redirect to login
-    if (!token || !userId || userRole !== 'PELANGGAN') {
-        window.location.href = '../index.html';
-        return;
-    }
+    
 
     // Setup logout button
     const logoutButton = document.getElementById('logoutButton');
@@ -19,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutButton.addEventListener('click', function(e) {
             e.preventDefault();
             localStorage.clear();
-            window.location.href = '../index.html';
+            window.location.href = '/';
         });
     }
 
@@ -48,11 +40,7 @@ async function loadUserName() {
 // Load dashboard data
 async function loadDashboardData() {
     try {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-            window.location.href = '../index.html';
-            return;
-        }
+        
 
         const response = await fetch(`${API_BASE_URL}/user/data/?id_pelanggan=${userId}`);
         const data = await response.json();
