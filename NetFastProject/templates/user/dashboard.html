@@ -7,67 +7,226 @@
     <title>Dashboard Pelanggan - NetFast</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+
+<style>
+/* ===== GLOBAL DASHBOARD STYLE ===== */
+body {
+    background: linear-gradient(135deg, #E0E7FF 0%, #F5E0FF 50%, #FFE3ED 100%);
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 90px;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(18px);
+    border-right: 1px solid rgba(255,255,255,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 25px;
+    z-index: 999;
+}
+.sidebar a {
+    color: #6C63FF;
+    font-size: 22px;
+    margin: 25px 0;
+    text-decoration: none;
+    transition: 0.3s;
+}
+.sidebar a:hover, .sidebar a.active {
+    color: #fff;
+    background: linear-gradient(135deg, #6C63FF, #FF66B2);
+    padding: 10px;
+    border-radius: 14px;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+    margin-left: 120px;
+    padding: 30px;
+}
+
+/* ===== CARD BASE STYLE ===== */
+.card {
+    border: none !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+/* ===== VARIANTS ===== */
+.card-glass {
+    background: rgba(255,255,255,0.35);
+}
+.card-purple {
+    background: linear-gradient(135deg, #6C63FF, #8B78FF);
+    color: #fff;
+}
+.card-pink {
+    background: linear-gradient(135deg, #FF9ACD, #FF6CA9);
+    color: #fff;
+}
+.card-blue {
+    background: linear-gradient(135deg, #89CFF0, #6B9EFF);
+    color: #fff;
+}
+
+/* ===== CARD HEADER ===== */
+.card-header {
+    border-bottom: none;
+    background: transparent !important;
+    font-weight: 600;
+}
+
+/* ===== TEXT ===== */
+h3, h4, h5, h6, p, small {
+    color: inherit;
+}
+.text-muted {
+    color: rgba(255,255,255,0.8) !important;
+}
+
+/* ===== BUTTONS ===== */
+.btn-outline-primary {
+    border-color: #fff !important;
+    color: #fff !important;
+}
+.btn-outline-primary:hover {
+    background: #fff !important;
+    color: #6C63FF !important;
+}
+.btn-primary {
+    background: #fff !important;
+    color: #6C63FF !important;
+    border: none !important;
+}
+.btn-primary:hover {
+    background: #f5f5f5 !important;
+}
+
+/* ===== SPEED TEST DISPLAY ===== */
+.speed-display {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+.speed-item {
+    background: rgba(255,255,255,0.25);
+    border-radius: 18px;
+    padding: 15px 25px;
+    margin: 10px;
+    width: 120px;
+    text-align: center;
+}
+.speed-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ===== LIST GROUP ===== */
+.list-group-item {
+    background: rgba(255,255,255,0.15) !important;
+    border: none !important;
+    color: #fff !important;
+}
+
+/* ===== BADGES ===== */
+.badge {
+    padding: 7px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+}
+.badge.bg-success {
+    background: #A3FFBF !important;
+    color: #333;
+}
+.badge.bg-warning {
+    background: #FFD580 !important;
+    color: #333;
+}
+
+/* ===== HEADER TITLE ===== */
+.welcome-card {
+    background: linear-gradient(135deg, #6C63FF, #A07BFF);
+    color: #fff;
+    border: none;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 70px;
+    }
+    .main-content {
+        margin-left: 90px;
+    }
+}
+</style>
 </head>
-<body class="bg-light">
 
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand logo" href="#">🌐 NetFast</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#"><i class="fas fa-home me-1"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-file-invoice-dollar me-1"></i> Tagihan</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-headset me-1"></i> Bantuan</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="logoutButton"><i class="fas fa-sign-out-alt me-1"></i> Logout</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<body>
 
-    <div class="container mt-4">
+<!-- Sidebar -->
+<div class="sidebar">
+    <a href="#" class="active"><i class="fas fa-home"></i></a>
+    <a href="#"><i class="fas fa-file-invoice-dollar"></i></a>
+    <a href="#"><i class="fas fa-headset"></i></a>
+    <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i></a>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <div class="container-fluid">
+
+        <!-- Welcome Card -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card shadow-sm border-0 welcome-card">
+                <div class="card shadow-sm welcome-card text-center">
                     <div class="card-body">
-                        <h3 class="card-title" id="welcomeName">Selamat Datang, {{ user.nama_lengkap }}</h3>
-                        <p class="card-text text-muted">Kelola layanan internet Anda dengan mudah di sini.</p>
+                        <h3 class="card-title">Selamat Datang, {{ user.nama_lengkap }}</h3>
+                        <p class="card-text text-light">Kelola layanan internet Anda dengan mudah di sini.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row">
+            <!-- Info Akun -->
             <div class="col-lg-7">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-user-circle me-2 text-primary"></i> Informasi Akun</h5>
+                <div class="card card-glass mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-circle me-2"></i> Informasi Akun</h5>
                     </div>
-                    <div class="card-body" id="userInfo">
-                        <p><strong>Nama:</strong> <span>{{ user.nama }}</span></p>
-                        <p><strong>Email:</strong> <span>{{ user.email }}</span></p>
-                        <p><strong>No. Telepon:</strong> <span>{{ user.no_telp }}</span></p>
-                        <p><strong>Alamat Pemasangan:</strong><br> <span>{{ user.alamat }}</span></p>
+                    <div class="card-body">
+                        <p><strong>Nama:</strong> {{ user.nama }}</p>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                        <p><strong>No. Telepon:</strong> {{ user.no_telp }}</p>
+                        <p><strong>Alamat Pemasangan:</strong> {{ user.alamat }}</p>
                         <button class="btn btn-outline-primary btn-sm">Edit Profil</button>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2 text-primary"></i> Uji Kecepatan</h5>
+                <!-- Speed Test -->
+                <div class="card card-blue mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tachometer-alt me-2"></i> Uji Kecepatan</h5>
                     </div>
-                    <div class="card-body text-center" id="speedTest">
+                    <div class="card-body text-center">
                         <div class="speed-display mb-3">
                             <div class="speed-item">
                                 <h6>Download</h6>
@@ -85,58 +244,61 @@
                                 <small>ms</small>
                             </div>
                         </div>
-                        <button class="btn btn-primary" id="startSpeedTest">Mulai Uji Kecepatan</button>
-                        <div id="speedTestStatus" class="mt-2 text-muted small"></div>
+                        <button class="btn btn-light text-primary" id="startSpeedTest">Mulai Uji Kecepatan</button>
+                        <div id="speedTestStatus" class="mt-2 text-white small"></div>
                     </div>
                 </div>
             </div>
 
+            <!-- Paket & Riwayat -->
             <div class="col-lg-5">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-wifi me-2 text-primary"></i> Paket Aktif</h5>
+                <div class="card card-purple mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-wifi me-2"></i> Paket Aktif</h5>
                     </div>
-                    <div class="card-body" id="paketInfo">
-                        <h4 class="text-primary">{{ subscription.paket_name }}</h4>
+                    <div class="card-body">
+                        <h4>{{ subscription.paket_name }}</h4>
                         <p>Kecepatan: <strong>{{ subscription.kecepatan }}</strong></p>
                         <p>Status: <span class="badge bg-{% if subscription.status == 'Aktif' %}success{% else %}warning{% endif %}">{{ subscription.status }}</span></p>
                         <a href="#" class="btn btn-outline-primary btn-sm">Ganti Paket</a>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i> Riwayat Layanan</h5>
+                <div class="card card-pink mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history me-2"></i> Riwayat Layanan</h5>
                     </div>
-                    <div class="card-body" id="serviceHistory">
+                    <div class="card-body">
                         <ul class="list-group list-group-flush">
                             {% if recent_services %}
                                 {% for service in recent_services %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <li class="list-group-item d-flex justify-content-between">
                                     <div>
                                         <span class="fw-bold">{{ service.jenis_jasa }}</span><br>
-                                        <small class="text-muted">{{ service.tanggal_pemesanan|date:"d/m/Y" }}</small>
+                                        <small>{{ service.tanggal_pemesanan|date:"d/m/Y" }}</small>
                                     </div>
-                                    <span class="badge bg-{% if service.status_pemesanan == 'Selesai' %}success{% else %}warning{% endif %} rounded-pill">
+                                    <span class="badge bg-{% if service.status_pemesanan == 'Selesai' %}success{% else %}warning{% endif %}">
                                         {{ service.status_pemesanan }}
                                     </span>
                                 </li>
                                 {% endfor %}
                             {% else %}
-                                <li class="list-group-item text-center text-muted">
+                                <li class="list-group-item text-center text-light">
                                     Belum ada riwayat layanan
                                 </li>
                             {% endif %}
                         </ul>
-                        <a href="{% url 'user_pemesanan' %}" class="btn btn-link btn-sm mt-2">Lihat Semua Layanan</a>
+                        <a href="{% url 'user_pemesanan' %}" class="btn btn-light btn-sm mt-2">Lihat Semua Layanan</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/user.js' %}"></script>
-    <script src="{% static 'js/speed-test.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/user.js' %}"></script>
+<script src="{% static 'js/speed-test.js' %}"></script>
+
 </body>
 </html>
