@@ -89,5 +89,6 @@ source .venv/bin/activate.sh
 pip install -r requirements.txt
 
 # jalanin server
+cd NetFastProject
 python NetFastProject/manage.py runserver
 ```
