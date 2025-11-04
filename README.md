@@ -66,7 +66,7 @@ Proyek ini merupakan tugas dari mata kuliah **Basis Data**, dengan fokus pada pe
 
 ## Setup Project
 
-Perama pastikan anda ada pada folder project ini yang telah berhasil anda klon
+Pertama pastikan anda ada pada folder project ini yang telah berhasil anda klon
 jika belum silahkan clone dengan command
 ```bash
 git clone --depth=1 https://github.com/IzazTsany14/project-basis-data
