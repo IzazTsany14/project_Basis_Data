@@ -77,7 +77,7 @@ cd project-basis-data
 # buat virtual environment python
 python -m venv .venv
 
-# atifkan venv python
+# aktifkan venv python
 ## powershell
 ## windows
 .venv/Scrips/activate.ps1
