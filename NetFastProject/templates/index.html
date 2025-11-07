@@ -1,101 +1,210 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NetFast - Login</title>
+
+    <!-- Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Raleway:ital,wght@1,500&display=swap" rel="stylesheet">
+
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, #b8c6db 0%, #f5f7fa 100%);
             display: flex;
             align-items: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
-        .login-container { max-width: 450px; margin: auto; }
-        .card { border: none; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border-radius: 15px 15px 0 0 !important;
-            padding: 30px; text-align: center;
+
+        /* Background gradient shapes */
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
         }
-        .logo { font-size: 2.5rem; font-weight: bold; margin-bottom: 10px; }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none; padding: 12px; font-weight: 600;
+        .shape1 { width: 300px; height: 300px; background: #667eea; top: -80px; left: -60px; }
+        .shape2 { width: 400px; height: 400px; background: #764ba2; bottom: -100px; right: -100px; }
+
+        /* Container utama */
+        .login-box {
+            background: #fff;
+            border-radius: 25px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.1);
+            max-width: 420px;
+            width: 100%;
+            padding: 40px 35px;
+            z-index: 10;
+            text-align: center;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .nav-pills .nav-link { border-radius: 10px; font-weight: 600; }
-        .nav-pills .nav-link.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+        /* Logo dan Slogan */
+        .login-box h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            color: #5c3b8e;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 6px rgba(118,75,162,0.2);
+        }
+
+        .tagline {
+            font-family: 'Raleway', sans-serif;
+            font-style: italic;
+            font-size: 0.95rem;
+            color: #6c6c6c;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Role Selector */
+        .role-select {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+
+        .role-btn {
+            border-radius: 20px;
+            border: 2px solid #764ba2;
+            color: #764ba2;
+            background: transparent;
+            padding: 8px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .role-btn.active,
+        .role-btn:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        /* Form style */
+        .form-control {
+            border-radius: 30px;
+            padding: 12px 20px;
+            border: 1.5px solid #d1c4e9;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 8px rgba(118,75,162,0.3);
+        }
+
+        /* Button Login */
+        .btn-login {
+            border-radius: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 12px;
+            transition: 0.3s;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        }
+
+        /* Footer link */
+        a {
+            text-decoration: none;
+            color: #764ba2;
+        }
+
+        .footer-text {
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        /* Illustration */
+        .illustration {
+            position: absolute;
+            bottom: 0;
+            left: 30px;
+            width: 220px;
+            opacity: 0.95;
+        }
+
+        @media (max-width: 768px) {
+            .illustration { display: none; }
+        }
+
+        #alertMessage {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="container login-container">
-        <div class="card">
-            <div class="card-header">
-                <div class="logo">🌐 NetFast</div>
-                <p class="mb-0">Layanan Internet Cepat & Terpercaya</p>
-            </div>
-            <div class="card-body p-4">
-                <ul class="nav nav-pills mb-4 justify-content-center" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="pelanggan-tab" data-bs-toggle="pill" 
-                                data-bs-target="#pelanggan" type="button">Pelanggan</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="staf-tab" data-bs-toggle="pill" 
-                                data-bs-target="#staf" type="button">Teknisi/Admin</button>
-                    </li>
-                </ul>
+    <!-- Background shapes -->
+    <div class="shape1 bg-shape"></div>
+    <div class="shape2 bg-shape"></div>
 
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="pelanggan">
-                        <form id="loginPelangganForm">
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="login_id" id="emailPelanggan" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Password</label>
-                                <input type="password" class="form-control" name="password" id="passwordPelanggan" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 mb-3">Login</button>
-                            <div class="text-center">
-                                <a href="{% url 'registrasi_pelanggan' %}">Belum punya akun? Daftar disini</a>
-                            </div>
-                        </form>
-                    </div>
+    <!-- Main Login Box -->
+    <div class="login-box">
+        <h2>NetFast</h2>
+        <div class="tagline">Layanan cepat dan terpercaya</div>
 
-                    <div class="tab-pane fade" id="staf">
-                        <form id="loginStafForm">
-                            <div class="mb-3">
-                                <label class="form-label">Username</label>
-                                <input type="text" class="form-control" name="login_id" id="usernameStaf" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Password</label>
-                                <input type="password" class="form-control" name="password" id="passwordStaf" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Login</button>
-                        </form>
-                    </div>
-                </div>
-                <div id="alertMessage" class="alert d-none mt-3"></div>
-            </div>
+        <!-- Tombol Role -->
+        <div class="role-select">
+            <button type="button" class="role-btn active" id="btnPelanggan">Pelanggan</button>
+            <button type="button" class="role-btn" id="btnTeknisiAdmin">Teknisi/Admin</button>
         </div>
+
+        <div id="alertMessage" class="alert"></div>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <input type="text" class="form-control" placeholder="Username" id="username" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" placeholder="Password" id="password" required>
+            </div>
+
+            <button type="submit" class="btn btn-login w-100 mb-3">LOGIN</button>
+
+            <div class="footer-text">
+                Belum punya akun? <a href="{% url 'registrasi_pelanggan' %}">Buat Akun</a>
+            </div>
+        </form>
     </div>
 
+    <!-- Illustration -->
+    <img src="{% static 'images/login-illustration.png' %}" alt="illustration" class="illustration">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    
-    <script src="{% static 'js/auth.js' %}"></script>
-    
+
     <script>
+        let selectedRole = "Pelanggan";
+
+        // Tombol role toggle
+        document.getElementById('btnPelanggan').addEventListener('click', function() {
+            selectedRole = "Pelanggan";
+            this.classList.add('active');
+            document.getElementById('btnTeknisiAdmin').classList.remove('active');
+        });
+
+        document.getElementById('btnTeknisiAdmin').addEventListener('click', function() {
+            selectedRole = "TeknisiAdmin";
+            this.classList.add('active');
+            document.getElementById('btnPelanggan').classList.remove('active');
+        });
+
+        // Ambil CSRF token
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -115,48 +224,21 @@
             const alertDiv = document.getElementById('alertMessage');
             alertDiv.className = `alert alert-${type}`;
             alertDiv.textContent = message;
-            alertDiv.classList.remove('d-none');
-            setTimeout(() => alertDiv.classList.add('d-none'), 3000);
+            alertDiv.style.display = 'block';
+            setTimeout(() => alertDiv.style.display = 'none', 3000);
         }
 
-        // Event listeners
-        document.getElementById('loginPelangganForm').addEventListener('submit', async (e) => {
+        // Login ke server Django
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            const formData = {
-                email: document.getElementById('emailPelanggan').value,
-                password: document.getElementById('passwordPelanggan').value
-            };
-            
-            try {
-                const response = await fetch('/auth/login/', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken'),
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                const data = await response.json();
-                if (response.ok) {
-                    showAlert('Login berhasil! Mengalihkan...', 'success');
-                    window.location.href = '/user/dashboard/';
-                } else {
-                    showAlert(data.error || 'Login gagal');
-                }
-            } catch (error) {
-                showAlert('Terjadi kesalahan. Silakan coba lagi.');
-            }
-        });
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-        document.getElementById('loginStafForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = {
-                username: document.getElementById('usernameStaf').value,
-                password: document.getElementById('passwordStaf').value
-            };
-            
+            if (!username || !password) {
+                showAlert('Isi semua kolom!', 'warning');
+                return;
+            }
+
             try {
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
@@ -165,22 +247,23 @@
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken'),
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({ username, password, role: selectedRole }),
                 });
-                
+
                 const data = await response.json();
+
                 if (response.ok) {
                     showAlert('Login berhasil! Mengalihkan...', 'success');
-                    if (data.user.role_akses === 'Admin') {
+                    if (selectedRole === 'TeknisiAdmin') {
                         window.location.href = '/admin/dashboard/';
                     } else {
-                        window.location.href = '/teknisi/dashboard/';
+                        window.location.href = '/user/dashboard/';
                     }
                 } else {
-                    showAlert(data.error || 'Login gagal');
+                    showAlert(data.error || 'Username atau password salah.');
                 }
-            } catch (error) {
-                showAlert('Terjadi kesalahan. Silakan coba lagi.');
+            } catch (err) {
+                showAlert('Terjadi kesalahan koneksi ke server.');
             }
         });
     </script>

@@ -11,7 +11,7 @@
 <style>
 /* ===== GLOBAL DASHBOARD STYLE ===== */
 body {
-    background: linear-gradient(135deg, #E0E7FF 0%, #F5E0FF 50%, #FFE3ED 100%);
+    background: linear-gradient(120deg, #b8c6db 0%, #f5f7fa 100%);
     font-family: 'Poppins', sans-serif;
     color: #333;
     min-height: 100vh;
@@ -25,7 +25,7 @@ body {
     left: 0;
     height: 100%;
     width: 90px;
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.5);
     backdrop-filter: blur(18px);
     border-right: 1px solid rgba(255,255,255,0.3);
     display: flex;
@@ -85,6 +85,35 @@ body {
     color: #fff;
 }
 
+/* ===== INFORMASI AKUN ===== */
+.card-account {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card-account:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+.card-account .card-header {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+    font-weight: 600;
+}
+.card-account .btn-outline-light {
+    border-color: #fff;
+    color: #fff;
+    transition: 0.3s;
+}
+.card-account .btn-outline-light:hover {
+    background: #fff;
+    color: #00aaff;
+}
+
 /* ===== CARD HEADER ===== */
 .card-header {
     border-bottom: none;
@@ -136,6 +165,22 @@ h3, h4, h5, h6, p, small {
     font-size: 26px;
     font-weight: 700;
     color: #fff;
+}
+
+/* ===== SPEED TEST BUTTON PUTIH ===== */
+#startSpeedTest {
+    background: #fff;
+    color: #6C63FF;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#startSpeedTest:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    color: #6C63FF;
 }
 
 /* ===== LIST GROUP ===== */
@@ -208,7 +253,7 @@ h3, h4, h5, h6, p, small {
         <div class="row">
             <!-- Info Akun -->
             <div class="col-lg-7">
-                <div class="card card-glass mb-4">
+                <div class="card card-account mb-4">
                     <div class="card-header">
                         <h5><i class="fas fa-user-circle me-2"></i> Informasi Akun</h5>
                     </div>
@@ -217,7 +262,7 @@ h3, h4, h5, h6, p, small {
                         <p><strong>Email:</strong> {{ user.email }}</p>
                         <p><strong>No. Telepon:</strong> {{ user.no_telp }}</p>
                         <p><strong>Alamat Pemasangan:</strong> {{ user.alamat }}</p>
-                        <button class="btn btn-outline-primary btn-sm">Edit Profil</button>
+                        <button class="btn btn-outline-light btn-sm">Edit Profil</button>
                     </div>
                 </div>
 
@@ -244,7 +289,7 @@ h3, h4, h5, h6, p, small {
                                 <small>ms</small>
                             </div>
                         </div>
-                        <button class="btn btn-light text-primary" id="startSpeedTest">Mulai Uji Kecepatan</button>
+                        <button id="startSpeedTest">Mulai Uji Kecepatan</button>
                         <div id="speedTestStatus" class="mt-2 text-white small"></div>
                     </div>
                 </div>

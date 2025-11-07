@@ -5,67 +5,183 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NetFast - Registrasi</title>
+
+    <!-- Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Raleway:ital,wght@1,500&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(120deg, #b8c6db 0%, #f5f7fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Background shapes */
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+        }
+        .shape1 { width: 300px; height: 300px; background: #667eea; top: -80px; left: -60px; }
+        .shape2 { width: 400px; height: 400px; background: #764ba2; bottom: -100px; right: -100px; }
+
+        /* Register box */
+        .register-box {
+            background: #fff;
+            border-radius: 25px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.1);
+            max-width: 650px;
+            width: 100%;
+            padding: 40px 45px;
+            z-index: 10;
+        }
+
+        .register-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        /* Font sama dengan login */
+        .register-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            color: #5c3b8e;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 6px rgba(118,75,162,0.2);
+        }
+
+        .register-header p {
+            font-family: 'Raleway', sans-serif;
+            font-style: italic;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #6c6c6c;
+            margin-bottom: 25px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            border-radius: 30px;
+            padding: 12px 18px;
+            border: 1.5px solid #d1c4e9;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 8px rgba(118,75,162,0.3);
+        }
+
+        .btn-register {
+            border-radius: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            padding: 12px;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        }
+
+        .form-links {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .form-links a {
+            color: #764ba2;
+            text-decoration: none;
+        }
+
+        .form-links a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            text-align: center;
+        }
+
+        @media (max-width: 576px) {
+            .register-box {
+                padding: 25px 25px;
+            }
+        }
+
+        #alertMessage {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <div class="register-container">
+    <!-- Background shapes -->
+    <div class="shape1 bg-shape"></div>
+    <div class="shape2 bg-shape"></div>
+
+    <div class="register-box">
         <div class="register-header">
-            <h1>🌐 NetFast</h1>
+            <h2>NetFast</h2>
             <p>Daftar Akun Pelanggan Baru</p>
         </div>
-        
-        <form class="register-form" id="registerForm">
-            <h2>Registrasi Pelanggan</h2>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="nama_lengkap">Nama Lengkap</label>
-                    <input type="text" id="nama_lengkap" name="nama_lengkap" required>
+
+        <div id="alertMessage" class="alert"></div>
+
+        <form id="registerForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="nama_lengkap" class="form-label">Nama Lengkap</label>
+                    <input type="text" class="form-control" id="nama_lengkap" required>
                 </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required minlength="6">
+                </div>
+                <div class="col-md-6">
+                    <label for="confirm_password" class="form-label">Konfirmasi Password</label>
+                    <input type="password" class="form-control" id="confirm_password" required>
+                </div>
+                <div class="col-12">
+                    <label for="alamat_pemasangan" class="form-label">Alamat Pemasangan</label>
+                    <textarea class="form-control" id="alamat_pemasangan" rows="3" required></textarea>
+                </div>
+                <div class="col-12">
+                    <label for="no_telepon" class="form-label">Nomor Telepon</label>
+                    <input type="tel" class="form-control" id="no_telepon" required>
                 </div>
             </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="6">
-                </div>
-                <div class="form-group">
-                    <label for="confirm_password">Konfirmasi Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
-                </div>
+
+            <button type="submit" class="btn-register mt-4">Daftar Sekarang</button>
+
+            <div class="form-links mt-3">
+                Sudah punya akun? <a href="{% url 'login' %}">Login di sini</a>
             </div>
-            
-            <div class="form-group">
-                <label for="alamat_pemasangan">Alamat Pemasangan</label>
-                <textarea id="alamat_pemasangan" name="alamat_pemasangan" rows="3" required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="no_telepon">Nomor Telepon</label>
-                <input type="tel" id="no_telepon" name="no_telepon" required>
-            </div>
-            
-            <button type="submit" class="btn-primary">Daftar Sekarang</button>
-            
-            <div class="form-links">
-                <a href="{% url 'login' %}">Sudah punya akun? Login disini</a>
-            </div>
-            
-            <div id="alertMessage" class="alert d-none mt-3"></div>
         </form>
-        
-        <div class="register-footer">
-            <p>&copy; 2024 NetFast. Semua hak cipta dilindungi.</p>
-        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/script.js' %}"></script>
+
     <script>
         function getCookie(name) {
             let cookieValue = null;
@@ -86,15 +202,15 @@
             const alertDiv = document.getElementById('alertMessage');
             alertDiv.className = `alert alert-${type}`;
             alertDiv.textContent = message;
-            alertDiv.classList.remove('d-none');
-            setTimeout(() => alertDiv.classList.add('d-none'), 5000);
+            alertDiv.style.display = 'block';
+            setTimeout(() => alertDiv.style.display = 'none', 4000);
         }
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
+            const password = document.getElementById('password').value.trim();
+            const confirmPassword = document.getElementById('confirm_password').value.trim();
             
             if (password !== confirmPassword) {
                 showAlert('Password dan konfirmasi password tidak cocok.');
@@ -126,10 +242,10 @@
                         window.location.href = '/';
                     }, 2000);
                 } else {
-                    showAlert(data.error || 'Registrasi gagal');
+                    showAlert(data.error || 'Registrasi gagal.');
                 }
             } catch (error) {
-                showAlert('Terjadi kesalahan. Silakan coba lagi.');
+                showAlert('Terjadi kesalahan koneksi ke server.');
             }
         });
     </script>
