@@ -19,19 +19,17 @@
             min-height: 100vh;
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(120deg, #b8c6db 0%, #f5f7fa 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
-            overflow: hidden;
+            overflow-y: auto; /* ✅ biar bisa discroll */
         }
 
         /* Background shapes */
         .bg-shape {
-            position: absolute;
+            position: fixed; /* ✅ biar background tetap */
             border-radius: 50%;
             filter: blur(80px);
             opacity: 0.6;
+            z-index: 0;
         }
         .shape1 { width: 300px; height: 300px; background: #667eea; top: -80px; left: -60px; }
         .shape2 { width: 400px; height: 400px; background: #764ba2; bottom: -100px; right: -100px; }
@@ -42,8 +40,10 @@
             border-radius: 25px;
             box-shadow: 0 10px 50px rgba(0,0,0,0.1);
             max-width: 650px;
-            width: 100%;
+            width: 90%;
             padding: 40px 45px;
+            margin: 80px auto; /* ✅ biar ada jarak dari atas bawah */
+            position: relative;
             z-index: 10;
         }
 
@@ -52,7 +52,6 @@
             margin-bottom: 25px;
         }
 
-        /* Font sama dengan login */
         .register-header h2 {
             font-family: 'Orbitron', sans-serif;
             font-weight: 800;
@@ -123,6 +122,7 @@
         @media (max-width: 576px) {
             .register-box {
                 padding: 25px 25px;
+                margin: 40px auto; /* ✅ jarak lebih kecil di HP */
             }
         }
 

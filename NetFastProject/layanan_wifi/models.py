@@ -60,7 +60,7 @@ class PaketLayanan(models.Model):
     deskripsi = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'paket_layanan'
 
     def __str__(self):
@@ -76,7 +76,7 @@ class Pelanggan(models.Model):
     tanggal_daftar = models.DateField(blank=True, null=True, auto_now_add=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'pelanggan'
 
     def set_password(self, raw_password):
@@ -112,14 +112,14 @@ class Teknisi(models.Model):
 
 class Langganan(models.Model):
     id_langganan = models.AutoField(primary_key=True)
-    id_pelanggan = models.ForeignKey(Pelanggan, models.DO_NOTHING, db_column='id_pelanggan')
-    id_paket = models.ForeignKey(PaketLayanan, models.DO_NOTHING, db_column='id_paket')
+    id_pelanggan = models.ForeignKey(Pelanggan, models.DO_NOTHING, db_column='id_pelanggan', null=True, blank=True)
+    id_paket = models.ForeignKey(PaketLayanan, models.DO_NOTHING, db_column='id_paket', null=True, blank=True)
     tanggal_mulai = models.DateField()
     tanggal_akhir = models.DateField(blank=True, null=True)
     status_langganan = models.CharField(max_length=11)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'langganan'
 
 class Pembayaran(models.Model):
@@ -173,14 +173,14 @@ class PenempatanPerangkat(models.Model):
 
 class RiwayatTestingWifi(models.Model):
     id_testing = models.AutoField(primary_key=True)
-    id_langganan = models.ForeignKey(Langganan, models.DO_NOTHING, db_column='id_langganan')
+    id_langganan = models.ForeignKey(Langganan, models.DO_NOTHING, db_column='id_langganan', null=True, blank=True)
     waktu_testing = models.DateTimeField(auto_now_add=True)
     download_speed_mbps = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     upload_speed_mbps = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     ping_ms = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'riwayat_testing_wifi'
 
 # Model dari .sql Anda tidak memiliki tabel LaporanTeknisi, Tagihan, atau Notifikasi.

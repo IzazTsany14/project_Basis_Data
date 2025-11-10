@@ -1,140 +1,348 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
-    <title>NetFast - Speed Test</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/dashboard.css">
+    <title>Uji Kecepatan - NetFast</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* ==== GLOBAL ==== */
+        body {
+            background: #f6f7fb;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ==== SIDEBAR ==== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 230px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 15px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+        }
+        .sidebar h4 {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 18px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ==== NAVBAR ==== */
+        .topbar {
+            background: #fff;
+            margin-left: 230px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .topbar h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #444;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+        }
+
+        /* ==== MAIN CONTENT ==== */
+        .main-content {
+            margin-left: 230px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        /* ==== CARD ==== */
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+        .card-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        /* ==== SPEED TEST ==== */
+        .speed-display {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .speed-item {
+            background: rgba(255,255,255,0.2);
+            border-radius: 18px;
+            padding: 15px 25px;
+            margin: 10px;
+            width: 130px;
+            text-align: center;
+        }
+        .speed-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+        #startSpeedTest {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+        }
+        #startSpeedTest:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+
+        /* ==== RESPONSIVE ==== */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+            .topbar, .main-content {
+                margin-left: 70px;
+            }
+            .sidebar a span {
+                display: none;
+            }
+            .sidebar h4 {
+                display: none;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <h2>🌐 NetFast</h2>
-                <p id="user-name">Loading...</p>
-            </div>
-            <ul class="sidebar-menu">
-                <li><a href="dashboard.html">📊 Dashboard</a></li>
-                <li><a href="pemesanan-jasa.html">🛠️ Pemesanan Jasa</a></li>
-                <li><a href="speed-test.html" class="active">⚡ Speed Test</a></li>
-                <li><a href="riwayat-pesanan.html">📋 Riwayat Pesanan</a></li>
-                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
-            </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="content-header">
-                <h1>Speed Test WiFi</h1>
-                <p>Tes kecepatan internet Anda dan simpan hasilnya</p>
-            </header>
-
-            <div class="speed-test-container">
-                <!-- Speed Test Main Card -->
-                <div class="card speed-test-card">
-                    <div class="card-header">
-                        <h3>⚡ Tes Kecepatan Internet</h3>
-                    </div>
-                    <div class="card-body">
-                        <div id="speed-test-interface">
-                            <!-- Test Button -->
-                            <div class="test-button-container">
-                                <button id="start-test-btn" class="btn-speed-test" onclick="startSpeedTest()">
-                                    <span class="btn-icon">▶️</span>
-                                    <span class="btn-text">Mulai Tes</span>
-                                </button>
-                            </div>
-
-                            <!-- Progress Indicator -->
-                            <div id="test-progress" class="test-progress hidden">
-                                <div class="progress-bar">
-                                    <div id="progress-fill" class="progress-fill"></div>
-                                </div>
-                                <p id="progress-text">Memulai tes...</p>
-                            </div>
-
-                            <!-- Results Display -->
-                            <div id="test-results" class="test-results hidden">
-                                <div class="result-grid">
-                                    <div class="result-item">
-                                        <div class="result-icon">⬇️</div>
-                                        <div class="result-label">Download</div>
-                                        <div class="result-value" id="download-speed">0 Mbps</div>
-                                    </div>
-                                    <div class="result-item">
-                                        <div class="result-icon">⬆️</div>
-                                        <div class="result-label">Upload</div>
-                                        <div class="result-value" id="upload-speed">0 Mbps</div>
-                                    </div>
-                                    <div class="result-item">
-                                        <div class="result-icon">📡</div>
-                                        <div class="result-label">Ping</div>
-                                        <div class="result-value" id="ping-value">0 ms</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="result-actions">
-                                    <button id="save-result-btn" class="btn-primary" onclick="saveTestResult()">
-                                        💾 Simpan Hasil
-                                    </button>
-                                    <button class="btn-outline" onclick="resetTest()">
-                                        🔄 Tes Ulang
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Test History Card -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>📊 Riwayat Tes Terakhir</h3>
-                    </div>
-                    <div class="card-body">
-                        <div id="test-history">
-                            <p>Belum ada riwayat tes</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tips Card -->
-                <div class="card info-card">
-                    <div class="card-header">
-                        <h3>💡 Tips untuk Tes Akurat</h3>
-                    </div>
-                    <div class="card-body">
-                        <ul>
-                            <li>Pastikan tidak ada aplikasi lain yang menggunakan internet</li>
-                            <li>Tutup semua tab browser yang tidak perlu</li>
-                            <li>Gunakan koneksi WiFi, bukan data seluler</li>
-                            <li>Lakukan tes di beberapa waktu berbeda untuk hasil yang lebih akurat</li>
-                            <li>Pastikan perangkat dekat dengan router WiFi</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </main>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h4>NetFast</h4>
+        <a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+        <a href="{% url 'speed_test' %}" class="active"><i class="fas fa-bolt"></i> <span>Uji Kecepatan</span></a>
+        <a href="{% url 'packages' %}"><i class="fas fa-box"></i> <span>Paket Aktif</span></a>
+        <a href="{% url 'services_history' %}"><i class="fas fa-history"></i> <span>Riwayat Layanan</span></a>
+        <a href="{% url 'edit_profile' %}"><i class="fas fa-user-cog"></i> <span>Profil</span></a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Keluar</span></a>
     </div>
 
-    <script src="../js/speed-test.js"></script>
-    <script src="../js/user.js"></script>
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <h5>Uji Kecepatan Internet</h5>
+        <div class="user-info">
+            <span>{{ user.nama }}</span>
+            <img src="{% static 'images/profile.jpg' %}" alt="User">
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="row g-4">
+            <!-- Speed Test Card -->
+            <div class="col-lg-8">
+                <div class="card card-gradient">
+                    <div class="card-body">
+                        <h5 class="card-title">Uji Kecepatan Internet</h5>
+                        <p class="text-white-50 mb-3">Lakukan tes kecepatan koneksi secara langsung</p>
+                        <div class="speed-display">
+                            <div class="speed-item">
+                                <small>Download</small>
+                                <div class="speed-value" id="downloadSpeed">-- Mbps</div>
+                            </div>
+                            <div class="speed-item">
+                                <small>Upload</small>
+                                <div class="speed-value" id="uploadSpeed">-- Mbps</div>
+                            </div>
+                            <div class="speed-item">
+                                <small>Ping</small>
+                                <div class="speed-value" id="pingSpeed">-- ms</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button id="startSpeedTest">Mulai Uji Kecepatan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Card -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Riwayat Terakhir</h5>
+                        <div id="testHistory" class="mt-3">
+                            <p class="text-muted">Belum ada riwayat tes</p>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{% url 'speed_history' %}" class="btn btn-outline-primary w-100">Lihat Riwayat Lengkap</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/speed-test.js' %}"></script>
     <script>
-        // Load user info and test history when page loads
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        // Load test history on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadUserName();
             loadTestHistory();
         });
 
-        function logout() {
-            if (confirm('Apakah Anda yakin ingin logout?')) {
-                localStorage.removeItem('userToken');
-                localStorage.removeItem('userId');
-                localStorage.removeItem('userRole');
-                window.location.href = '../index.html';
+        async function loadTestHistory() {
+            try {
+                const response = await fetch('/api/speed-test/', {
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    }
+                });
+                const data = await response.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    const latest = data[0];
+                    document.getElementById('testHistory').innerHTML = `
+                        <div class="mb-2">
+                            <small class="text-muted">${new Date(latest.waktu_testing || latest.created_at).toLocaleString('id-ID')}</small>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Download:</span>
+                            <strong>${latest.download_speed_mbps || latest.download_speed} Mbps</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Upload:</span>
+                            <strong>${latest.upload_speed_mbps || latest.upload_speed} Mbps</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Ping:</span>
+                            <strong>${latest.ping_ms || latest.ping} ms</strong>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading test history:', error);
+            }
+        }
+
+        // Simulasi uji kecepatan
+        document.getElementById("startSpeedTest").addEventListener("click", function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = "Mengukur...";
+            setTimeout(() => {
+                const download = (Math.random() * 50 + 10).toFixed(1);
+                const upload = (Math.random() * 10 + 2).toFixed(1);
+                const ping = Math.floor(Math.random() * 50 + 10);
+
+                document.getElementById("downloadSpeed").textContent = download + " Mbps";
+                document.getElementById("uploadSpeed").textContent = upload + " Mbps";
+                document.getElementById("pingSpeed").textContent = ping + " ms";
+
+                btn.textContent = "Simpan Hasil";
+                btn.onclick = function() {
+                    saveSpeedTest(download, upload, ping);
+                };
+                btn.disabled = false;
+            }, 2500);
+        });
+
+        async function saveSpeedTest(download, upload, ping) {
+            try {
+                const response = await fetch('/api/speed-test/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    },
+                    body: JSON.stringify({
+                        download_speed_mbps: parseFloat(download),
+                        upload_speed_mbps: parseFloat(upload),
+                        ping_ms: parseInt(ping)
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Hasil tes berhasil disimpan!');
+                    loadTestHistory();
+                    document.getElementById("startSpeedTest").textContent = "Mulai Uji Kecepatan";
+                    document.getElementById("startSpeedTest").onclick = null;
+                } else {
+                    alert('Gagal menyimpan hasil tes');
+                }
+            } catch (error) {
+                console.error('Error saving speed test:', error);
+                alert('Terjadi kesalahan saat menyimpan');
             }
         }
     </script>

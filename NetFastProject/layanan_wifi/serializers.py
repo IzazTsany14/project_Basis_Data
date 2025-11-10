@@ -48,9 +48,11 @@ class TeknisiSerializer(serializers.ModelSerializer):
 
 
 class PaketLayananSerializer(serializers.ModelSerializer):
+    harga_bulanan = serializers.DecimalField(source='harga', max_digits=10, decimal_places=2, read_only=True)
+
     class Meta:
         model = PaketLayanan
-        fields = ['id_paket', 'nama_paket', 'kecepatan_mbps', 'harga', 'deskripsi']
+        fields = ['id_paket', 'nama_paket', 'kecepatan_mbps', 'harga', 'harga_bulanan', 'deskripsi']
         read_only_fields = ['id_paket']
 
 

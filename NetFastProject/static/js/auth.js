@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.__NETFAST_CSRF = csrftoken;
 });
 
+// API base: use same origin and root paths so URLs like '/testing/save/' map to Django views
+const API_BASE_URL = '';
+
 // Handle customer login
 async function handleCustomerLogin(event) {
     event.preventDefault();
@@ -269,8 +272,10 @@ async function apiCall(endpoint, options = {}) {
     const token = localStorage.getItem('userToken');
     
     const defaultOptions = {
+        credentials: 'same-origin', // ensure session cookie is sent
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': window.__NETFAST_CSRF || '',
             ...(token && { 'Authorization': `Bearer ${token}` })
         }
     };
@@ -285,7 +290,7 @@ async function apiCall(endpoint, options = {}) {
     };
     
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, mergedOptions);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, mergedOptions);
         
         // Handle unauthorized access
         if (response.status === 401) {

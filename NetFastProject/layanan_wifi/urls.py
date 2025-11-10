@@ -13,6 +13,24 @@ urlpatterns = [
     # Dashboard dan Halaman User
     path('user/dashboard/', views.dashboard_pelanggan_view, name='dashboard'),
     path('user/dashboard/', views.dashboard_pelanggan_view, name='user_index'),
+    
+    # User pages
+    path('user/speed-test/', views.speed_test_view, name='speed_test'),
+    path('user/speed-history/', views.speed_history_view, name='speed_history'),
+    path('user/edit-profile/', views.edit_profile_view, name='edit_profile'),
+    path('user/packages/', views.packages_view, name='packages'),
+    path('user/services-history/', views.services_history_view, name='services_history'),
+    
+    # User API endpoints
+    path('api/user/data/', views.user_dashboard, name='user_data'),
+    path('api/user/profile/', views.profile_api, name='profile_api'),
+    path('api/user/packages/', views.package_api, name='package_api'),
+    path('api/packages/', views.package_api, name='packages_api'),  # Alias for consistency
+    path('api/speed-test/', views.speed_test_api, name='speed_test_api'),
+    path('api/speed-test/history/', views.user_riwayat_testing, name='speed_test_history'),
+    path('api/services/', views.services_list_api, name='services_api'),
+    path('api/services/<int:service_id>/', views.service_detail_api, name='service_detail_api'),
+    path('api/services-history/', views.services_history_api, name='services_history_api'),
     # path('user/index.html', views.dashboard_pelanggan_view, name='user_index'),
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
     path('user/langganan/', views.user_langganan, name='langganan'),

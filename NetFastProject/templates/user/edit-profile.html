@@ -1,0 +1,314 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profil - NetFast</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* ==== GLOBAL ==== */
+        body {
+            background: #f6f7fb;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ==== SIDEBAR ==== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 230px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 15px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+        }
+        .sidebar h4 {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 18px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ==== NAVBAR ==== */
+        .topbar {
+            background: #fff;
+            margin-left: 230px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .topbar h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #444;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+        }
+
+        /* ==== MAIN CONTENT ==== */
+        .main-content {
+            margin-left: 230px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        /* ==== CARD ==== */
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+
+        /* ==== FORM ==== */
+        .form-control {
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .form-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        /* ==== BUTTON ==== */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+
+        /* ==== ALERT ==== */
+        .alert {
+            border-radius: 12px;
+            border: none;
+        }
+
+        /* ==== RESPONSIVE ==== */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+            .topbar, .main-content {
+                margin-left: 70px;
+            }
+            .sidebar a span {
+                display: none;
+            }
+            .sidebar h4 {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h4>NetFast</h4>
+        <a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+        <a href="{% url 'speed_test' %}"><i class="fas fa-bolt"></i> <span>Uji Kecepatan</span></a>
+        <a href="{% url 'packages' %}"><i class="fas fa-box"></i> <span>Paket Aktif</span></a>
+        <a href="{% url 'services_history' %}"><i class="fas fa-history"></i> <span>Riwayat Layanan</span></a>
+        <a href="{% url 'edit_profile' %}" class="active"><i class="fas fa-user-cog"></i> <span>Profil</span></a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Keluar</span></a>
+    </div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <h5>Edit Profil</h5>
+        <div class="user-info">
+            <span>{{ user.nama }}</span>
+            <img src="{% static 'images/profile.jpg' %}" alt="User">
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body p-5">
+                        <h4 class="card-title mb-4 text-center">👤 Edit Profil</h4>
+
+                        <div id="alertMessage" class="alert d-none"></div>
+
+                        <form id="editProfileForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="nama_lengkap" class="form-label">Nama Lengkap</label>
+                                    <input type="text" class="form-control" id="nama_lengkap" value="{{ user.nama }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" value="{{ user.email }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="no_telepon" class="form-label">Nomor Telepon</label>
+                                    <input type="tel" class="form-control" id="no_telepon" value="{{ user.no_telp }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="alamat_pemasangan" class="form-label">Alamat Pemasangan</label>
+                                    <textarea class="form-control" id="alamat_pemasangan" rows="3" required>{{ user.alamat }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        // Load current profile data
+        document.addEventListener('DOMContentLoaded', loadProfileData);
+
+        async function loadProfileData() {
+            try {
+                const response = await fetch('/api/user/profile/');
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('nama_lengkap').value = data.nama_lengkap || '';
+                    document.getElementById('email').value = data.email || '';
+                    document.getElementById('no_telepon').value = data.no_telepon || '';
+                    document.getElementById('alamat_pemasangan').value = data.alamat_pemasangan || '';
+                } else {
+                    showAlert('Gagal memuat data profil', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {
+                nama_lengkap: document.getElementById('nama_lengkap').value,
+                email: document.getElementById('email').value,
+                no_telepon: document.getElementById('no_telepon').value,
+                alamat_pemasangan: document.getElementById('alamat_pemasangan').value
+            };
+
+            try {
+                const response = await fetch('/api/user/profile/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Profil berhasil diperbarui!', 'success');
+                } else {
+                    showAlert(data.error || 'Gagal memperbarui profil', 'danger');
+                }
+            } catch (error) {
+                showAlert('Terjadi kesalahan. Silakan coba lagi.', 'danger');
+            }
+        });
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.classList.remove('d-none');
+            setTimeout(() => alertDiv.classList.add('d-none'), 5000);
+        }
+    </script>
+</body>
+</html>

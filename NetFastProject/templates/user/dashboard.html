@@ -4,346 +4,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Pelanggan - NetFast</title>
+    <title>NetFast Dashboard</title>
+
+    <!-- Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
-<style>
-/* ===== GLOBAL DASHBOARD STYLE ===== */
-body {
-    background: linear-gradient(120deg, #b8c6db 0%, #f5f7fa 100%);
-    font-family: 'Poppins', sans-serif;
-    color: #333;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
+    <style>
+        /* ==== GLOBAL ==== */
+        body {
+            background: #f6f7fb;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-/* ===== SIDEBAR ===== */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 90px;
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(18px);
-    border-right: 1px solid rgba(255,255,255,0.3);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 25px;
-    z-index: 999;
-}
-.sidebar a {
-    color: #6C63FF;
-    font-size: 22px;
-    margin: 25px 0;
-    text-decoration: none;
-    transition: 0.3s;
-}
-.sidebar a:hover, .sidebar a.active {
-    color: #fff;
-    background: linear-gradient(135deg, #6C63FF, #FF66B2);
-    padding: 10px;
-    border-radius: 14px;
-}
+        /* ==== SIDEBAR ==== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 230px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 15px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+        }
+        .sidebar h4 {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 18px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+        }
 
-/* ===== MAIN CONTENT ===== */
-.main-content {
-    margin-left: 120px;
-    padding: 30px;
-}
+        /* ==== NAVBAR ==== */
+        .topbar {
+            background: #fff;
+            margin-left: 230px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .topbar h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #444;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+        }
 
-/* ===== CARD BASE STYLE ===== */
-.card {
-    border: none !important;
-    border-radius: 20px !important;
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-}
+        /* ==== MAIN CONTENT ==== */
+        .main-content {
+            margin-left: 230px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
 
-/* ===== VARIANTS ===== */
-.card-glass {
-    background: rgba(255,255,255,0.35);
-}
-.card-purple {
-    background: linear-gradient(135deg, #6C63FF, #8B78FF);
-    color: #fff;
-}
-.card-pink {
-    background: linear-gradient(135deg, #FF9ACD, #FF6CA9);
-    color: #fff;
-}
-.card-blue {
-    background: linear-gradient(135deg, #89CFF0, #6B9EFF);
-    color: #fff;
-}
+        /* ==== CARD ==== */
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+        .card-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
 
-/* ===== INFORMASI AKUN ===== */
-.card-account {
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    backdrop-filter: blur(10px);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.card-account:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-}
-.card-account .card-header {
-    background: transparent !important;
-    border-bottom: 1px solid rgba(255,255,255,0.25);
-    font-weight: 600;
-}
-.card-account .btn-outline-light {
-    border-color: #fff;
-    color: #fff;
-    transition: 0.3s;
-}
-.card-account .btn-outline-light:hover {
-    background: #fff;
-    color: #00aaff;
-}
+        /* ==== SPEED TEST ==== */
+        .speed-display {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .speed-item {
+            background: rgba(255,255,255,0.2);
+            border-radius: 18px;
+            padding: 15px 25px;
+            margin: 10px;
+            width: 130px;
+            text-align: center;
+        }
+        .speed-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+        #startSpeedTest {
+            background: #fff;
+            color: #667eea;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+        }
+        #startSpeedTest:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
 
-/* ===== CARD HEADER ===== */
-.card-header {
-    border-bottom: none;
-    background: transparent !important;
-    font-weight: 600;
-}
+        /* ==== CHART PLACEHOLDER ==== */
+        .chart-placeholder {
+            background: rgba(255,255,255,0.1);
+            height: 180px;
+            border-radius: 12px;
+            text-align: center;
+            line-height: 180px;
+            color: rgba(255,255,255,0.7);
+        }
 
-/* ===== TEXT ===== */
-h3, h4, h5, h6, p, small {
-    color: inherit;
-}
-.text-muted {
-    color: rgba(255,255,255,0.8) !important;
-}
-
-/* ===== BUTTONS ===== */
-.btn-outline-primary {
-    border-color: #fff !important;
-    color: #fff !important;
-}
-.btn-outline-primary:hover {
-    background: #fff !important;
-    color: #6C63FF !important;
-}
-.btn-primary {
-    background: #fff !important;
-    color: #6C63FF !important;
-    border: none !important;
-}
-.btn-primary:hover {
-    background: #f5f5f5 !important;
-}
-
-/* ===== SPEED TEST DISPLAY ===== */
-.speed-display {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-}
-.speed-item {
-    background: rgba(255,255,255,0.25);
-    border-radius: 18px;
-    padding: 15px 25px;
-    margin: 10px;
-    width: 120px;
-    text-align: center;
-}
-.speed-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: #fff;
-}
-
-/* ===== SPEED TEST BUTTON PUTIH ===== */
-#startSpeedTest {
-    background: #fff;
-    color: #6C63FF;
-    font-weight: 600;
-    border: none;
-    border-radius: 12px;
-    padding: 10px 20px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-#startSpeedTest:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-    color: #6C63FF;
-}
-
-/* ===== LIST GROUP ===== */
-.list-group-item {
-    background: rgba(255,255,255,0.15) !important;
-    border: none !important;
-    color: #fff !important;
-}
-
-/* ===== BADGES ===== */
-.badge {
-    padding: 7px 12px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-}
-.badge.bg-success {
-    background: #A3FFBF !important;
-    color: #333;
-}
-.badge.bg-warning {
-    background: #FFD580 !important;
-    color: #333;
-}
-
-/* ===== HEADER TITLE ===== */
-.welcome-card {
-    background: linear-gradient(135deg, #6C63FF, #A07BFF);
-    color: #fff;
-    border: none;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 992px) {
-    .sidebar {
-        width: 70px;
-    }
-    .main-content {
-        margin-left: 90px;
-    }
-}
-</style>
+        /* ==== RESPONSIVE ==== */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+            .topbar, .main-content {
+                margin-left: 70px;
+            }
+            .sidebar a span {
+                display: none;
+            }
+            .sidebar h4 {
+                display: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h4>NetFast</h4>
+        <a href="{% url 'dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+        <a href="{% url 'speed_test' %}"><i class="fas fa-bolt"></i> <span>Uji Kecepatan</span></a>
+        <a href="{% url 'packages' %}"><i class="fas fa-box"></i> <span>Paket Aktif</span></a>
+        <a href="{% url 'services_history' %}"><i class="fas fa-history"></i> <span>Riwayat Layanan</span></a>
+        <a href="{% url 'edit_profile' %}"><i class="fas fa-user-cog"></i> <span>Profil</span></a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Keluar</span></a>
+    </div>
 
-<!-- Sidebar -->
-<div class="sidebar">
-    <a href="#" class="active"><i class="fas fa-home"></i></a>
-    <a href="#"><i class="fas fa-file-invoice-dollar"></i></a>
-    <a href="#"><i class="fas fa-headset"></i></a>
-    <a href="#" id="logoutButton"><i class="fas fa-sign-out-alt"></i></a>
-</div>
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <h5>Selamat datang di Dashboard NetFast</h5>
+        <div class="user-info">
+            <span>{{ user.nama }}</span>
+            <img src="{% static 'images/profile.jpg' %}" alt="User">
+        </div>
+    </div>
 
-<!-- Main Content -->
-<div class="main-content">
-    <div class="container-fluid">
-
-        <!-- Welcome Card -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card shadow-sm welcome-card text-center">
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="row g-4">
+            <!-- Speed Test Card -->
+            <div class="col-lg-6">
+                <div class="card card-gradient">
                     <div class="card-body">
-                        <h3 class="card-title">Selamat Datang, {{ user.nama_lengkap }}</h3>
-                        <p class="card-text text-light">Kelola layanan internet Anda dengan mudah di sini.</p>
+                        <h5 class="card-title">Uji Kecepatan Internet</h5>
+                        <p class="text-white-50 mb-3">Lakukan tes kecepatan koneksi secara langsung</p>
+                        <div class="speed-display">
+                            <div class="speed-item">
+                                <small>Download</small>
+                                <div class="speed-value" id="downloadSpeed">-- Mbps</div>
+                            </div>
+                            <div class="speed-item">
+                                <small>Upload</small>
+                                <div class="speed-value" id="uploadSpeed">-- Mbps</div>
+                            </div>
+                            <div class="speed-item">
+                                <small>Ping</small>
+                                <div class="speed-value" id="pingSpeed">-- ms</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button id="startSpeedTest">Mulai Uji Kecepatan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paket Aktif -->
+            <div class="col-lg-6">
+                <div class="card card-gradient">
+                    <div class="card-body">
+                        <h5 class="card-title">Paket Internet Aktif</h5>
+                        <p class="text-white-50">Lihat detail paket internet yang sedang aktif</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">Nama Paket: <strong>{{ subscription.paket_name }}</strong></li>
+                            <li class="list-group-item">Kecepatan: <strong>{{ subscription.kecepatan }}</strong></li>
+                            <li class="list-group-item">Masa Aktif: <strong>30 Hari</strong></li>
+                            <li class="list-group-item">Status: <span class="badge bg-success">{{ subscription.status }}</span></li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <!-- Info Akun -->
-            <div class="col-lg-7">
-                <div class="card card-account mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-user-circle me-2"></i> Informasi Akun</h5>
-                    </div>
+        <!-- Riwayat & Analitik -->
+        <div class="row g-4 mt-4">
+            <div class="col-lg-8">
+                <div class="card">
                     <div class="card-body">
-                        <p><strong>Nama:</strong> {{ user.nama }}</p>
-                        <p><strong>Email:</strong> {{ user.email }}</p>
-                        <p><strong>No. Telepon:</strong> {{ user.no_telp }}</p>
-                        <p><strong>Alamat Pemasangan:</strong> {{ user.alamat }}</p>
-                        <button class="btn btn-outline-light btn-sm">Edit Profil</button>
-                    </div>
-                </div>
-
-                <!-- Speed Test -->
-                <div class="card card-blue mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-tachometer-alt me-2"></i> Uji Kecepatan</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="speed-display mb-3">
-                            <div class="speed-item">
-                                <h6>Download</h6>
-                                <div id="downloadSpeed" class="speed-value">0.00</div>
-                                <small>Mbps</small>
-                            </div>
-                            <div class="speed-item">
-                                <h6>Upload</h6>
-                                <div id="uploadSpeed" class="speed-value">0.00</div>
-                                <small>Mbps</small>
-                            </div>
-                            <div class="speed-item">
-                                <h6>Ping</h6>
-                                <div id="pingValue" class="speed-value">0</div>
-                                <small>ms</small>
-                            </div>
+                        <h5 class="card-title">Riwayat Layanan</h5>
+                        <p class="text-muted mb-3">Catatan aktivitas koneksi dan uji kecepatan</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Jenis Jasa</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for service in recent_services %}
+                                    <tr>
+                                        <td>{{ service.tanggal_pemesanan|date:"d M Y" }}</td>
+                                        <td>{{ service.jenis_jasa }}</td>
+                                        <td>{{ service.status_pemesanan }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
-                        <button id="startSpeedTest">Mulai Uji Kecepatan</button>
-                        <div id="speedTestStatus" class="mt-2 text-white small"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Paket & Riwayat -->
-            <div class="col-lg-5">
-                <div class="card card-purple mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-wifi me-2"></i> Paket Aktif</h5>
-                    </div>
-                    <div class="card-body">
-                        <h4>{{ subscription.paket_name }}</h4>
-                        <p>Kecepatan: <strong>{{ subscription.kecepatan }}</strong></p>
-                        <p>Status: <span class="badge bg-{% if subscription.status == 'Aktif' %}success{% else %}warning{% endif %}">{{ subscription.status }}</span></p>
-                        <a href="#" class="btn btn-outline-primary btn-sm">Ganti Paket</a>
-                    </div>
-                </div>
-
-                <div class="card card-pink mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-history me-2"></i> Riwayat Layanan</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            {% if recent_services %}
-                                {% for service in recent_services %}
-                                <li class="list-group-item d-flex justify-content-between">
-                                    <div>
-                                        <span class="fw-bold">{{ service.jenis_jasa }}</span><br>
-                                        <small>{{ service.tanggal_pemesanan|date:"d/m/Y" }}</small>
-                                    </div>
-                                    <span class="badge bg-{% if service.status_pemesanan == 'Selesai' %}success{% else %}warning{% endif %}">
-                                        {{ service.status_pemesanan }}
-                                    </span>
-                                </li>
-                                {% endfor %}
-                            {% else %}
-                                <li class="list-group-item text-center text-light">
-                                    Belum ada riwayat layanan
-                                </li>
-                            {% endif %}
-                        </ul>
-                        <a href="{% url 'user_pemesanan' %}" class="btn btn-light btn-sm mt-2">Lihat Semua Layanan</a>
+            <!-- Akun Info -->
+            <div class="col-lg-4">
+                <div class="card card-gradient">
+                    <div class="card-body text-center">
+                        <h5>Profil Pengguna</h5>
+                        <img src="{% static 'images/profile.jpg' %}" alt="User" class="rounded-circle mt-3 mb-3" width="80">
+                        <p><strong>{{ user.nama }}</strong></p>
+                        <p class="text-white-50">Pelanggan NetFast sejak {{ user.tanggal_bergabung|date:"Y" }}</p>
+                        <a href="{% url 'edit_profile' %}" class="btn btn-light btn-sm mt-2">Edit Profil</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-<script src="{% static 'js/user.js' %}"></script>
-<script src="{% static 'js/speed-test.js' %}"></script>
+    <!-- JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
 
+        // Simulasi uji kecepatan
+        document.getElementById("startSpeedTest").addEventListener("click", function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = "Mengukur...";
+            setTimeout(() => {
+                document.getElementById("downloadSpeed").textContent = "95 Mbps";
+                document.getElementById("uploadSpeed").textContent = "23 Mbps";
+                document.getElementById("pingSpeed").textContent = "21 ms";
+                btn.textContent = "Mulai Uji Kecepatan";
+                btn.disabled = false;
+            }, 2500);
+        });
+    </script>
 </body>
 </html>

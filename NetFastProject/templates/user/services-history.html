@@ -1,0 +1,573 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riwayat Layanan - NetFast</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* ==== GLOBAL ==== */
+        body {
+            background: #f6f7fb;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ==== SIDEBAR ==== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 230px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 25px 15px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
+        }
+        .sidebar h4 {
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 18px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .sidebar a i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* ==== NAVBAR ==== */
+        .topbar {
+            background: #fff;
+            margin-left: 230px;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .topbar h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #444;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid #667eea;
+        }
+
+        /* ==== MAIN CONTENT ==== */
+        .main-content {
+            margin-left: 230px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        /* ==== CARD ==== */
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+        }
+
+        /* ==== SERVICE CARDS ==== */
+        .service-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        }
+        .service-card.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        /* ==== STATUS BADGES ==== */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-selesai {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        .status-menunggu-penugasan {
+            background: linear-gradient(135deg, #ffc107, #fd7e14);
+            color: white;
+        }
+        .status-ditugaskan {
+            background: linear-gradient(135deg, #17a2b8, #6f42c1);
+            color: white;
+        }
+        .status-dikerjakan {
+            background: linear-gradient(135deg, #007bff, #6610f2);
+            color: white;
+        }
+        .status-batal {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+            color: white;
+        }
+
+        /* ==== BUTTONS ==== */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+        .btn-outline-primary {
+            border: 2px solid #667eea;
+            color: #667eea;
+            background: transparent;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-outline-primary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ==== EMPTY STATE ==== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+        }
+        .empty-state i {
+            font-size: 64px;
+            color: #667eea;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+
+        /* ==== MODAL ==== */
+        .modal-content {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .modal-header {
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 20px 20px 0 0;
+        }
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* ==== RESPONSIVE ==== */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+            .topbar, .main-content {
+                margin-left: 70px;
+            }
+            .sidebar a span {
+                display: none;
+            }
+            .sidebar h4 {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h4>NetFast</h4>
+        <a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+        <a href="{% url 'speed_test' %}"><i class="fas fa-bolt"></i> <span>Uji Kecepatan</span></a>
+        <a href="{% url 'packages' %}"><i class="fas fa-box"></i> <span>Paket Aktif</span></a>
+        <a href="{% url 'services_history' %}" class="active"><i class="fas fa-history"></i> <span>Riwayat Layanan</span></a>
+        <a href="{% url 'edit_profile' %}"><i class="fas fa-user-cog"></i> <span>Profil</span></a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Keluar</span></a>
+    </div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <h5>Riwayat Layanan</h5>
+        <div class="user-info">
+            <span>{{ user.nama }}</span>
+            <img src="{% static 'images/profile.jpg' %}" alt="User">
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="fw-bold mb-3">Riwayat Layanan Anda</h4>
+                        <p class="text-muted">Pantau status dan detail semua layanan yang telah Anda pesan</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showNewServiceModal()">
+                        <i class="fas fa-plus me-2"></i> Pesan Layanan Baru
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="alertMessage" class="alert d-none alert-dismissible fade show" role="alert">
+            <span id="alertText"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div id="historyContainer">
+            <!-- Service history will be loaded here dynamically -->
+        </div>
+    </div>
+
+    <!-- Service Details Modal -->
+    <div class="modal fade" id="serviceDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Detail Layanan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="serviceDetailsContent">
+                    <!-- Service details will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Service Request Modal -->
+    <div class="modal fade" id="newServiceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Pesan Layanan Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newServiceForm">
+                        <div class="mb-3">
+                            <label for="jenis_jasa" class="form-label">Jenis Layanan</label>
+                            <select class="form-select" id="jenis_jasa" required>
+                                <option value="">Pilih jenis layanan...</option>
+                                <option value="1">Instalasi Baru</option>
+                                <option value="2">Perbaikan Koneksi</option>
+                                <option value="3">Upgrade Paket</option>
+                                <option value="4">Pindah Lokasi</option>
+                                <option value="5">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tanggal_pemesanan" class="form-label">Tanggal & Waktu</label>
+                            <input type="datetime-local" class="form-control" id="tanggal_pemesanan" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="catatan" class="form-label">Catatan Tambahan</label>
+                            <textarea class="form-control" id="catatan" rows="4" placeholder="Jelaskan detail masalah atau kebutuhan Anda..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Batal
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="submitNewService()">
+                        <i class="fas fa-paper-plane me-2"></i>Kirim Pesanan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const serviceDetailsModal = new bootstrap.Modal(document.getElementById('serviceDetailsModal'));
+        const newServiceModal = new bootstrap.Modal(document.getElementById('newServiceModal'));
+
+        // Load service history when page loads
+        document.addEventListener('DOMContentLoaded', loadServiceHistory);
+
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        async function loadServiceHistory() {
+            try {
+                const response = await fetch('/api/services-history/');
+                const data = await response.json();
+
+                const container = document.getElementById('historyContainer');
+                const services = data.services || [];
+
+                if (!services || services.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h4 class="mt-3">Belum Ada Riwayat Layanan</h4>
+                            <p class="text-muted">Anda belum pernah memesan layanan. Mulai pesan layanan pertama Anda!</p>
+                            <button class="btn btn-primary mt-3" onclick="showNewServiceModal()">
+                                <i class="fas fa-plus me-2"></i>Pesan Layanan Sekarang
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = services.map(service => {
+                    const statusClass = service.status_pemesanan.toLowerCase().replace(/\s+/g, '-');
+                    const tanggal = new Date(service.tanggal_pemesanan).toLocaleDateString('id-ID', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    const waktu = new Date(service.tanggal_pemesanan).toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    return `
+                        <div class="service-card">
+                            <div class="row align-items-center">
+                                <div class="col-lg-3 col-md-4">
+                                    <div class="mb-2">
+                                        <strong class="text-primary">${tanggal}</strong>
+                                    </div>
+                                    <small class="text-muted">${waktu}</small>
+                                </div>
+                                <div class="col-lg-5 col-md-4">
+                                    <h6 class="mb-1">${service.id_jenis_jasa ? service.id_jenis_jasa.nama_jasa : 'Layanan'}</h6>
+                                    <p class="text-muted mb-0 small">${service.catatan ? service.catatan.substring(0, 80) + '...' : 'Tidak ada catatan'}</p>
+                                </div>
+                                <div class="col-lg-2 col-md-2">
+                                    <span class="status-badge status-${statusClass}">${service.status_pemesanan}</span>
+                                </div>
+                                <div class="col-lg-2 col-md-2 text-end">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="showServiceDetails('${service.id_pemesanan}')">
+                                        <i class="fas fa-eye me-1"></i>Detail
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading service history:', error);
+                showAlert('Gagal memuat riwayat layanan. Silakan coba lagi.', 'danger');
+            }
+        }
+
+        async function showServiceDetails(serviceId) {
+            try {
+                const response = await fetch(`/api/services/${serviceId}/`);
+                const service = await response.json();
+
+                const tanggal = new Date(service.tanggal_pemesanan).toLocaleDateString('id-ID', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                const waktu = new Date(service.tanggal_pemesanan).toLocaleTimeString('id-ID');
+
+                document.getElementById('serviceDetailsContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Jenis Layanan</label>
+                                <p class="mb-0">${service.id_jenis_jasa ? service.id_jenis_jasa.nama_jasa : 'Tidak diketahui'}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Status</label>
+                                <p class="mb-0">
+                                    <span class="status-badge status-${service.status_pemesanan.toLowerCase().replace(/\s+/g, '-')}">${service.status_pemesanan}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Tanggal Pemesanan</label>
+                                <p class="mb-0">${tanggal}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Waktu Pemesanan</label>
+                                <p class="mb-0">${waktu}</p>
+                            </div>
+                        </div>
+                        ${service.id_teknisi ? `
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Teknisi</label>
+                                <p class="mb-0">${service.id_teknisi.nama_teknisi}</p>
+                                <small class="text-muted">No. HP: ${service.id_teknisi.no_telepon}</small>
+                            </div>
+                        </div>
+                        ` : ''}
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted">Catatan</label>
+                                <p class="mb-0">${service.catatan || 'Tidak ada catatan'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                serviceDetailsModal.show();
+            } catch (error) {
+                console.error('Error loading service details:', error);
+                showAlert('Gagal memuat detail layanan', 'danger');
+            }
+        }
+
+        function showNewServiceModal() {
+            // Set minimum datetime to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('tanggal_pemesanan').min = now.toISOString().slice(0, 16);
+
+            // Reset form
+            document.getElementById('newServiceForm').reset();
+            newServiceModal.show();
+        }
+
+        async function submitNewService() {
+            const form = document.getElementById('newServiceForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = {
+                id_jenis_jasa: document.getElementById('jenis_jasa').value,
+                tanggal_pemesanan: document.getElementById('tanggal_pemesanan').value,
+                catatan: document.getElementById('catatan').value
+            };
+
+            try {
+                const response = await fetch('/api/user-pemesanan/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Pesanan layanan berhasil dibuat!', 'success');
+                    newServiceModal.hide();
+                    loadServiceHistory(); // Reload the history
+                } else {
+                    showAlert(data.error || 'Gagal membuat pesanan', 'danger');
+                }
+            } catch (error) {
+                console.error('Error submitting service request:', error);
+                showAlert('Terjadi kesalahan. Silakan coba lagi.', 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alertMessage');
+            const alertText = document.getElementById('alertText');
+            alertText.textContent = message;
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.classList.remove('d-none');
+
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                alertDiv.classList.add('d-none');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
