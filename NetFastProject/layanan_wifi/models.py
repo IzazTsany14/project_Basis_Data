@@ -60,7 +60,7 @@ class PaketLayanan(models.Model):
     deskripsi = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'paket_layanan'
 
     def __str__(self):
@@ -76,7 +76,7 @@ class Pelanggan(models.Model):
     tanggal_daftar = models.DateField(blank=True, null=True, auto_now_add=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'pelanggan'
 
     def set_password(self, raw_password):
@@ -84,7 +84,7 @@ class Pelanggan(models.Model):
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.password_hash)
-    
+
     def __str__(self):
         return self.nama_lengkap
 
@@ -119,7 +119,7 @@ class Langganan(models.Model):
     status_langganan = models.CharField(max_length=11)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'langganan'
 
 class Pembayaran(models.Model):
@@ -180,7 +180,7 @@ class RiwayatTestingWifi(models.Model):
     ping_ms = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'riwayat_testing_wifi'
 
 # Model dari .sql Anda tidak memiliki tabel LaporanTeknisi, Tagihan, atau Notifikasi.
