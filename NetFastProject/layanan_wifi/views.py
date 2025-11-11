@@ -1,5 +1,3 @@
-# GANTI SEMUA ISI views.py DENGAN INI:
-
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -40,7 +38,8 @@ def logout(request):
         auth_logout(request)
     except Exception:
         pass
-    return redirect('login')
+    # Return a simple JSON response so frontend can react
+    return Response({'message': 'Logged out'}, status=status.HTTP_200_OK)
     
 def dashboard_redirect_view(request):
     if not request.user.is_authenticated:
@@ -82,6 +81,7 @@ def dashboard_pelanggan_view(request):
         'email': getattr(pelanggan, 'email', ''),
         'no_telp': getattr(pelanggan, 'no_telepon', '') or getattr(pelanggan, 'no_telp', ''),
         'alamat': getattr(pelanggan, 'alamat_pemasangan', '') or getattr(pelanggan, 'alamat', ''),
+        'tanggal_bergabung': getattr(pelanggan, 'tanggal_bergabung', None),
     }
 
     paket = None
@@ -114,7 +114,7 @@ def dashboard_pelanggan_view(request):
     }
     return render(request, 'user/dashboard.html', context)
 
-# --- Admin Views ---
+# --- Admin Views (from HEAD) ---
 @role_required(allowed_roles=['admin'])
 def admin_dashboard_view(request):
     return render(request, 'admin/dashboard.html')
@@ -131,7 +131,7 @@ def admin_manajemen_teknisi_view(request):
 def admin_manajemen_pelanggan_view(request):
     return render(request, 'admin/manajemen-pelanggan.html')
 
-# --- Teknisi Views ---
+# --- Teknisi Views (from HEAD) ---
 @role_required(allowed_roles=['teknisi', 'admin'])
 def teknisi_dashboard_view(request):
     return render(request, 'teknisi/dashboard.html')
@@ -140,6 +140,82 @@ def teknisi_dashboard_view(request):
 def teknisi_detail_tugas_view(request):
     return render(request, 'teknisi/detail-tugas.html')
 
+# --- Pelanggan Views (from ecdb7c0...) ---
+def speed_test_view(request):
+    """Render halaman speed test untuk pelanggan.
+    Template: templates/user/speed-test.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+    return render(request, 'user/speed-test.html')
+
+def edit_profile_view(request):
+    """Render halaman edit profil untuk pelanggan.
+    Template: templates/user/edit-profile.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+    
+    try:
+        pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
+    except Pelanggan.DoesNotExist:
+        return redirect('login')
+    
+    context = {
+        'user': {
+            'nama': pelanggan.nama_lengkap,
+            'email': pelanggan.email,
+            'no_telp': pelanggan.no_telepon,
+            'alamat': pelanggan.alamat_pemasangan
+        }
+    }
+    return render(request, 'user/edit-profile.html', context)
+
+def packages_view(request):
+    """Render halaman paket internet untuk pelanggan.
+    Template: templates/user/packages.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+
+    try:
+        # Ambil paket aktif pelanggan
+        langganan = Langganan.objects.filter(
+            id_pelanggan=pelanggan_id,
+            status_langganan='AKTIF'
+        ).latest('tanggal_mulai')
+        current_package_id = langganan.id_paket.id_paket
+    except Langganan.DoesNotExist:
+        current_package_id = None
+    
+    context = {
+        'currentPackageId': current_package_id
+    }
+    return render(request, 'user/packages.html', context)
+
+def services_history_view(request):
+    """Render halaman riwayat layanan untuk pelanggan.
+    Template: templates/user/services-history.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+    return render(request, 'user/services-history.html')
+
+
+def speed_history_view(request):
+    """Render halaman riwayat uji kecepatan (grafik) untuk pelanggan.
+    Template: templates/user/speed-history.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+    return render(request, 'user/speed-history.html')
+
+# --- Sisa Kode (API Views, dll) ---
 
 @api_view(['POST'])
 @csrf_exempt
@@ -249,13 +325,21 @@ def user_pemesanan(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
-        serializer = PemesananJasaCreateSerializer(data=request.data)
+        # Get pelanggan_id from session
+        pelanggan_id = request.session.get('pelanggan_id')
+        if not pelanggan_id:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        data = request.data.copy()
+        data['id_pelanggan'] = pelanggan_id
+
+        serializer = PemesananJasaCreateSerializer(data=data)
         if serializer.is_valid():
             # Set status awal saat menyimpan
             pemesanan = serializer.save(status_pemesanan='Menunggu Penugasan')
-            
+
             # (Logika Notifikasi dihapus karena tabel Notifikasi tidak ada di .sql)
-            
+
             return Response({
                 'message': 'Pemesanan berhasil dibuat',
                 'pemesanan': PemesananJasaSerializer(pemesanan).data
@@ -472,6 +556,83 @@ def user_langganan(request):
 # Endpoint Notifikasi, Tagihan, dan Laporan dihapus karena tabelnya tidak ada di .sql
 
 
+@api_view(['GET', 'POST'])
+def speed_test_api(request):
+    """
+    GET: Ambil riwayat testing terakhir
+    POST: Simpan hasil speed test baru
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+    # Get active subscription for speed comparison
+    try:
+        langganan = Langganan.objects.filter(
+            id_pelanggan=pelanggan_id,
+            status_langganan='AKTIF'
+        ).select_related('id_paket').latest('tanggal_mulai')
+        paket = langganan.id_paket
+    except Langganan.DoesNotExist:
+        return Response({'error': 'Tidak ada paket aktif'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'GET':
+        # Ambil langganan aktif
+        try:
+            langganan = Langganan.objects.filter(
+                id_pelanggan=pelanggan_id,
+                status_langganan='AKTIF'
+            ).latest('tanggal_mulai')
+        except Langganan.DoesNotExist:
+            return Response({'error': 'Tidak ada langganan aktif'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ambil riwayat testing
+        riwayat = RiwayatTestingWifi.objects.filter(
+            id_langganan=langganan
+        ).order_by('-waktu_testing')[:10]  # 10 tes terakhir
+
+        serializer = RiwayatTestingWifiSerializer(riwayat, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        # Validasi data tes
+        data = request.data
+        if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
+            return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Validate speeds against package speed
+        package_speed = paket.kecepatan_mbps
+        measured_speed = float(data['download_speed_mbps'])
+
+        try:
+            # Ambil langganan aktif
+            langganan = Langganan.objects.filter(
+                id_pelanggan=pelanggan_id,
+                status_langganan='AKTIF'
+            ).latest('tanggal_mulai')
+
+            # Simpan hasil tes
+            test = RiwayatTestingWifi.objects.create(
+                id_langganan=langganan,
+                download_speed_mbps=float(data['download_speed']),
+                upload_speed_mbps=float(data['upload_speed']),
+                ping_ms=int(data['ping']),
+                waktu_testing=datetime.now()
+            )
+
+            serializer = RiwayatTestingWifiSerializer(test)
+            return Response({
+                'message': 'Speed test berhasil disimpan',
+                'test': serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        except Langganan.DoesNotExist:
+            return Response({'error': 'Tidak ada langganan aktif'}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({'error': 'Format data tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(['GET'])
 def user_riwayat_testing(request):
     id_pelanggan = request.GET.get('id_pelanggan')
@@ -486,7 +647,202 @@ def user_riwayat_testing(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@api_view(['GET', 'POST'])
+def profile_api(request):
+    """
+    GET: Ambil data profil user
+    POST: Update data profil user
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
+    except Pelanggan.DoesNotExist:
+        return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
+    except Pelanggan.DoesNotExist:
+        return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = PelangganSerializer(pelanggan)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        data = request.data
+        update_fields = []
+        
+        # Validate required fields
+        required_fields = ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan']
+        for field in required_fields:
+            if not data.get(field):
+                return Response({
+                    'error': f'Field {field} harus diisi'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update customer data
+        if 'nama_lengkap' in data:
+            pelanggan.nama_lengkap = data['nama_lengkap']
+            update_fields.append('nama_lengkap')
+
+        if 'email' in data:
+            if data['email'] != pelanggan.email:
+                # Cek email unik
+                if Pelanggan.objects.filter(email=data['email']).exists():
+                    return Response({'error': 'Email sudah digunakan'}, status=status.HTTP_400_BAD_REQUEST)
+                pelanggan.email = data['email']
+                update_fields.append('email')
+
+        if 'no_telepon' in data:
+            pelanggan.no_telepon = data['no_telepon']
+            update_fields.append('no_telepon')
+
+        if 'alamat_pemasangan' in data:
+            pelanggan.alamat_pemasangan = data['alamat_pemasangan']
+            update_fields.append('alamat_pemasangan')
+
+        if update_fields:
+            try:
+                pelanggan.save(update_fields=update_fields)
+                return Response({
+                    'message': 'Profil berhasil diperbarui',
+                    'user': PelangganSerializer(pelanggan).data
+                }, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response({'error': 'Tidak ada data yang diperbarui'}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['GET'])
+def service_detail_api(request, service_id):
+    """API endpoint to get specific service details"""
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        service = PemesananJasa.objects.get(
+            id_pemesanan=service_id,
+            id_pelanggan=pelanggan_id
+        )
+        serializer = PemesananJasaSerializer(service)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except PemesananJasa.DoesNotExist:
+        return Response({'error': 'Service not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET', 'POST'])
+def package_api(request):
+    """
+    GET: Ambil data paket aktif dan daftar paket tersedia
+    POST: Ganti paket berlangganan
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if request.method == 'GET':
+        # Ambil paket aktif
+        try:
+            langganan = Langganan.objects.filter(
+                id_pelanggan=pelanggan_id,
+                status_langganan='AKTIF'
+            ).latest('tanggal_mulai')
+            current_package = PaketLayananSerializer(langganan.id_paket).data
+        except Langganan.DoesNotExist:
+            current_package = None
+
+        # Ambil semua paket tersedia
+        all_packages = PaketLayanan.objects.all()
+        packages = PaketLayananSerializer(all_packages, many=True).data
+
+        return Response({
+            'current_package': current_package,
+            'available_packages': packages
+        }, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        package_id = request.data.get('package_id')
+        if not package_id:
+            return Response({'error': 'ID paket diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Validasi paket baru
+            new_package = PaketLayanan.objects.get(id_paket=package_id)
+
+            # Nonaktifkan langganan lama jika ada
+            Langganan.objects.filter(
+                id_pelanggan=pelanggan_id,
+                status_langganan='AKTIF'
+            ).update(
+                status_langganan='NONAKTIF',
+                tanggal_akhir=date.today()
+            )
+
+            # Buat langganan baru
+            langganan = Langganan.objects.create(
+                id_pelanggan_id=pelanggan_id,
+                id_paket=new_package,
+                tanggal_mulai=date.today(),
+                status_langganan='AKTIF'
+            )
+
+            return Response({
+                'message': 'Paket berhasil diubah',
+                'subscription': LanggananSerializer(langganan).data
+            }, status=status.HTTP_201_CREATED)
+
+        except PaketLayanan.DoesNotExist:
+            return Response({'error': 'Paket tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def services_list_api(request):
+    """API endpoint to get user's service history"""
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        services = PemesananJasa.objects.filter(
+            id_pelanggan=pelanggan_id
+        ).order_by('-tanggal_pemesanan')
+        
+        serializer = PemesananJasaSerializer(services, many=True)
+        return Response({
+            'services': serializer.data
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def services_history_api(request):
+    """API endpoint for user's service history"""
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+    try:
+        # Get all services with related data
+        services = PemesananJasa.objects.filter(
+            id_pelanggan=pelanggan_id
+        ).select_related(
+            'id_jenis_jasa',
+            'id_teknisi'
+        ).order_by('-tanggal_pemesanan')
+        
+        serializer = PemesananJasaSerializer(services, many=True)
+        return Response({
+            'services': serializer.data
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 def admin_dashboard_stats(request):
     total_pelanggan = Pelanggan.objects.count() # .sql tidak punya status_aktif
     total_teknisi = Teknisi.objects.count()

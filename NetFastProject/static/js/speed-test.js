@@ -12,9 +12,9 @@ async function startSpeedTest() {
     const resultsDiv = document.getElementById('test-results');
     
     // Hide results and show progress
-    resultsDiv.classList.add('hidden');
-    progressDiv.classList.remove('hidden');
-    startBtn.disabled = true;
+    if (resultsDiv) resultsDiv.classList.add('hidden');
+    if (progressDiv) progressDiv.classList.remove('hidden');
+    if (startBtn) startBtn.disabled = true;
     
     try {
         // Simulate download test
@@ -95,21 +95,31 @@ function showTestResults() {
     const resultsDiv = document.getElementById('test-results');
     
     // Animate the results display
-    document.getElementById('download-speed').textContent = `${testResults.download} Mbps`;
-    document.getElementById('upload-speed').textContent = `${testResults.upload} Mbps`;
-    document.getElementById('ping-value').textContent = `${testResults.ping} ms`;
+    // Update both dash-style ids and CamelCase IDs used on dashboard
+    const map = [
+        ['download-speed', 'downloadSpeed', `${testResults.download} Mbps`],
+        ['upload-speed', 'uploadSpeed', `${testResults.upload} Mbps`],
+        ['ping-value', 'pingValue', `${testResults.ping} ms`]
+    ];
+    map.forEach(([id1, id2, value]) => {
+        const el1 = document.getElementById(id1);
+        const el2 = document.getElementById(id2);
+        if (el1) el1.textContent = value;
+        if (el2) el2.textContent = value;
+    });
     
     resultsDiv.classList.remove('hidden');
     
     // Animate numbers counting up
-    animateNumber('download-speed', 0, testResults.download, 'Mbps', 1500);
-    animateNumber('upload-speed', 0, testResults.upload, 'Mbps', 1500);
-    animateNumber('ping-value', 0, testResults.ping, 'ms', 1500);
+    animateNumber('download-speed', 'downloadSpeed', 0, testResults.download, 'Mbps', 1500);
+    animateNumber('upload-speed', 'uploadSpeed', 0, testResults.upload, 'Mbps', 1500);
+    animateNumber('ping-value', 'pingValue', 0, testResults.ping, 'ms', 1500);
 }
 
 // Animate number counting
-function animateNumber(elementId, start, end, unit, duration) {
-    const element = document.getElementById(elementId);
+function animateNumber(elementIdPrimary, elementIdSecondary, start, end, unit, duration) {
+    const elementPrimary = document.getElementById(elementIdPrimary);
+    const elementSecondary = document.getElementById(elementIdSecondary);
     const startTime = performance.now();
     
     function updateNumber(currentTime) {
@@ -119,13 +129,16 @@ function animateNumber(elementId, start, end, unit, duration) {
         // Easing function for smooth animation
         const easeOut = 1 - Math.pow(1 - progress, 3);
         const current = start + (end - start) * easeOut;
+        const text = `${current.toFixed(1)} ${unit}`;
         
-        element.textContent = `${current.toFixed(1)} ${unit}`;
+        if (elementPrimary) elementPrimary.textContent = text;
+        if (elementSecondary) elementSecondary.textContent = text;
         
         if (progress < 1) {
             requestAnimationFrame(updateNumber);
         } else {
-            element.textContent = `${end} ${unit}`;
+            if (elementPrimary) elementPrimary.textContent = `${end} ${unit}`;
+            if (elementSecondary) elementSecondary.textContent = `${end} ${unit}`;
         }
     }
     
@@ -145,40 +158,68 @@ async function saveTestResult() {
         NetFastAuth.showLoading(saveBtn);
         
         const testData = {
-            id_pelanggan: localStorage.getItem('userId'),
-            kecepatan_download: testResults.download,
-            kecepatan_upload: testResults.upload,
-            ping: testResults.ping,
-            tanggal_testing: testResults.timestamp,
-            lokasi_testing: 'Web Dashboard' // Could be enhanced to get actual location
+            // API expects keys: download_speed_mbps, upload_speed_mbps, ping_ms
+            download_speed_mbps: testResults.download,
+            upload_speed_mbps: testResults.upload,
+            ping_ms: testResults.ping,
+            // Include pelanggan ID from session
+            id_pelanggan: window.pelangganId
         };
-        
-        const response = await NetFastAuth.apiCall('/speed-test/', {
+
+        // Call backend endpoint with CSRF token
+        const response = await fetch('/api/speed-test/', {
             method: 'POST',
-            body: JSON.stringify(testData)
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': NetFastAuth.getCookie('csrftoken')
+            },
+            body: JSON.stringify(testData),
+            credentials: 'include'
         });
         
-        if (response && response.ok) {
-            NetFastAuth.showAlert('Hasil tes berhasil disimpan!', 'success');
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Show success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.textContent = 'Hasil tes berhasil disimpan!';
+            document.querySelector('.speed-card').prepend(alert);
             
             // Refresh test history
-            setTimeout(() => {
-                loadTestHistory();
-            }, 1000);
+            loadTestHistory();
             
             // Disable save button
             saveBtn.disabled = true;
             saveBtn.textContent = '✓ Tersimpan';
+            
+            // Remove alert after 3 seconds
+            setTimeout(() => alert.remove(), 3000);
+            // Jika berada di halaman uji kecepatan, arahkan ke halaman riwayat
+            try {
+                const path = window.location.pathname || '';
+                if (path.startsWith('/user/speed-test') || path.startsWith('/user/speed-test/')) {
+                    setTimeout(() => { window.location.href = '/user/speed-history/'; }, 800);
+                }
+            } catch(e) { /* ignore */ }
         } else {
-            const error = await response.json();
-            NetFastAuth.showAlert(error.message || 'Gagal menyimpan hasil tes', 'error');
+            // Show error message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger';
+            alert.textContent = data.error || 'Gagal menyimpan hasil tes';
+            document.querySelector('.speed-card').prepend(alert);
+            
+            // Remove alert after 3 seconds
+            setTimeout(() => alert.remove(), 3000);
         }
     } catch (error) {
         console.error('Error saving test result:', error);
         NetFastAuth.showAlert('Terjadi kesalahan saat menyimpan hasil', 'error');
+        return false;
     } finally {
         NetFastAuth.hideLoading(saveBtn);
     }
+    return true;
 }
 
 // Reset test interface
@@ -201,25 +242,30 @@ function resetTest() {
 // Load test history
 async function loadTestHistory() {
     try {
-        const response = await NetFastAuth.apiCall('/user/speed-test-history/');
-        const historyContainer = document.getElementById('test-history');
-        
-        if (response && response.ok) {
+        // Call backend endpoint '/api/speed-test/' which returns recent tests for the session user
+        const response = await fetch('/api/speed-test/', {
+            headers: {
+                'X-CSRFToken': NetFastAuth.getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        const historyContainer = document.getElementById('test-history');        if (response && response.ok) {
             const data = await response.json();
             
-            if (data.tests && data.tests.length > 0) {
-                // Show last 5 tests
-                const recentTests = data.tests.slice(0, 5);
-                
+            // layanan_wifi.user_riwayat_testing returns list of RiwayatTestingWifiSerializer
+            // which contains fields like download_speed_mbps, upload_speed_mbps, ping_ms, waktu_testing
+                const recentTests = Array.isArray(data) ? data.slice(0,5) : (data.tests || []).slice(0,5);
+            if (recentTests && recentTests.length > 0) {
                 historyContainer.innerHTML = `
                     <div class="history-list">
                         ${recentTests.map(test => `
                             <div class="history-item">
-                                <div class="history-date">${formatDate(test.tanggal_testing)}</div>
+                                <div class="history-date">${formatDate(test.waktu_testing || test.tanggal_testing || test.waktu_testing)}</div>
                                 <div class="history-speeds">
-                                    <span>⬇️ ${test.kecepatan_download} Mbps</span>
-                                    <span>⬆️ ${test.kecepatan_upload} Mbps</span>
-                                    <span>📡 ${test.ping} ms</span>
+                                    <span>⬇️ ${test.download_speed_mbps || test.download_speed} Mbps</span>
+                                    <span>⬆️ ${test.upload_speed_mbps || test.upload_speed} Mbps</span>
+                                    <span>📡 ${test.ping_ms || test.ping} ms</span>
                                 </div>
                             </div>
                         `).join('')}
