@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Tugas - NetFast</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="../../static/css/dashboard.css">
+</head>
+<body>
+    <header>
+        <h1>Detail Tugas Teknisi</h1>
+        <nav>
+            <a href="./dashboard.html">Kembali ke Dashboard</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Detail Tugas</h2>
+        <section id="detail-pelanggan">
+            <h3>Informasi Pelanggan</h3>
+            <p><strong>Nama:</strong> <span id="detail-nama-pelanggan"></span></p>
+            <p><strong>Alamat Pemasangan:</strong> <span id="detail-alamat-pelanggan"></span></p>
+            <p><strong>Jenis Jasa:</strong> <span id="detail-jenis-jasa"></span></p>
+        </section>
+
+        <section id="update-status">
+            <h3>Update Status Pengerjaan</h3>
+            <form id="form-update-status">
+                <input type="hidden" id="id-pesanan" name="id_pesanan">
+                <select id="status-pemesanan" name="status_pemesanan">
+                    <option value="Mulai Dikerjakan">Mulai Dikerjakan</option>
+                    <option value="Selesai">Selesai</option>
+                    <option value="Bermasalah">Bermasalah</option>
+                </select>
+                <button type="submit">Update Status</button>
+            </form>
+        </section>
+
+        <section id="pencatatan-perangkat">
+            <h3>Pencatatan Perangkat Terpasang</h3>
+            <form id="form-catat-perangkat">
+                <input type="hidden" id="id-langganan-perangkat" name="id_langganan">
+                <div>
+                    <label for="serial-number">Serial Number Perangkat</label>
+                    <input type="text" id="serial-number" name="serial_number" required>
+                </div>
+                <div>
+                    <label for="id-perangkat">Jenis Perangkat</label>
+                    <select id="id-perangkat" name="id_perangkat" required>
+                        <!-- Opsi akan diisi oleh JS dari API -->
+                    </select>
+                </div>
+                <button type="submit">Simpan Perangkat</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 NetFast</p>
+    </footer>
+    <script src="../../static/js/teknisi.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Pelanggan - NetFast</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="../../static/css/dashboard.css">
+</head>
+<body>
+    <header>
+        <h1>Manajemen Pelanggan</h1>
+        <nav>
+            <a href="./dashboard.html">Dashboard</a>
+            <a href="./manajemen-pesanan.html">Manajemen Pesanan</a>
+            <a href="./manajemen-teknisi.html">Manajemen Teknisi</a>
+            <a href="#">Manajemen Pelanggan</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Daftar Pelanggan & Langganan</h2>
+        <section id="form-pelanggan">
+            <h3>Tambah/Edit Pelanggan</h3>
+            <form id="form-manajemen-pelanggan">
+                <input type="hidden" id="id-pelanggan" name="id_pelanggan">
+                <div>
+                    <label for="nama-pelanggan">Nama Lengkap</label>
+                    <input type="text" id="nama-pelanggan" name="nama" required>
+                </div>
+                <div>
+                    <label for="alamat-pelanggan">Alamat</label>
+                    <input type="text" id="alamat-pelanggan" name="alamat" required>
+                </div>
+                <div>
+                    <label for="telepon-pelanggan">Telepon</label>
+                    <input type="text" id="telepon-pelanggan" name="telepon" required>
+                </div>
+                <div>
+                    <label for="email-pelanggan">Email</label>
+                    <input type="email" id="email-pelanggan" name="email" required>
+                </div>
+                <button type="submit">Simpan Pelanggan</button>
+            </form>
+        </section>
+        <section id="list-pelanggan">
+            <h3>Data Pelanggan</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>Alamat</th>
+                        <th>Telepon</th>
+                        <th>Email</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="pelanggan-table-body">
+                    <!-- Data diisi oleh JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 NetFast</p>
+    </footer>
+    <script src="../../static/js/admin.js"></script>
+</body>
+</html>

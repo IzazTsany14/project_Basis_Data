@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Pesanan - NetFast</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="../../static/css/dashboard.css">
+</head>
+<body>
+    <header>
+        <h1>Manajemen Pesanan</h1>
+        <nav>
+            <a href="./dashboard.html">Dashboard</a>
+            <a href="#">Manajemen Pesanan</a>
+            <a href="./manajemen-teknisi.html">Manajemen Teknisi</a>
+            <a href="./manajemen-pelanggan.html">Manajemen Pelanggan</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Penugasan Teknisi</h2>
+        <section id="pesanan-baru">
+            <h3>Pesanan Baru (Menunggu Penugasan)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Pesanan</th>
+                        <th>Pelanggan</th>
+                        <th>Alamat</th>
+                        <th>Jenis Jasa</th>
+                        <th>Pilih Teknisi</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="pesanan-baru-list">
+                    <!-- Data diisi oleh JS -->
+                </tbody>
+            </table>
+        </section>
+        <section id="pesanan-dikerjakan">
+            <h3>Pesanan Dalam Pengerjaan</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Pesanan</th>
+                        <th>Pelanggan</th>
+                        <th>Teknisi Bertugas</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="pesanan-dikerjakan-list">
+                    <!-- Data diisi oleh JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 NetFast</p>
+    </footer>
+    <script src="../../static/js/admin.js"></script>
+</body>
+</html>

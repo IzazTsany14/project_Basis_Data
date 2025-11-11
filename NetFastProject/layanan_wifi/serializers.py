@@ -69,13 +69,14 @@ class LanggananSerializer(serializers.ModelSerializer):
 
 class PemesananJasaSerializer(serializers.ModelSerializer):
     nama_pelanggan = serializers.CharField(source='id_pelanggan.nama_lengkap', read_only=True)
+    alamat_pemasangan = serializers.CharField(source='id_pelanggan.alamat_pemasangan', read_only=True) # Added this line
     nama_teknisi = serializers.CharField(source='id_teknisi.nama_teknisi', read_only=True, allow_null=True)
     nama_jasa = serializers.CharField(source='id_jenis_jasa.nama_jasa', read_only=True)
 
     class Meta:
         model = PemesananJasa
         fields = ['id_pemesanan', 'id_pelanggan', 'id_teknisi', 'id_jenis_jasa',
-                  'nama_pelanggan', 'nama_teknisi', 'nama_jasa',
+                  'nama_pelanggan', 'alamat_pemasangan', 'nama_teknisi', 'nama_jasa', # Added alamat_pemasangan here
                   'tanggal_pemesanan', 'tanggal_jadwal', 'status_pemesanan', 'catatan']
         read_only_fields = ['id_pemesanan', 'tanggal_pemesanan']
 

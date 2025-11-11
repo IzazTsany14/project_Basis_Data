@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\HP\project_Basis_Data\.venv
+set VIRTUAL_ENV=C:\Users\IDEAPAD SLIM 5\Music\project_Basis_Data\.venv
 
 if not defined PROMPT set PROMPT=$P$G
 

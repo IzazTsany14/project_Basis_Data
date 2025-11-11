@@ -26,22 +26,38 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from .decorators import role_required
 
 def login_page(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect('dashboard') # Redirect to the generic dashboard dispatcher
     return render(request, 'index.html')
 
 def logout(request):
     # Clear custom session flags and Django auth
-    request.session.pop('pelanggan_id', None)
-    request.session.pop('teknisi_id', None)
-    request.session.pop('user_role', None)
+    request.session.flush() # More thorough than popping individual keys
     try:
         auth_logout(request)
     except Exception:
         pass
+    return redirect('login')
     
+def dashboard_redirect_view(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    user_role = request.session.get('user_role')
+
+    if user_role == 'admin':
+        return redirect('admin_dashboard')
+    elif user_role == 'teknisi':
+        return redirect('teknisi_dashboard')
+    elif user_role == 'pelanggan':
+        return redirect('user_dashboard') # Assuming 'user_dashboard' is the name for pelanggan dashboard
+    else:
+        # Fallback if role is not recognized or not set
+        return redirect('login')
+
 def dashboard_pelanggan_view(request):
     print("Dashboard view called")
     """Session-aware dashboard view for pelanggan.
@@ -97,6 +113,33 @@ def dashboard_pelanggan_view(request):
         'recent_services': recent_services,
     }
     return render(request, 'user/dashboard.html', context)
+
+# --- Admin Views ---
+@role_required(allowed_roles=['admin'])
+def admin_dashboard_view(request):
+    return render(request, 'admin/dashboard.html')
+
+@role_required(allowed_roles=['admin'])
+def admin_manajemen_pesanan_view(request):
+    return render(request, 'admin/manajemen-pesanan.html')
+
+@role_required(allowed_roles=['admin'])
+def admin_manajemen_teknisi_view(request):
+    return render(request, 'admin/manajemen-teknisi.html')
+
+@role_required(allowed_roles=['admin'])
+def admin_manajemen_pelanggan_view(request):
+    return render(request, 'admin/manajemen-pelanggan.html')
+
+# --- Teknisi Views ---
+@role_required(allowed_roles=['teknisi', 'admin'])
+def teknisi_dashboard_view(request):
+    return render(request, 'teknisi/dashboard.html')
+
+@role_required(allowed_roles=['teknisi', 'admin'])
+def teknisi_detail_tugas_view(request):
+    return render(request, 'teknisi/detail-tugas.html')
+
 
 @api_view(['POST'])
 @csrf_exempt
@@ -155,7 +198,7 @@ def login(request):
         teknisi = Teknisi.objects.get(username=login_id)
         if teknisi.check_password(password):
             request.session['teknisi_id'] = teknisi.id_teknisi
-            request.session['user_role'] = teknisi.role_akses or 'teknisi'
+            request.session['user_role'] = (teknisi.role_akses or 'teknisi').lower()
             return Response({'message': 'Login berhasil', 'user': {'role': teknisi.role_akses, 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=status.HTTP_200_OK)
 
         # Teknisi legacy fallbacks
@@ -168,7 +211,7 @@ def login(request):
                 except Exception:
                     pass
                 request.session['teknisi_id'] = teknisi.id_teknisi
-                request.session['user_role'] = teknisi.role_akses or 'teknisi'
+                request.session['user_role'] = (teknisi.role_akses or 'teknisi').lower()
                 return Response({'message': 'Login berhasil (legacy)', 'user': {'role': teknisi.role_akses, 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=status.HTTP_200_OK)
     except Teknisi.DoesNotExist:
         pass
@@ -268,9 +311,9 @@ def user_dashboard(request):
 
 @api_view(['GET'])
 def teknisi_tugas(request):
-    id_teknisi = request.GET.get('id_teknisi')
+    id_teknisi = request.session.get('teknisi_id') # Changed from request.GET
     if not id_teknisi:
-        return Response({'error': 'id_teknisi diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Sesi teknisi tidak ditemukan atau tidak valid'}, status=status.HTTP_401_UNAUTHORIZED)
 
     tugas = PemesananJasa.objects.filter(
         id_teknisi=id_teknisi

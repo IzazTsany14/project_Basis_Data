@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Teknisi - NetFast</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <link rel="stylesheet" href="../../static/css/dashboard.css">
+</head>
+<body>
+    <header>
+        <h1>Manajemen Teknisi</h1>
+        <nav>
+            <a href="./dashboard.html">Dashboard</a>
+            <a href="./manajemen-pesanan.html">Manajemen Pesanan</a>
+            <a href="#">Manajemen Teknisi</a>
+            <a href="./manajemen-pelanggan.html">Manajemen Pelanggan</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <h2>Data Teknisi</h2>
+        <section id="form-teknisi">
+            <h3>Tambah/Edit Teknisi</h3>
+            <form id="form-manajemen-teknisi">
+                <input type="hidden" id="id-teknisi" name="id_teknisi">
+                <div>
+                    <label for="nama-teknisi">Nama Lengkap</label>
+                    <input type="text" id="nama-teknisi" name="nama" required>
+                </div>
+                <div>
+                    <label for="username-teknisi">Username</label>
+                    <input type="text" id="username-teknisi" name="username" required>
+                </div>
+                <div>
+                    <label for="password-teknisi">Password</label>
+                    <input type="password" id="password-teknisi" name="password">
+                    <small>Kosongkan jika tidak ingin mengubah password.</small>
+                </div>
+                <div>
+                    <label for="area-layanan-teknisi">Area Layanan</label>
+                    <select id="area-layanan-teknisi" name="id_area_layanan" required>
+                        <!-- Opsi diisi oleh JS -->
+                    </select>
+                </div>
+                <button type="submit">Simpan Teknisi</button>
+            </form>
+        </section>
+        <section id="list-teknisi">
+            <h3>Daftar Teknisi Terdaftar</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama</th>
+                        <th>Username</th>
+                        <th>Area Layanan</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="teknisi-table-body">
+                    <!-- Data diisi oleh JS -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 NetFast</p>
+    </footer>
+    <script src="../../static/js/admin.js"></script>
+</body>
+</html>

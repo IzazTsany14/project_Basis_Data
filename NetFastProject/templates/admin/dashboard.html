@@ -1,0 +1,636 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - NetFast</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Sidebar */
+        .sidebar {
+            width: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(139, 92, 246, 0.1);
+            padding: 1rem 0;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            box-shadow: 4px 0 24px rgba(139, 92, 246, 0.1);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sidebar-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .sidebar-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .sidebar-icon.active::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            width: 4px;
+            height: 30px;
+            background: #8b5cf6;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .icon-home {
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+        }
+
+        .icon-package {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+        }
+
+        .icon-speed {
+            background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
+        }
+
+        .icon-history {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        }
+
+        .icon-settings {
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+        }
+
+        .icon-share {
+            background: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+        }
+
+        /* Mobile Toggle */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1001;
+            background: white;
+            color: #8b5cf6;
+            padding: 0.8rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 80px;
+            padding: 2rem;
+        }
+
+        /* Welcome Header */
+        .welcome-header {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            padding: 2rem 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+            text-align: center;
+        }
+
+        .welcome-header h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-header p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Card Styles */
+        .info-card {
+            background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.3);
+            color: white;
+        }
+
+        .package-card {
+            background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+
+        .history-card {
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(236, 72, 153, 0.3);
+            color: white;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .card-header .icon {
+            font-size: 1.3rem;
+        }
+
+        .card-content p {
+            margin: 0.8rem 0;
+            font-size: 0.95rem;
+            opacity: 0.95;
+        }
+
+        .card-content strong {
+            font-weight: 600;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .badge-inactive {
+            background: rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* Speed Test Card */
+        .speed-card {
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .speed-metrics {
+            display: flex;
+            justify-content: space-around;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .metric {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1.5rem;
+            border-radius: 15px;
+            flex: 1;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-unit {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Statistics Section */
+        #statistik-global {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #8b5cf6, #ec4899);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.2);
+        }
+
+        .stat-card h3 {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card p {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: countUp 1s ease-out;
+        }
+
+        .stat-icon {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 4rem;
+            opacity: 0.1;
+        }
+
+        .loading {
+            text-align: center;
+            color: #8b5cf6;
+            font-size: 1.2rem;
+            padding: 3rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+        }
+
+        .spinner {
+            border: 4px solid rgba(139, 92, 246, 0.2);
+            border-radius: 50%;
+            border-top: 4px solid #8b5cf6;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+            margin-top: 3rem;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .speed-card {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 80px;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .mobile-toggle {
+                display: block;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 5rem 1rem 1rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #statistik-global {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome-header h1 {
+                font-size: 1.5rem;
+            }
+
+            .speed-metrics {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Mobile Toggle Button -->
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+        <!-- Icon Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-icon icon-home active" title="Dashboard">🏠</div>
+            <div class="sidebar-icon icon-package" title="Paket">📦</div>
+            <div class="sidebar-icon icon-speed" title="Speed Test">⚡</div>
+            <div class="sidebar-icon icon-history" title="Riwayat">🕒</div>
+            <div class="sidebar-icon icon-settings" title="Pengaturan">⚙️</div>
+            <div class="sidebar-icon icon-share" title="Berbagi">🔗</div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Welcome Header -->
+            <div class="welcome-header">
+                <h1>Selamat Datang, Admin!</h1>
+                <p>Kelola layanan internet Anda dengan mudah di sini.</p>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Info Card -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <span class="icon">👤</span>
+                        <span>Informasi Admin</span>
+                    </div>
+                    <div class="card-content">
+                        <p><strong>Nama:</strong> Administrator</p>
+                        <p><strong>Email:</strong> admin@netfast.com</p>
+                        <p><strong>No. Telepon:</strong> 085678952431</p>
+                        <p><strong>Role:</strong> Super Admin</p>
+                        <button class="btn">Edit Profil</button>
+                    </div>
+                </div>
+
+                <!-- Package Card -->
+                <div class="package-card">
+                    <div class="card-header">
+                        <span class="icon">📡</span>
+                        <span>Status Sistem</span>
+                    </div>
+                    <div class="card-content">
+                        <p><strong>Server:</strong> Online</p>
+                        <p><strong>Uptime:</strong> 99.8%</p>
+                        <div class="badge badge-inactive">Semua Sistem Aktif</div>
+                        <button class="btn">Monitor Sistem</button>
+                    </div>
+                </div>
+
+                <!-- History Card -->
+                <div class="history-card">
+                    <div class="card-header">
+                        <span class="icon">📋</span>
+                        <span>Aktivitas Terkini</span>
+                    </div>
+                    <div class="card-content">
+                        <p>Belum ada aktivitas terbaru</p>
+                        <button class="btn">Lihat Semua Aktivitas</button>
+                    </div>
+                </div>
+
+                <!-- Speed Test Card -->
+                <div class="speed-card">
+                    <div class="card-header">
+                        <span class="icon">⚡</span>
+                        <span>Monitor Performa Jaringan</span>
+                    </div>
+                    <div class="speed-metrics">
+                        <div class="metric">
+                            <div class="metric-label">Download</div>
+                            <div class="metric-value">0.00</div>
+                            <div class="metric-unit">Mbps</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Upload</div>
+                            <div class="metric-value">0.00</div>
+                            <div class="metric-unit">Mbps</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">Ping</div>
+                            <div class="metric-value">0</div>
+                            <div class="metric-unit">ms</div>
+                        </div>
+                    </div>
+                    <button class="btn">Mulai Test Kecepatan</button>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <h2 style="color: #374151; margin: 2rem 0 1rem; font-size: 1.5rem;">Ringkasan Statistik</h2>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Memuat data...</p>
+            </div>
+
+            <section id="statistik-global" style="display: none;">
+                <div class="stat-card">
+                    <h3>Pelanggan Aktif</h3>
+                    <p id="stat-pelanggan-aktif">0</p>
+                    <span class="stat-icon">👥</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Pesanan Baru</h3>
+                    <p id="stat-pesanan-baru">0</p>
+                    <span class="stat-icon">📦</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Teknisi Tersedia</h3>
+                    <p id="stat-teknisi-tersedia">0</p>
+                    <span class="stat-icon">🔧</span>
+                </div>
+            </section>
+
+            <footer>
+                <p>&copy; 2025 NetFast - Layanan Internet Cepat & Terpercaya</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // Toggle sidebar untuk mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('active');
+        }
+
+        // Close sidebar saat klik di luar (mobile)
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-toggle');
+            
+            if (window.innerWidth <= 768 && 
+                !sidebar.contains(event.target) && 
+                !toggle.contains(event.target) &&
+                sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+
+        // Sidebar icon click handler
+        document.querySelectorAll('.sidebar-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Fungsi untuk animasi angka
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Fungsi untuk memuat data statistik
+        async function loadStatistik() {
+            try {
+                // Simulasi delay loading
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Contoh data - ganti dengan API call sebenarnya
+                const data = {
+                    pelangganAktif: 247,
+                    pesananBaru: 18,
+                    teknisiTersedia: 12
+                };
+
+                // Sembunyikan loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('statistik-global').style.display = 'grid';
+
+                // Animasi angka
+                animateValue(document.getElementById('stat-pelanggan-aktif'), 0, data.pelangganAktif, 1500);
+                animateValue(document.getElementById('stat-pesanan-baru'), 0, data.pesananBaru, 1500);
+                animateValue(document.getElementById('stat-teknisi-tersedia'), 0, data.teknisiTersedia, 1500);
+
+            } catch (error) {
+                console.error('Error loading statistik:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<p style="color: #ef4444;">Gagal memuat data. Silakan refresh halaman.</p>';
+            }
+        }
+
+        // Fungsi untuk refresh data secara periodik
+        function startAutoRefresh(interval = 60000) {
+            setInterval(() => {
+                loadStatistik();
+            }, interval);
+        }
+
+        // Load data saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatistik();
+            // Auto refresh setiap 1 menit
+            startAutoRefresh(60000);
+        });
+    </script>
+</body>
+</html>

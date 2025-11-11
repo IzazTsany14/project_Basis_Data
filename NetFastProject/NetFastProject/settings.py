@@ -84,7 +84,7 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = BASE_DIR / 'staticfiles' 
-LOGIN_REDIRECT_URL = '/user/dashboard/'
+LOGIN_REDIRECT_URL = '/dashboard/' # Changed to generic dashboard
 LOGIN_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
