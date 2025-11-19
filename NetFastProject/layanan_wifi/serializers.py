@@ -3,7 +3,7 @@
 from rest_framework import serializers
 from .models import (
     Pelanggan, Teknisi, PaketLayanan, Langganan,
-    PemesananJasa, RiwayatTestingWifi, JenisJasa
+    PemesananJasa, RiwayatTestingWifi, JenisJasa, AreaLayanan
 )
 
 # --- Serializer untuk Login ---
@@ -18,10 +18,16 @@ class LoginSerializer(serializers.Serializer):
 
 
 class PelangganSerializer(serializers.ModelSerializer):
+    password_plain = serializers.SerializerMethodField()
+
     class Meta:
         model = Pelanggan
-        fields = ['id_pelanggan', 'nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan', 'tanggal_daftar']
+        fields = ['id_pelanggan', 'nama_lengkap', 'email', 'password_hash', 'password_plain', 'alamat_pemasangan', 'no_telepon', 'tanggal_daftar']
         read_only_fields = ['id_pelanggan', 'tanggal_daftar']
+
+    def get_password_plain(self, obj):
+        # For display purposes, show a masked password since we don't store plain text
+        return "••••••••" if obj.password_hash else ""
 
 class PelangganRegistrasiSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
@@ -124,3 +130,9 @@ class RiwayatTestingWifiCreateSerializer(serializers.Serializer):
             **validated_data
         )
         return testing
+
+
+class AreaLayananSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AreaLayanan
+        fields = ['id_area_layanan', 'nama_area', 'kode_pos']

@@ -47,12 +47,30 @@ urlpatterns = [
     path('teknisi/pemesanan/<int:id_pemesanan>/update/', views.teknisi_update_status, name='teknisi_update'),
     
     # Admin Routes
-    path('admin/pemesanan/menunggu/', views.admin_pemesanan_menunggu, name='admin_pemesanan'),
     path('admin/penugasan/', views.admin_tugaskan_teknisi, name='admin_penugasan'),
-    path('admin/teknisi/list/', views.admin_list_teknisi, name='admin_teknisi'),
+
+    # Admin Order Management
+    path('api/admin/pesanan-menunggu/', views.admin_pemesanan_menunggu, name='admin_pesanan_menunggu'),
+    path('api/admin/pesanan-aktif/', views.admin_pesanan_aktif, name='admin_pesanan_aktif'),
+    path('api/admin/teknisi/list/', views.admin_list_teknisi, name='admin_teknisi_list'),
     path('admin/paket/', views.admin_paket_layanan, name='admin_paket'),
     path('admin/paket/<int:id_paket>/', views.admin_paket_layanan, name='admin_paket_detail'),
     path('admin/dashboard/stats/', views.admin_dashboard_stats, name='admin_stats'),
+    path('admin/dashboard/chart/', views.admin_dashboard_chart, name='admin_chart'),
+
+    # Admin Customer Management
+    path('api/admin/pelanggan/', views.admin_pelanggan, name='admin_pelanggan'),
+    path('api/admin/pelanggan/<int:id_pelanggan>/', views.admin_pelanggan, name='admin_pelanggan_detail'),
+    path('api/admin/pelanggan/<int:id_pelanggan>/delete/', views.admin_pelanggan, name='admin_pelanggan_delete'),
+
+    # Admin Technician Management
+    path('api/admin/teknisi/', views.admin_teknisi, name='admin_teknisi'),
+    path('api/admin/teknisi/<int:id_teknisi>/', views.admin_teknisi, name='admin_teknisi_detail'),
+    path('api/admin/teknisi/<int:id_teknisi>/delete/', views.admin_teknisi, name='admin_teknisi_delete'),
+
+    # Admin Area Layanan
+    path('api/area-layanan/', views.admin_area_layanan, name='admin_area_layanan'),
+
 
     # --- Admin Pages ---
     path('admin/dashboard/', views.admin_dashboard_view, name='admin_dashboard'),

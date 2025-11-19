@@ -1,71 +1,435 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Pelanggan - NetFast</title>
-    <link rel="stylesheet" href="../../static/css/style.css">
-    <link rel="stylesheet" href="../../static/css/dashboard.css">
+    <title>Manajemen Pelanggan - NetFast Admin</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{% static 'css/admin.css' %}" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Manajemen Pelanggan</h1>
-        <nav>
-            <a href="./dashboard.html">Dashboard</a>
-            <a href="./manajemen-pesanan.html">Manajemen Pesanan</a>
-            <a href="./manajemen-teknisi.html">Manajemen Teknisi</a>
-            <a href="#">Manajemen Pelanggan</a>
-            <a href="/logout">Logout</a>
+    <div class="container-fluid">
+        <!-- Mobile Header -->
+        <nav class="navbar navbar-expand-md navbar-light bg-light d-md-none">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <span class="navbar-brand mb-0 h1">
+                    <i class="bi bi-wifi fs-4 me-2 text-primary"></i>
+                    <span class="fs-4 fw-bold text-primary">NetFast</span>
+                </span>
+            </div>
         </nav>
-    </header>
-    <main>
-        <h2>Daftar Pelanggan & Langganan</h2>
-        <section id="form-pelanggan">
-            <h3>Tambah/Edit Pelanggan</h3>
-            <form id="form-manajemen-pelanggan">
-                <input type="hidden" id="id-pelanggan" name="id_pelanggan">
-                <div>
-                    <label for="nama-pelanggan">Nama Lengkap</label>
-                    <input type="text" id="nama-pelanggan" name="nama" required>
+
+        <!-- Mobile Sidebar (Collapsible) -->
+        <div class="collapse d-md-none" id="mobileSidebar">
+            <nav class="bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+                        <i class="bi bi-wifi fs-4 me-2 text-primary"></i>
+                        <span class="fs-4 fw-bold text-primary">NetFast</span>
+                    </div>
+                    <hr>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard/">
+                                <i class="bi bi-house-door me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/manajemen-pelanggan/">
+                                <i class="bi bi-people me-2"></i>
+                                Pelanggan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-pesanan/">
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                Pesanan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-teknisi/">
+                                <i class="bi bi-wrench me-2"></i>
+                                Teknisi
+                            </a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-2 fs-4"></i>
+                            <strong>Admin</strong>
+                        </a>
+                        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sign out</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <label for="alamat-pelanggan">Alamat</label>
-                    <input type="text" id="alamat-pelanggan" name="alamat" required>
+            </nav>
+        </div>
+
+        <div class="row">
+            <!-- Desktop Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+                        <i class="bi bi-wifi fs-4 me-2 text-primary"></i>
+                        <span class="fs-4 fw-bold text-primary">NetFast</span>
+                    </div>
+                    <hr>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard/">
+                                <i class="bi bi-house-door me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/manajemen-pelanggan/">
+                                <i class="bi bi-people me-2"></i>
+                                Pelanggan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-pesanan/">
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                Pesanan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-teknisi/">
+                                <i class="bi bi-wrench me-2"></i>
+                                Teknisi
+                            </a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-2 fs-4"></i>
+                            <strong>Admin</strong>
+                        </a>
+                        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sign out</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <label for="telepon-pelanggan">Telepon</label>
-                    <input type="text" id="telepon-pelanggan" name="telepon" required>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Manajemen Pelanggan</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+                            <i class="bi bi-plus-circle me-1"></i>Tambah Pelanggan
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label for="email-pelanggan">Email</label>
-                    <input type="email" id="email-pelanggan" name="email" required>
+
+                <!-- Alert Messages -->
+                <div id="alertContainer"></div>
+
+                <!-- Customers Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Daftar Pelanggan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="customersTable">
+                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nama Lengkap</th>
+                                        <th>Email</th>
+                                        <th>No. Telepon</th>
+                                        <th>Alamat Pemasangan</th>
+                                        <th>Tanggal Daftar</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customersTableBody">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit">Simpan Pelanggan</button>
-            </form>
-        </section>
-        <section id="list-pelanggan">
-            <h3>Data Pelanggan</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nama</th>
-                        <th>Alamat</th>
-                        <th>Telepon</th>
-                        <th>Email</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="pelanggan-table-body">
-                    <!-- Data diisi oleh JS -->
-                </tbody>
-            </table>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2025 NetFast</p>
-    </footer>
-    <script src="../../static/js/admin.js"></script>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add/Edit Customer Modal -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1" aria-labelledby="addCustomerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addCustomerModalLabel">Tambah Pelanggan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="customerForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="customerId" name="id_pelanggan">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="namaLengkap" class="form-label">Nama Lengkap *</label>
+                                <input type="text" class="form-control" id="namaLengkap" name="nama_lengkap" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="noTelepon" class="form-label">No. Telepon</label>
+                                <input type="text" class="form-control" id="noTelepon" name="no_telepon">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Kosongkan jika tidak ingin mengubah password">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="tanggalDaftar" class="form-label">Tanggal Daftar</label>
+                                <input type="date" class="form-control" id="tanggalDaftar" name="tanggal_daftar">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="alamatPemasangan" class="form-label">Alamat Pemasangan *</label>
+                            <textarea class="form-control" id="alamatPemasangan" name="alamat_pemasangan" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        const API_BASE_URL = '/api/admin/pelanggan';
+
+        // Load customers on page load
+        document.addEventListener('DOMContentLoaded', loadCustomers);
+
+        // Load customers function
+        async function loadCustomers() {
+            try {
+                const response = await fetch(API_BASE_URL + '/');
+                if (response.ok) {
+                    const customers = await response.json();
+                    displayCustomers(customers);
+                } else {
+                    showAlert('Gagal memuat data pelanggan', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+            }
+        }
+
+        // Display customers in table
+        function displayCustomers(customers) {
+            const tbody = document.getElementById('customersTableBody');
+            tbody.innerHTML = '';
+
+            if (customers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data pelanggan</td></tr>';
+                return;
+            }
+
+            customers.forEach(customer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${customer.id_pelanggan}</td>
+                    <td>${customer.nama_lengkap}</td>
+                    <td>${customer.email || '-'}</td>
+                    <td>${customer.no_telepon || '-'}</td>
+                    <td>${customer.alamat_pemasangan}</td>
+                    <td>${customer.tanggal_daftar || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editCustomer(${customer.id_pelanggan})">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomer(${customer.id_pelanggan})">
+                            <i class="bi bi-trash"></i> Hapus
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Edit customer
+        async function editCustomer(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${id}/`);
+                if (response.ok) {
+                    const customer = await response.json();
+                    populateForm(customer);
+                    const modal = new bootstrap.Modal(document.getElementById('addCustomerModal'));
+                    modal.show();
+                } else {
+                    showAlert('Gagal memuat data pelanggan', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading customer:', error);
+                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+            }
+        }
+
+        // Delete customer
+        async function deleteCustomer(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus pelanggan ini?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+
+                if (response.ok) {
+                    showAlert('Pelanggan berhasil dihapus', 'success');
+                    loadCustomers();
+                } else {
+                    showAlert('Gagal menghapus pelanggan', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting customer:', error);
+                showAlert('Terjadi kesalahan saat menghapus', 'danger');
+            }
+        }
+
+        // Populate form for editing
+        function populateForm(customer) {
+            document.getElementById('customerId').value = customer.id_pelanggan;
+            document.getElementById('namaLengkap').value = customer.nama_lengkap;
+            document.getElementById('email').value = customer.email || '';
+            document.getElementById('password').value = ''; // Don't populate password for security
+            document.getElementById('password').required = false; // Not required for editing
+            document.getElementById('noTelepon').value = customer.no_telepon || '';
+            document.getElementById('alamatPemasangan').value = customer.alamat_pemasangan;
+            document.getElementById('tanggalDaftar').value = customer.tanggal_daftar || '';
+
+            document.getElementById('addCustomerModalLabel').textContent = 'Edit Pelanggan';
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('customerForm').reset();
+            document.getElementById('customerId').value = '';
+            document.getElementById('password').required = true;
+            document.getElementById('password').placeholder = '';
+            document.getElementById('addCustomerModalLabel').textContent = 'Tambah Pelanggan';
+        }
+
+        // Form submit handler
+        document.getElementById('customerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            const isEdit = data.id_pelanggan;
+
+            // Remove password if empty for edit
+            if (isEdit && !data.password) {
+                delete data.password;
+            }
+
+            try {
+                const url = isEdit ? `${API_BASE_URL}/${data.id_pelanggan}/` : `${API_BASE_URL}/`;
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showAlert(`Pelanggan berhasil ${isEdit ? 'diperbarui' : 'ditambahkan'}`, 'success');
+                    resetForm();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+                    modal.hide();
+                    loadCustomers();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Gagal ${isEdit ? 'memperbarui' : 'menambahkan'} pelanggan: ${JSON.stringify(error)}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving customer:', error);
+                showAlert('Terjadi kesalahan saat menyimpan data', 'danger');
+            }
+        });
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            alertContainer.appendChild(alert);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Get CSRF token
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfToken ? csrfToken.value : '';
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        // Reset form when modal is hidden
+        document.getElementById('addCustomerModal').addEventListener('hidden.bs.modal', resetForm);
+    </script>
 </body>
 </html>

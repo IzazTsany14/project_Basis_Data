@@ -1,73 +1,549 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Teknisi - NetFast</title>
-    <link rel="stylesheet" href="../../static/css/style.css">
-    <link rel="stylesheet" href="../../static/css/dashboard.css">
+    <title>Manajemen Teknisi - NetFast Admin</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{% static 'css/admin.css' %}" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>Manajemen Teknisi</h1>
-        <nav>
-            <a href="./dashboard.html">Dashboard</a>
-            <a href="./manajemen-pesanan.html">Manajemen Pesanan</a>
-            <a href="#">Manajemen Teknisi</a>
-            <a href="./manajemen-pelanggan.html">Manajemen Pelanggan</a>
-            <a href="/logout">Logout</a>
+    <div class="container-fluid">
+        <!-- Mobile Header -->
+        <nav class="navbar navbar-expand-md navbar-light bg-light d-md-none">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <span class="navbar-brand mb-0 h1">
+                    <i class="bi bi-wifi fs-4 me-2 text-primary"></i>
+                    <span class="fs-4 fw-bold text-primary">NetFast</span>
+                </span>
+            </div>
         </nav>
-    </header>
-    <main>
-        <h2>Data Teknisi</h2>
-        <section id="form-teknisi">
-            <h3>Tambah/Edit Teknisi</h3>
-            <form id="form-manajemen-teknisi">
-                <input type="hidden" id="id-teknisi" name="id_teknisi">
-                <div>
-                    <label for="nama-teknisi">Nama Lengkap</label>
-                    <input type="text" id="nama-teknisi" name="nama" required>
+
+        <!-- Mobile Sidebar (Collapsible) -->
+        <div class="collapse d-md-none" id="mobileSidebar">
+            <nav class="bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+                        <i class="bi bi-wifi fs-4 me-2 text-primary"></i>
+                        <span class="fs-4 fw-bold text-primary">NetFast</span>
+                    </div>
+                    <hr>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard/">
+                                <i class="bi bi-house-door me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-pesanan/">
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                Pesanan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/manajemen-teknisi/">
+                                <i class="bi bi-wrench me-2"></i>
+                                Teknisi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-pelanggan/">
+                                <i class="bi bi-people me-2"></i>
+                                Pelanggan
+                            </a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-2 fs-4"></i>
+                            <strong>Admin</strong>
+                        </a>
+                        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sign out</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <label for="username-teknisi">Username</label>
-                    <input type="text" id="username-teknisi" name="username" required>
+            </nav>
+        </div>
+
+        <div class="row">
+            <!-- Desktop Sidebar -->
+            <nav id="sidebar" class="col-md-3 col-lg-2 d-none d-md-block bg-light sidebar">
+                <div class="position-sticky pt-3">
+                    <div class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+                        <i class="bi bi-wifi fs-4 me-2 text-primary"></i>
+                        <span class="fs-4 fw-bold text-primary">NetFast</span>
+                    </div>
+                    <hr>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard/">
+                                <i class="bi bi-house-door me-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-pesanan/">
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                Pesanan
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/manajemen-teknisi/">
+                                <i class="bi bi-wrench me-2"></i>
+                                Teknisi
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/manajemen-pelanggan/">
+                                <i class="bi bi-people me-2"></i>
+                                Pelanggan
+                            </a>
+                        </li>
+                    </ul>
+                    <hr>
+                    <div class="dropdown">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-2 fs-4"></i>
+                            <strong>Admin</strong>
+                        </a>
+                        <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser1">
+                            <li><a class="dropdown-item" href="#" onclick="logout()">Sign out</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <label for="password-teknisi">Password</label>
-                    <input type="password" id="password-teknisi" name="password">
-                    <small>Kosongkan jika tidak ingin mengubah password.</small>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Manajemen Teknisi</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTechnicianModal">
+                            <i class="bi bi-plus-circle me-1"></i>Tambah Teknisi
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label for="area-layanan-teknisi">Area Layanan</label>
-                    <select id="area-layanan-teknisi" name="id_area_layanan" required>
-                        <!-- Opsi diisi oleh JS -->
-                    </select>
+
+                <!-- Alert Messages -->
+                <div id="alertContainer"></div>
+
+                <!-- Search and Filter Controls -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="searchInput" class="form-label">Cari Teknisi</label>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Cari nama atau username...">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="areaFilterSelect" class="form-label">Filter Area Layanan</label>
+                                <select class="form-select" id="areaFilterSelect">
+                                    <option value="">Semua Area</option>
+                                    <!-- Area options will be populated by JS -->
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sortSelect" class="form-label">Urutkan Berdasarkan</label>
+                                <select class="form-select" id="sortSelect">
+                                    <option value="nama_teknisi">Nama Lengkap</option>
+                                    <option value="username">Username</option>
+                                    <option value="area_layanan">Area Layanan</option>
+                                    <option value="role_akses">Role</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="applyFilters()">
+                                    <i class="bi bi-search me-1"></i>Filter
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="resetFilters()">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button type="submit">Simpan Teknisi</button>
-            </form>
-        </section>
-        <section id="list-teknisi">
-            <h3>Daftar Teknisi Terdaftar</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nama</th>
-                        <th>Username</th>
-                        <th>Area Layanan</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="teknisi-table-body">
-                    <!-- Data diisi oleh JS -->
-                </tbody>
-            </table>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2025 NetFast</p>
-    </footer>
-    <script src="../../static/js/admin.js"></script>
+
+                <!-- Technicians Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Daftar Teknisi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="techniciansTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nama Lengkap</th>
+                                        <th>Username</th>
+                                        <th>Area Layanan</th>
+                                        <th>No. Telepon</th>
+                                        <th>Role</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="techniciansTableBody">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add/Edit Technician Modal -->
+    <div class="modal fade" id="addTechnicianModal" tabindex="-1" aria-labelledby="addTechnicianModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTechnicianModalLabel">Tambah Teknisi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="technicianForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="technicianId" name="id_teknisi">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="namaTeknisi" class="form-label">Nama Lengkap *</label>
+                                <input type="text" class="form-control" id="namaTeknisi" name="nama_teknisi" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Username *</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="password" class="form-label">Password *</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan password">
+                                <div class="form-text">Kosongkan jika tidak ingin mengubah password</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="noTelepon" class="form-label">No. Telepon *</label>
+                                <input type="text" class="form-control" id="noTelepon" name="no_telepon" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="areaLayanan" class="form-label">Area Layanan *</label>
+                                <select class="form-select" id="areaLayanan" name="id_area_layanan" required>
+                                    <option value="">Pilih Area Layanan</option>
+                                    <!-- Options will be populated by JS -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="roleAkses" class="form-label">Role Akses *</label>
+                                <select class="form-select" id="roleAkses" name="role_akses" required>
+                                    <option value="Teknisi">Teknisi</option>
+                                    <option value="Admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const API_BASE_URL = '/api/admin';
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTechnicians();
+            loadServiceAreas();
+            loadAreaFilterOptions();
+        });
+
+        // Load area filter options
+        async function loadAreaFilterOptions() {
+            try {
+                const response = await fetch('/api/area-layanan/');
+                if (response.ok) {
+                    const areas = await response.json();
+                    const select = document.getElementById('areaFilterSelect');
+                    areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id_area_layanan;
+                        option.textContent = area.nama_area;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading area filter options:', error);
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            loadTechnicians();
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('areaFilterSelect').value = '';
+            document.getElementById('sortSelect').value = 'nama_teknisi';
+            loadTechnicians();
+        }
+
+        // Load technicians
+        async function loadTechnicians() {
+            try {
+                // Get filter values
+                const search = document.getElementById('searchInput').value;
+                const areaFilter = document.getElementById('areaFilterSelect').value;
+                const sortBy = document.getElementById('sortSelect').value;
+
+                // Build query string
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (areaFilter) params.append('area_id', areaFilter);
+                if (sortBy) params.append('sort_by', sortBy);
+
+                const url = `${API_BASE_URL}/teknisi/${params.toString() ? '?' + params.toString() : ''}`;
+                const response = await fetch(url);
+
+                if (response.ok) {
+                    const technicians = await response.json();
+                    displayTechnicians(technicians);
+                } else {
+                    showAlert('Gagal memuat data teknisi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading technicians:', error);
+                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+            }
+        }
+
+        // Load service areas
+        async function loadServiceAreas() {
+            try {
+                const response = await fetch('/api/area-layanan/');
+                if (response.ok) {
+                    const areas = await response.json();
+                    populateAreaSelect(areas);
+                }
+            } catch (error) {
+                console.error('Error loading service areas:', error);
+            }
+        }
+
+        // Populate area select
+        function populateAreaSelect(areas) {
+            const select = document.getElementById('areaLayanan');
+            areas.forEach(area => {
+                const option = document.createElement('option');
+                option.value = area.id_area_layanan;
+                option.textContent = area.nama_area;
+                select.appendChild(option);
+            });
+        }
+
+        // Display technicians in table
+        function displayTechnicians(technicians) {
+            const tbody = document.getElementById('techniciansTableBody');
+            tbody.innerHTML = '';
+
+            if (technicians.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data teknisi</td></tr>';
+                return;
+            }
+
+            technicians.forEach(technician => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${technician.id_teknisi}</td>
+                    <td>${technician.nama_teknisi}</td>
+                    <td>${technician.username}</td>
+                    <td>${technician.area_layanan || 'N/A'}</td>
+                    <td>${technician.no_telepon || 'N/A'}</td>
+                    <td><span class="badge bg-${technician.role_akses === 'Admin' ? 'primary' : 'info'}">${technician.role_akses}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="editTechnician(${technician.id_teknisi})">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTechnician(${technician.id_teknisi})">
+                            <i class="bi bi-trash"></i> Hapus
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Edit technician
+        async function editTechnician(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/teknisi/${id}/`);
+                if (response.ok) {
+                    const technician = await response.json();
+                    populateForm(technician);
+                    const modal = new bootstrap.Modal(document.getElementById('addTechnicianModal'));
+                    modal.show();
+                } else {
+                    showAlert('Gagal memuat data teknisi', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading technician:', error);
+                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+            }
+        }
+
+        // Delete technician
+        async function deleteTechnician(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus teknisi ini?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/teknisi/${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                });
+
+                if (response.ok) {
+                    showAlert('Teknisi berhasil dihapus', 'success');
+                    loadTechnicians();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Gagal menghapus teknisi: ${error.error || 'Unknown error'}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting technician:', error);
+                showAlert('Terjadi kesalahan saat menghapus', 'danger');
+            }
+        }
+
+        // Populate form for editing
+        function populateForm(technician) {
+            document.getElementById('technicianId').value = technician.id_teknisi;
+            document.getElementById('namaTeknisi').value = technician.nama_teknisi;
+            document.getElementById('username').value = technician.username;
+            document.getElementById('password').value = ''; // Don't populate password
+            document.getElementById('noTelepon').value = technician.no_telepon || '';
+            document.getElementById('areaLayanan').value = technician.id_area_layanan || '';
+            document.getElementById('roleAkses').value = technician.role_akses;
+
+            document.getElementById('addTechnicianModalLabel').textContent = 'Edit Teknisi';
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('technicianForm').reset();
+            document.getElementById('technicianId').value = '';
+            document.getElementById('addTechnicianModalLabel').textContent = 'Tambah Teknisi';
+        }
+
+        // Form submit handler
+        document.getElementById('technicianForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            const isEdit = data.id_teknisi;
+
+            // Remove empty password for edit
+            if (isEdit && !data.password) {
+                delete data.password;
+            }
+
+            try {
+                const url = isEdit ? `${API_BASE_URL}/teknisi/${data.id_teknisi}/` : `${API_BASE_URL}/teknisi/`;
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showAlert(`Teknisi berhasil ${isEdit ? 'diperbarui' : 'ditambahkan'}`, 'success');
+                    resetForm();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addTechnicianModal'));
+                    modal.hide();
+                    loadTechnicians();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Gagal ${isEdit ? 'memperbarui' : 'menambahkan'} teknisi: ${JSON.stringify(error)}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving technician:', error);
+                showAlert('Terjadi kesalahan saat menyimpan data', 'danger');
+            }
+        });
+
+        // Get CSRF token
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfToken ? csrfToken.value : '';
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            alertContainer.appendChild(alert);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Logout function
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        // Reset form when modal is hidden
+        document.getElementById('addTechnicianModal').addEventListener('hidden.bs.modal', resetForm);
+    </script>
 </body>
 </html>

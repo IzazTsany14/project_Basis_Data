@@ -226,22 +226,27 @@
             }
 
             try {
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken'),
                     },
-                    body: JSON.stringify({ username, password, role: selectedRole }),
+                    body: formData,
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
                     showAlert('Login berhasil! Mengalihkan...', 'success');
-                    if (selectedRole === 'TeknisiAdmin') {
+                    if (data.user.role === 'admin') {
                         window.location.href = '/admin/dashboard/';
+                    } else if (data.user.role === 'teknisi') {
+                        window.location.href = '/teknisi/dashboard/';
                     } else {
                         window.location.href = '/user/dashboard/';
                     }
