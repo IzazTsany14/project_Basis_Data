@@ -265,6 +265,8 @@ def registrasi_pelanggan(request):
     serializer = PelangganRegistrasiSerializer(data=request.data)
     if serializer.is_valid():
         pelanggan = serializer.save()
+        # Create default subscription or handle as needed
+        # For now, just register the user
         return Response({
             'message': 'Registrasi berhasil',
             'pelanggan': PelangganSerializer(pelanggan).data
