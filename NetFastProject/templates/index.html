@@ -171,17 +171,45 @@
 
         /* ===================== RESPONSIVE FIX ===================== */
 
-        @media(max-width: 900px) {
+        @media(max-width: 1024px) {
             .wrapper {
-                flex-direction: column;
+                width: 95%;
+                max-width: 900px;
+            }
+
+            .left-panel h2 {
+                font-size: 2.2rem;
+            }
+
+            .right-panel h1 {
+                font-size: 2.4rem;
+            }
+        }
+
+        @media(max-width: 768px) {
+            .wrapper {
+                width: 98%;
+                max-width: 700px;
                 height: auto;
+                flex-direction: column;
                 padding-bottom: 40px;
+            }
+
+            .left-panel {
+                width: 100%;
+                padding: 40px 30px;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            .left-panel h2 {
+                font-size: 2rem;
             }
 
             .right-panel {
                 width: 100%;
                 border-radius: 0;
-                padding: 40px 25px;
+                padding: 40px 30px;
                 text-align: center;
                 transform: none !important;
                 opacity: 1 !important;
@@ -197,30 +225,71 @@
                 margin: 0 auto;
             }
 
-            .left-panel {
-                width: 100%;
-                padding: 40px 25px;
-                transform: none !important;
-                opacity: 1 !important;
+            .bubble.b1 {
+                width: 200px;
+                height: 200px;
+                top: -40px;
+                left: -20px;
             }
 
-            .left-panel h2 {
-                font-size: 2rem;
+            .bubble.b2 {
+                width: 250px;
+                height: 250px;
+                bottom: -60px;
+                right: -50px;
             }
         }
 
         @media(max-width: 480px) {
+            .wrapper {
+                width: 100%;
+                max-width: none;
+                margin: 10px;
+                border-radius: 20px;
+            }
 
             .left-panel {
                 padding: 30px 20px;
             }
 
+            .left-panel h2 {
+                font-size: 1.8rem;
+            }
+
             .right-panel {
-                padding: 35px 20px;
+                padding: 30px 20px;
             }
 
             .right-panel h1 {
                 font-size: 1.8rem;
+            }
+
+            .right-panel p {
+                font-size: 0.95rem;
+            }
+
+            .form-control {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .btn-login {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+
+            .bubble.b1 {
+                width: 150px;
+                height: 150px;
+                top: -30px;
+                left: -15px;
+            }
+
+            .bubble.b2 {
+                width: 180px;
+                height: 180px;
+                bottom: -40px;
+                right: -30px;
             }
         }
     </style>

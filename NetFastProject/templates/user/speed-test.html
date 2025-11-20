@@ -148,16 +148,24 @@
         /* ==== RESPONSIVE ==== */
         @media (max-width: 992px) {
             .sidebar {
-                width: 70px;
+                transform: translateX(-100%);
+                width: 230px;
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
             }
             .topbar, .main-content {
-                margin-left: 70px;
+                margin-left: 0;
             }
-            .sidebar a span {
-                display: none;
-            }
-            .sidebar h4 {
-                display: none;
+            .hamburger {
+                display: block;
+                background: none;
+                border: none;
+                color: #444;
+                font-size: 20px;
+                margin-right: 15px;
+                cursor: pointer;
             }
         }
     </style>
@@ -345,6 +353,21 @@
                 alert('Terjadi kesalahan saat menyimpan');
             }
         }
+
+        // Toggle sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.hamburger');
+            if (window.innerWidth <= 992 && !sidebar.contains(event.target) && !hamburger.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
     </script>
 </body>
 </html>
