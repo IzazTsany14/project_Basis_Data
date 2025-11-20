@@ -221,13 +221,67 @@ def speed_history_view(request):
 def login(request):
     from rest_framework.parsers import FormParser, MultiPartParser
     request.parsers = [FormParser(), MultiPartParser()]
-    # Accept either {email,password} or {username,password} or {login_id,password}
+    # Accept {login_id, password}
     data = request.POST
     password = data.get('password')
     login_id = data.get('login_id') or data.get('email') or data.get('username')
 
     if not login_id or not password:
-        return JsonResponse({'error': 'login_id/email/username dan password diperlukan'}, status=400)
+        return JsonResponse({'error': 'login_id dan password diperlukan'}, status=400)
+
+    # Try Admin first (by username, role_akses = 'admin')
+    try:
+        admin_user = Teknisi.objects.get(username=login_id, role_akses='admin')
+        if admin_user.check_password(password):
+            request.session['teknisi_id'] = admin_user.id_teknisi
+            request.session['user_role'] = 'admin'
+            request.session.cycle_key()
+            request.session.save()
+            return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
+
+        # Admin legacy fallbacks
+        aph = getattr(admin_user, 'password_hash', None)
+        if aph:
+            if aph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == aph:
+                try:
+                    admin_user.set_password(password)
+                    admin_user.save()
+                except Exception:
+                    pass
+                request.session['teknisi_id'] = admin_user.id_teknisi
+                request.session['user_role'] = 'admin'
+                request.session.cycle_key()
+                request.session.save()
+                return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
+    except Teknisi.DoesNotExist:
+        pass
+
+    # Try Teknisi (by username, exclude admin)
+    try:
+        teknisi = Teknisi.objects.exclude(role_akses='admin').get(username=login_id)
+        if teknisi.check_password(password):
+            request.session['teknisi_id'] = teknisi.id_teknisi
+            request.session['user_role'] = 'teknisi'
+            request.session.cycle_key()
+            request.session.save()
+            return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'teknisi', 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
+
+        # Teknisi legacy fallbacks
+        tph = getattr(teknisi, 'password_hash', None)
+        if tph:
+            if tph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == tph:
+                try:
+                    teknisi.set_password(password)
+                    teknisi.save()
+                except Exception:
+                    pass
+                request.session['teknisi_id'] = teknisi.id_teknisi
+                request.session['user_role'] = 'teknisi'
+                request.session.cycle_key()
+                request.session.save()
+                return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'teknisi', 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
+    except Teknisi.DoesNotExist:
+        pass
 
     # Try Pelanggan (by email)
     try:
@@ -269,60 +323,6 @@ def login(request):
             request.session['user_role'] = 'pelanggan'
             return JsonResponse({'message': 'Login berhasil (legacy) - password upgraded', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=200)
     except Pelanggan.DoesNotExist:
-        pass
-
-    # Try Admin first (by username, role_akses = 'admin')
-    try:
-        admin_user = Teknisi.objects.get(username=login_id, role_akses='admin')
-        if admin_user.check_password(password):
-            request.session['teknisi_id'] = admin_user.id_teknisi
-            request.session['user_role'] = 'admin'
-            request.session.cycle_key()
-            request.session.save()
-            return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
-
-        # Admin legacy fallbacks
-        aph = getattr(admin_user, 'password_hash', None)
-        if aph:
-            if aph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == aph:
-                try:
-                    admin_user.set_password(password)
-                    admin_user.save()
-                except Exception:
-                    pass
-                request.session['teknisi_id'] = admin_user.id_teknisi
-                request.session['user_role'] = 'admin'
-                request.session.cycle_key()
-                request.session.save()
-                return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
-    except Teknisi.DoesNotExist:
-        pass
-
-    # Try Teknisi (by username, exclude admin)
-    try:
-        teknisi = Teknisi.objects.exclude(role_akses='admin').get(username=login_id)
-        if teknisi.check_password(password):
-            request.session['teknisi_id'] = teknisi.id_teknisi
-            request.session['user_role'] = (teknisi.role_akses or 'teknisi').lower()
-            request.session.cycle_key()
-            request.session.save()
-            return JsonResponse({'message': 'Login berhasil', 'user': {'role': teknisi.role_akses, 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
-
-        # Teknisi legacy fallbacks
-        tph = getattr(teknisi, 'password_hash', None)
-        if tph:
-            if tph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == tph:
-                try:
-                    teknisi.set_password(password)
-                    teknisi.save()
-                except Exception:
-                    pass
-                request.session['teknisi_id'] = teknisi.id_teknisi
-                request.session['user_role'] = (teknisi.role_akses or 'teknisi').lower()
-                request.session.cycle_key()
-                request.session.save()
-                return Response({'message': 'Login berhasil (legacy)', 'user': {'role': teknisi.role_akses, 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=status.HTTP_200_OK)
-    except Teknisi.DoesNotExist:
         pass
 
     return JsonResponse({'error': 'Email/username atau password salah'}, status=401)
