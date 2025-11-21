@@ -1,205 +1,367 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NetFast - Login</title>
 
-    <!-- Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Raleway:ital,wght@1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Raleway:ital,wght@1,500&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
         body {
             margin: 0;
             padding: 0;
             min-height: 100vh;
-            font-family: 'Poppins', sans-serif;
             background: linear-gradient(120deg, #b8c6db 0%, #f5f7fa 100%);
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             position: relative;
-            overflow: hidden;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
         }
 
-        /* Background gradient shapes */
-        .bg-shape {
+        /* Background Bubble */
+        .bubble {
             position: absolute;
             border-radius: 50%;
             filter: blur(80px);
-            opacity: 0.6;
+            opacity: 0.55;
+            z-index: 1;
         }
-        .shape1 { width: 300px; height: 300px; background: #667eea; top: -80px; left: -60px; }
-        .shape2 { width: 400px; height: 400px; background: #764ba2; bottom: -100px; right: -100px; }
 
-        /* Container utama */
-        .login-box {
-            background: #fff;
+        .b1 {
+            width: 280px;
+            height: 280px;
+            background: #667eea;
+            top: -60px;
+            left: -40px;
+        }
+
+        .b2 {
+            width: 350px;
+            height: 350px;
+            background: #764ba2;
+            bottom: -100px;
+            right: -90px;
+        }
+
+        /* Main Container */
+        .wrapper {
+            width: 92%;
+            max-width: 1050px;
+            height: 600px;
+            background: #ffffff;
             border-radius: 25px;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.1);
-            max-width: 420px;
-            width: 100%;
-            padding: 40px 35px;
-            z-index: 10;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.15);
+            display: flex;
+            overflow: hidden;
+            z-index: 3;
+
+            /* Animation initial state */
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .wrapper.slide-in {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .wrapper.slide-out {
+            transform: translateX(-100%);
+            opacity: 0;
+            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+        }
+
+        /* Left Form */
+        .left-panel {
+            width: 50%;
+            padding: 55px 50px;
+
+            opacity: 0;
+            transform: translateY(40px);
+            transition: transform 1s ease, opacity 1s ease;
+        }
+
+        .wrapper.slide-in .left-panel {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .left-panel h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #5c3b8e;
             text-align: center;
         }
 
-        /* Logo dan Slogan */
-        .login-box h2 {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 800;
-            font-size: 2.2rem;
-            letter-spacing: 1px;
-            color: #5c3b8e;
-            margin-bottom: 8px;
-            text-shadow: 0 2px 6px rgba(118,75,162,0.2);
-        }
-
         .tagline {
+            text-align: center;
             font-family: 'Raleway', sans-serif;
             font-style: italic;
-            font-size: 0.95rem;
-            color: #6c6c6c;
             margin-bottom: 25px;
-            letter-spacing: 0.5px;
+            color: #777;
         }
 
-        /* Role Selector */
-        .role-select {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-        }
-
-        .role-btn {
-            border-radius: 20px;
-            border: 2px solid #764ba2;
-            color: #764ba2;
-            background: transparent;
-            padding: 8px 20px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .role-btn.active,
-        .role-btn:hover {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-
-        /* Form style */
         .form-control {
             border-radius: 30px;
             padding: 12px 20px;
             border: 1.5px solid #d1c4e9;
-            transition: all 0.3s ease;
         }
 
         .form-control:focus {
             border-color: #764ba2;
-            box-shadow: 0 0 8px rgba(118,75,162,0.3);
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.35);
         }
 
-        /* Button Login */
         .btn-login {
+            width: 100%;
             border-radius: 30px;
+            padding: 14px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             border: none;
             color: #fff;
             font-weight: 600;
-            padding: 12px;
-            transition: 0.3s;
         }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+        /* Right Oval Section */
+        .right-panel {
+            width: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            border-radius: 100% 0 0 100% / 70% 0 0 70%;
+
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform 1.2s ease-in-out, opacity 1.2s ease-in-out;
         }
 
-        /* Footer link */
-        a {
-            text-decoration: none;
-            color: #764ba2;
+        .wrapper.slide-in .right-panel {
+            transform: translateX(0);
+            opacity: 1;
         }
 
-        .footer-text {
-            margin-top: 15px;
-            font-size: 0.9rem;
+        .right-panel h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .right-panel p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            max-width: 400px;
         }
 
         #alertMessage {
             display: none;
         }
+
+        /* ===================== RESPONSIVE FIX ===================== */
+
+        @media(max-width: 1024px) {
+            .wrapper {
+                width: 95%;
+                max-width: 900px;
+            }
+
+            .left-panel h2 {
+                font-size: 2.2rem;
+            }
+
+            .right-panel h1 {
+                font-size: 2.4rem;
+            }
+        }
+
+        @media(max-width: 768px) {
+            .wrapper {
+                width: 98%;
+                max-width: 700px;
+                height: auto;
+                flex-direction: column;
+                padding-bottom: 40px;
+            }
+
+            .left-panel {
+                width: 100%;
+                padding: 40px 30px;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            .left-panel h2 {
+                font-size: 2rem;
+            }
+
+            .right-panel {
+                width: 100%;
+                border-radius: 0;
+                padding: 40px 30px;
+                text-align: center;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+
+            .right-panel h1 {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+
+            .right-panel p {
+                font-size: 1rem;
+                margin: 0 auto;
+            }
+
+            .bubble.b1 {
+                width: 200px;
+                height: 200px;
+                top: -40px;
+                left: -20px;
+            }
+
+            .bubble.b2 {
+                width: 250px;
+                height: 250px;
+                bottom: -60px;
+                right: -50px;
+            }
+        }
+
+        @media(max-width: 480px) {
+            .wrapper {
+                width: 100%;
+                max-width: none;
+                margin: 10px;
+                border-radius: 20px;
+            }
+
+            .left-panel {
+                padding: 30px 20px;
+            }
+
+            .left-panel h2 {
+                font-size: 1.8rem;
+            }
+
+            .right-panel {
+                padding: 30px 20px;
+            }
+
+            .right-panel h1 {
+                font-size: 1.8rem;
+            }
+
+            .right-panel p {
+                font-size: 0.95rem;
+            }
+
+            .form-control {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .btn-login {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+
+            .bubble.b1 {
+                width: 150px;
+                height: 150px;
+                top: -30px;
+                left: -15px;
+            }
+
+            .bubble.b2 {
+                width: 180px;
+                height: 180px;
+                bottom: -40px;
+                right: -30px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <!-- Background shapes -->
-    <div class="shape1 bg-shape"></div>
-    <div class="shape2 bg-shape"></div>
 
-    <!-- Main Login Box -->
-    <div class="login-box">
-        <h2>NetFast</h2>
-        <div class="tagline">Layanan cepat dan terpercaya</div>
+    <div class="bubble b1"></div>
+    <div class="bubble b2"></div>
 
-        <!-- Tombol Role -->
-        <div class="role-select">
-            <button type="button" class="role-btn active" id="btnPelanggan">Pelanggan</button>
-            <button type="button" class="role-btn" id="btnTeknisiAdmin">Teknisi/Admin</button>
+    <div class="wrapper" id="pageWrapper">
+
+        <div class="left-panel">
+            <h2>NetFast</h2>
+            <div class="tagline">Layanan cepat dan terpercaya</div>
+
+            <div id="alertMessage" class="alert"></div>
+
+            <div class="d-flex justify-content-center gap-3 mb-3">
+                <button type="button" class="btn btn-outline-primary px-3 py-1" id="btnPelanggan">Pelanggan</button>
+                <button type="button" class="btn btn-outline-primary px-3 py-1" id="btnTeknisiAdmin">Teknisi/Admin</button>
+            </div>
+
+            <form id="loginForm">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="username" placeholder="Username" required>
+                </div>
+
+                <div class="mb-3">
+                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                </div>
+
+                <button type="submit" class="btn-login">Masuk</button>
+
+                <div class="text-center mt-3">
+                    Belum punya akun?
+                    <a href="{% url 'registrasi_pelanggan' %}">Daftar disini</a>
+                </div>
+            </form>
         </div>
 
-        <div id="alertMessage" class="alert"></div>
+        <div class="right-panel">
+            <h1>Selamat Datang</h1>
+            <p>Silakan masuk untuk mengakses layanan internet cepat dari NetFast. Kami siap memberikan kualitas terbaik.</p>
+        </div>
 
-        <form id="loginForm">
-            <div class="mb-3">
-                <input type="text" class="form-control" placeholder="Username" id="username" required>
-            </div>
-            <div class="mb-3">
-                <input type="password" class="form-control" placeholder="Password" id="password" required>
-            </div>
-
-            <button type="submit" class="btn btn-login w-100 mb-3">LOGIN</button>
-
-            <div class="footer-text">
-                Belum punya akun? <a href="{% url 'registrasi_pelanggan' %}">Buat Akun</a>
-            </div>
-        </form>
     </div>
-
-    <!-- Illustration dihapus -->
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 
     <script>
         let selectedRole = "Pelanggan";
 
-        // Tombol role toggle
-        document.getElementById('btnPelanggan').addEventListener('click', function() {
+        document.getElementById('btnPelanggan').classList.add('active');
+
+        document.getElementById('btnPelanggan').addEventListener('click', function () {
             selectedRole = "Pelanggan";
             this.classList.add('active');
             document.getElementById('btnTeknisiAdmin').classList.remove('active');
         });
 
-        document.getElementById('btnTeknisiAdmin').addEventListener('click', function() {
+        document.getElementById('btnTeknisiAdmin').addEventListener('click', function () {
             selectedRole = "TeknisiAdmin";
             this.classList.add('active');
             document.getElementById('btnPelanggan').classList.remove('active');
         });
 
-        // Ambil CSRF token
         function getCookie(name) {
             let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
+            if (document.cookie) {
                 const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
+                for (let cookie of cookies) {
+                    if (cookie.trim().startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.trim().substring(name.length + 1));
                     }
                 }
             }
@@ -214,21 +376,27 @@
             setTimeout(() => alertDiv.style.display = 'none', 3000);
         }
 
-        // Login ke server Django
+        window.addEventListener('load', () => {
+            const wrapper = document.getElementById('pageWrapper');
+            setTimeout(() => {
+                wrapper.classList.add('slide-in');
+            }, 0);
+        });
+
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
 
             if (!username || !password) {
-                showAlert('Isi semua kolom!', 'warning');
+                showAlert("Isi semua kolom!", "warning");
                 return;
             }
 
             try {
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
-                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken'),
@@ -239,19 +407,28 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showAlert('Login berhasil! Mengalihkan...', 'success');
-                    if (selectedRole === 'TeknisiAdmin') {
-                        window.location.href = '/admin/dashboard/';
-                    } else {
-                        window.location.href = '/user/dashboard/';
-                    }
+                    showAlert("Login berhasil! Mengalihkan...", "success");
+
+                    const wrapper = document.getElementById('pageWrapper');
+                    wrapper.classList.remove('slide-in');
+                    wrapper.classList.add('slide-out');
+
+                    setTimeout(() => {
+                        if (selectedRole === 'TeknisiAdmin') {
+                            window.location.href = '/admin/dashboard/';
+                        } else {
+                            window.location.href = '/user/dashboard/';
+                        }
+                    }, 1000);
                 } else {
-                    showAlert(data.error || 'Username atau password salah.');
+                    showAlert(data.error || "Username atau password salah.");
                 }
-            } catch (err) {
-                showAlert('Terjadi kesalahan koneksi ke server.');
+            } catch (error) {
+                showAlert("Terjadi kesalahan koneksi.");
             }
         });
     </script>
+
 </body>
+
 </html>

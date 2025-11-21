@@ -129,10 +129,6 @@
             padding: 12px 24px;
             transition: all 0.3s ease;
         }
-        #startSpeedTest:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-        }
 
         /* ==== RESPONSIVE ==== */
         @media (max-width: 992px) {
@@ -141,6 +137,26 @@
             }
             .navbar-brand span {
                 display: none;
+            }
+            .sidebar {
+                transform: translateX(-100%);
+                width: 230px;
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .topbar, .main-content {
+                margin-left: 0;
+            }
+            .hamburger {
+                display: block;
+                background: none;
+                border: none;
+                color: #444;
+                font-size: 20px;
+                margin-right: 15px;
+                cursor: pointer;
             }
         }
     </style>
@@ -387,6 +403,21 @@
             document.getElementById('progressFill').style.width = percent + '%';
             document.getElementById('testStatus').textContent = status;
         }
+
+        // Toggle sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const hamburger = document.querySelector('.hamburger');
+            if (window.innerWidth <= 992 && !sidebar.contains(event.target) && !hamburger.contains(event.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
     </script>
 </body>
 </html>
