@@ -95,7 +95,7 @@ class RiwayatTestingWifiSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiwayatTestingWifi
         fields = ['id_testing', 'id_langganan', 'nama_pelanggan', 'nama_paket',
-                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms']
+                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms', 'connection_type']
         read_only_fields = ['id_testing', 'waktu_testing']
 
 
