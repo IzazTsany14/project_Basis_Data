@@ -20,79 +20,42 @@
             overflow-x: hidden;
         }
 
-        /* ==== SIDEBAR ==== */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 230px;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            padding: 25px 15px;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            box-shadow: 5px 0 25px rgba(0,0,0,0.08);
-        }
-        .sidebar h4 {
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 40px;
-            letter-spacing: 1px;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            padding: 12px 18px;
-            margin: 8px 0;
-            display: flex;
-            align-items: center;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        .sidebar a i {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-        .sidebar a:hover,
-        .sidebar a.active {
-            background: rgba(255,255,255,0.2);
-        }
-
         /* ==== NAVBAR ==== */
-        .topbar {
-            background: #fff;
-            margin-left: 230px;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        .navbar {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        .topbar h5 {
-            margin: 0;
-            font-weight: 600;
-            color: #444;
+        .navbar-brand {
+            font-weight: 700;
+            color: #fff !important;
         }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
-        .user-info img {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 2px solid #667eea;
+        .navbar-nav .nav-link:hover {
+            color: #fff !important;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+        }
+        .navbar-nav .nav-link.active {
+            color: #fff !important;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+        }
+        .navbar-toggler {
+            border: none;
+        }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
         }
 
         /* ==== MAIN CONTENT ==== */
         .main-content {
-            margin-left: 230px;
-            padding: 30px;
-            transition: all 0.3s ease;
+            padding: 30px 15px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         /* ==== CARD ==== */
@@ -178,40 +141,118 @@
 
         /* ==== RESPONSIVE ==== */
         @media (max-width: 992px) {
-            .sidebar {
-                width: 70px;
-            }
-            .topbar, .main-content {
-                margin-left: 70px;
-            }
-            .sidebar a span {
-                display: none;
-            }
-            .sidebar h4 {
-                display: none;
+            .main-content {
+                padding: 20px 10px;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <h4>NetFast</h4>
-        <a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
-        <a href="{% url 'speed_test' %}"><i class="fas fa-bolt"></i> <span>Uji Kecepatan</span></a>
-        <a href="{% url 'packages' %}" class="active"><i class="fas fa-box"></i> <span>Paket Aktif</span></a>
-        <a href="{% url 'services_history' %}"><i class="fas fa-history"></i> <span>Riwayat Layanan</span></a>
-        <a href="{% url 'edit_profile' %}"><i class="fas fa-user-cog"></i> <span>Profil</span></a>
-        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Keluar</span></a>
-    </div>
+    <!-- NAVIGATION BAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="fas fa-wifi me-2"></i>NetFast
+            </a>
 
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <h5>Paket Internet</h5>
-        <div class="user-info">
-            <span>{{ user.nama }}</span>
-            <img src="{% static 'images/profile.jpg' %}" alt="User">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'speed_test' %}">
+                            <i class="fas fa-bolt me-1"></i>Uji Kecepatan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'packages' %}">
+                            <i class="fas fa-box me-1"></i>Paket Aktif
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'services_history' %}">
+                            <i class="fas fa-history me-1"></i>Riwayat Layanan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'speed_history' %}">
+                            <i class="fas fa-chart-line me-1"></i>Riwayat Uji
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ user.nama }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'edit_profile' %}">
+                                <i class="fas fa-user-edit me-2"></i>Edit Profil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2"></i>Keluar
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarLabel">Menu Navigasi</h5>
+            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'speed_test' %}">
+                        <i class="fas fa-bolt me-2"></i>Uji Kecepatan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'packages' %}">
+                        <i class="fas fa-box me-2"></i>Paket Aktif
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'services_history' %}">
+                        <i class="fas fa-history me-2"></i>Riwayat Layanan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'speed_history' %}">
+                        <i class="fas fa-chart-line me-2"></i>Riwayat Uji
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'edit_profile' %}">
+                        <i class="fas fa-user-edit me-2"></i>Edit Profil
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Keluar
+                    </a>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -410,7 +451,10 @@
                             </ul>
                             <div class="text-center mt-4">
                                 ${isActive ?
-                                    '<button class="btn btn-success w-100" disabled><i class="fas fa-check me-2"></i>Paket Aktif</button>' :
+                                    '<div class="btn-group w-100" role="group">' +
+                                        '<button class="btn btn-success" disabled><i class="fas fa-check me-2"></i>Paket Aktif</button>' +
+                                        '<button class="btn btn-danger" onclick="deletePackage()"><i class="fas fa-trash me-2"></i>Hapus</button>' +
+                                    '</div>' :
                                     `<button class="btn btn-primary w-100" onclick="changePackage(${pkg.id_paket})"><i class="fas fa-exchange-alt me-2"></i>Ganti Paket</button>`
                                 }
                             </div>
