@@ -1,5 +1,11 @@
 // NetFast - User Module Logic
+<<<<<<< HEAD
 const API_BASE_URL = 'http://localhost:8000/api';
+=======
+// Use same-origin base so frontend calls map to Django urlpatterns (no separate /api prefix)
+const API_BASE_URL = '';
+const userId = localStorage.getItem('userId');
+>>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
 
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', function() {

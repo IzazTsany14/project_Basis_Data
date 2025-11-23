@@ -110,6 +110,7 @@ def dashboard_pelanggan_view(request):
         'user': user_ctx,
         'subscription': subscription_ctx,
         'recent_services': recent_services,
+        'recent_tests': riwayat_test,
     }
     return render(request, 'user/dashboard.html', context)
 
@@ -348,6 +349,8 @@ def registrasi_pelanggan(request):
     serializer = PelangganRegistrasiSerializer(data=request.data)
     if serializer.is_valid():
         pelanggan = serializer.save()
+        # Create default subscription or handle as needed
+        # For now, just register the user
         return Response({
             'message': 'Registrasi berhasil',
             'pelanggan': PelangganSerializer(pelanggan).data
@@ -621,30 +624,12 @@ def speed_test_api(request):
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
         return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-        
-    # Get active subscription for speed comparison
-    try:
-        langganan = Langganan.objects.filter(
-            id_pelanggan=pelanggan_id,
-            status_langganan='AKTIF'
-        ).select_related('id_paket').latest('tanggal_mulai')
-        paket = langganan.id_paket
-    except Langganan.DoesNotExist:
-        return Response({'error': 'Tidak ada paket aktif'}, status=status.HTTP_400_BAD_REQUEST)
 
     if request.method == 'GET':
-        # Ambil langganan aktif
-        try:
-            langganan = Langganan.objects.filter(
-                id_pelanggan=pelanggan_id,
-                status_langganan='AKTIF'
-            ).latest('tanggal_mulai')
-        except Langganan.DoesNotExist:
-            return Response({'error': 'Tidak ada langganan aktif'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Ambil riwayat testing
+        # Ambil semua riwayat testing untuk pelanggan ini dari semua langganan
+        langganan_ids = Langganan.objects.filter(id_pelanggan=pelanggan_id).values_list('id_langganan', flat=True)
         riwayat = RiwayatTestingWifi.objects.filter(
-            id_langganan=langganan
+            id_langganan__in=langganan_ids
         ).order_by('-waktu_testing')[:10]  # 10 tes terakhir
 
         serializer = RiwayatTestingWifiSerializer(riwayat, many=True)
@@ -655,21 +640,56 @@ def speed_test_api(request):
         data = request.data
         if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
             return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+<<<<<<< HEAD
 
         # Validate speeds against package speed
         package_speed = paket.kecepatan_mbps
         measured_speed = float(data['download_speed_mbps'])
+=======
+>>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
 
         try:
-            # Ambil langganan aktif
-            langganan = Langganan.objects.filter(
-                id_pelanggan=pelanggan_id,
-                status_langganan='AKTIF'
-            ).latest('tanggal_mulai')
+            # Coba ambil langganan aktif jika ada (opsional)
+            langganan = None
+            try:
+                langganan = Langganan.objects.filter(
+                    id_pelanggan=pelanggan_id,
+                    status_langganan='AKTIF'
+                ).latest('tanggal_mulai')
 
-            # Simpan hasil tes
+                # Log perbandingan dengan paket jika ada langganan aktif
+                if langganan.id_paket:
+                    package_speed = langganan.id_paket.kecepatan_mbps
+                    measured_speed = float(data['download_speed_mbps'])
+                    print(f"Package speed: {package_speed} Mbps, Measured: {measured_speed} Mbps")
+
+            except Langganan.DoesNotExist:
+                # Tidak ada langganan aktif, tapi tetap izinkan tes kecepatan
+                print(f"No active subscription for pelanggan {pelanggan_id}, but allowing speed test anyway")
+
+            # Deteksi tipe koneksi
+            connection_type = data.get('connection_type', 'Unknown')
+            if not connection_type or connection_type == 'Unknown':
+                # Coba deteksi otomatis berdasarkan kecepatan
+                download_speed = float(data['download_speed_mbps'])
+                if download_speed >= 100:
+                    connection_type = 'Fiber Optic'
+                elif download_speed >= 50:
+                    connection_type = 'Cable Broadband'
+                elif download_speed >= 25:
+                    connection_type = 'DSL'
+                elif download_speed >= 10:
+                    connection_type = 'Mobile Data'
+                else:
+                    connection_type = 'Slow Connection'
+
+            # Simpan hasil tes ke database (id_langganan bisa null)
             test = RiwayatTestingWifi.objects.create(
+<<<<<<< HEAD
                 id_langganan=langganan,
+=======
+                id_langganan=langganan,  # Bisa None jika tidak ada langganan aktif
+>>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
                 download_speed_mbps=float(data['download_speed_mbps']),
                 upload_speed_mbps=float(data['upload_speed_mbps']),
                 ping_ms=int(data['ping_ms']),
@@ -678,16 +698,14 @@ def speed_test_api(request):
 
             serializer = RiwayatTestingWifiSerializer(test)
             return Response({
-                'message': 'Speed test berhasil disimpan',
+                'message': 'Speed test berhasil disimpan ke riwayat',
                 'test': serializer.data
             }, status=status.HTTP_201_CREATED)
 
-        except Langganan.DoesNotExist:
-            return Response({'error': 'Tidak ada langganan aktif'}, status=status.HTTP_400_BAD_REQUEST)
         except (ValueError, TypeError):
-            return Response({'error': 'Format data tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Format data speed test tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Gagal menyimpan speed test: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def user_riwayat_testing(request):
@@ -857,6 +875,36 @@ def package_api(request):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+def delete_package_api(request):
+    """
+    POST: Hapus paket aktif (nonaktifkan langganan)
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        # Nonaktifkan langganan aktif
+        updated_count = Langganan.objects.filter(
+            id_pelanggan=pelanggan_id,
+            status_langganan='AKTIF'
+        ).update(
+            status_langganan='NONAKTIF',
+            tanggal_akhir=date.today()
+        )
+
+        if updated_count == 0:
+            return Response({'error': 'Tidak ada paket aktif yang dapat dihapus'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'message': 'Paket berhasil dihapus',
+            'updated_count': updated_count
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(['GET'])
 def services_list_api(request):
     """API endpoint to get user's service history"""
@@ -874,6 +922,49 @@ def services_list_api(request):
             'services': serializer.data
         }, status=status.HTTP_200_OK)
     except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+def ping_test_api(request):
+    """
+    Endpoint for ping testing
+    """
+    import time
+    import urllib.request
+    start = time.time()
+    try:
+        # Use urllib to make a simple HTTP request
+        req = urllib.request.Request('https://www.google.com', headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            end = time.time()
+            ping_ms = int((end - start) * 1000)
+            return Response({'ping_ms': ping_ms}, status=status.HTTP_200_OK)
+    except Exception as e:
+        # Fallback ping value if request fails
+        return Response({'ping_ms': 50}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def speed_test_upload(request):
+    """
+    Endpoint for upload speed testing
+    """
+    try:
+        # Validate that we received data
+        if not request.body:
+            return Response({'error': 'No data received'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Log upload details for debugging
+        upload_size = len(request.body)
+        print(f"Upload test received: {upload_size} bytes")
+
+        # Return success response with timing info
+        return Response({
+            'message': 'Upload received',
+            'bytes_received': upload_size,
+            'timestamp': datetime.now().isoformat()
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"Upload test error: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
@@ -912,6 +1003,7 @@ def admin_dashboard_stats(request):
         'pemesanan_menunggu': pemesanan_baru,  # Changed to all orders
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
+<<<<<<< HEAD
 
 
 
@@ -1154,3 +1246,5 @@ def admin_pelanggan(request, id_pelanggan=None):
 
 
 
+=======
+>>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f

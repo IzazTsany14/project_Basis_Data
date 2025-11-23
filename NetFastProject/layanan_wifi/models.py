@@ -74,6 +74,7 @@ class Pelanggan(models.Model):
     alamat_pemasangan = models.TextField()
     no_telepon = models.CharField(max_length=15, blank=True, null=True)
     tanggal_daftar = models.DateField(blank=True, null=True, auto_now_add=True)
+    id_area_layanan = models.ForeignKey(AreaLayanan, models.DO_NOTHING, db_column='id_area_layanan', blank=True, null=True)
 
     class Meta:
         managed = False

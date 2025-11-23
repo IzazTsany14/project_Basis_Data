@@ -190,6 +190,11 @@ async function loadJenisJasa() {
             
             if (data.services) {
                 data.services.forEach(service => {
+                    // Skip services related to location change
+                    if (service.nama_jasa && (service.nama_jasa.toLowerCase().includes('lokasi') ||
+                        service.nama_jasa.toLowerCase().includes('pindah'))) {
+                        return;
+                    }
                     const option = document.createElement('option');
                     option.value = service.id;
                     option.textContent = `${service.nama_jasa} - ${formatCurrency(service.harga)}`;
@@ -363,7 +368,7 @@ async function loadOrderDetail(orderId) {
                         <div><strong>Status:</strong> <span class="status-badge ${getStatusClass(order.status_pemesanan)}">${order.status_pemesanan}</span></div>
                         <div><strong>Tanggal Pesanan:</strong> ${formatDate(order.tanggal_pesanan)}</div>
                         <div><strong>Jadwal Layanan:</strong> ${formatDate(order.tanggal_jadwal)} ${order.waktu_jadwal || ''}</div>
-                        <div><strong>Alamat:</strong> ${order.alamat_layanan}</div>
+
                         <div><strong>Teknisi:</strong> ${order.teknisi_nama || 'Belum ditugaskan'}</div>
                         <div><strong>Kontak Darurat:</strong> ${order.kontak_darurat || '-'}</div>
                         <div><strong>Catatan:</strong> ${order.catatan || 'Tidak ada catatan'}</div>
