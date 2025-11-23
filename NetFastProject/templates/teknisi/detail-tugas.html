@@ -511,30 +511,30 @@
         // Toggle sidebar untuk mobile
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
             sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
         }
 
         // Close sidebar saat klik di luar (mobile)
-        document.addEventListener('click', function(event) {
+        function closeSidebar() {
             const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-toggle');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
 
-            if (window.innerWidth <= 768 &&
-                !sidebar.contains(event.target) &&
-                !toggle.contains(event.target) &&
-                sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
+        // Navigation function
+        function navigateTo(page) {
+            if (page === 'dashboard') {
+                window.location.href = '/teknisi/dashboard/';
+            } else if (page === 'tasks') {
+                // Already on tasks page
+            } else if (page === 'profile') {
+                // Navigate to profile page if exists
+                alert('Halaman profil sedang dalam pengembangan');
             }
-        });
-
-        // Sidebar icon click handler
-        document.querySelectorAll('.sidebar-icon').forEach(icon => {
-            icon.addEventListener('click', function() {
-                if (this.classList.contains('icon-logout') || this.classList.contains('icon-dashboard')) return;
-                document.querySelectorAll('.sidebar-icon').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        }
 
         // Fungsi logout
         function logout() {
@@ -701,6 +701,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadTaskDetail();
             loadDeviceTypes();
+
+            // Set active navigation on load
+            navigateTo('tasks');
         });
     </script>
 </body>

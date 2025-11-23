@@ -8,21 +8,15 @@ urlpatterns = [
     # Authentication
     path('auth/login/', views.login, name='login'),
     path('auth/logout/', views.logout, name='logout'),
-<<<<<<< HEAD
-    
+
     # Generic Dashboard Redirect
     path('dashboard/', views.dashboard_redirect_view, name='dashboard'), # New generic dashboard
 
     # Dashboard dan Halaman User
     path('user/dashboard/', views.dashboard_pelanggan_view, name='user_dashboard'), # Renamed from 'dashboard'
     path('user/dashboard/', views.dashboard_pelanggan_view, name='user_index'),
-    
-    # User pages
-=======
 
-    # User Views
-    path('user/dashboard/', views.dashboard_pelanggan_view, name='dashboard'),
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
+    # User pages
     path('user/speed-test/', views.speed_test_view, name='speed_test'),
     path('user/speed-history/', views.speed_history_view, name='speed_history'),
     path('user/packages/', views.packages_view, name='packages'),
@@ -53,9 +47,8 @@ urlpatterns = [
 
     # Teknisi Endpoints
     path('teknisi/tugas/', views.teknisi_tugas, name='teknisi_tugas'),
-<<<<<<< HEAD
     path('teknisi/pemesanan/<int:id_pemesanan>/update/', views.teknisi_update_status, name='teknisi_update'),
-    
+
     # Admin Routes
     path('admin/penugasan/', views.admin_tugaskan_teknisi, name='admin_penugasan'),
 
@@ -92,14 +85,3 @@ urlpatterns = [
     path('teknisi/dashboard/', views.teknisi_dashboard_view, name='teknisi_dashboard'),
     path('teknisi/detail-tugas/', views.teknisi_detail_tugas_view, name='teknisi_detail_tugas'),
 ]
-=======
-    path('teknisi/update-status/<int:id_pemesanan>/', views.teknisi_update_status, name='teknisi_update_status'),
-
-    # Legacy/Compatibility
-    path('api/user/dashboard/', views.user_dashboard, name='user_dashboard'),
-    path('api/user/langganan/', views.user_langganan, name='user_langganan'),
-    path('api/save-speed-test/', views.save_speed_test, name='save_speed_test'),
-    path('api/registrasi/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
-    path('api/admin/dashboard-stats/', views.admin_dashboard_stats, name='admin_dashboard_stats'),
-]
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
