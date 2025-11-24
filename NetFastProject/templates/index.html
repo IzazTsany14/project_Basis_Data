@@ -315,7 +315,7 @@
 
             <form id="loginForm">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="username" placeholder="Username" required>
+                    <input type="text" class="form-control" id="login_id" placeholder="Email atau Username" required>
                 </div>
 
                 <div class="mb-3">
@@ -349,54 +349,19 @@
             document.getElementById('btnTeknisiAdmin').classList.remove('active');
         });
 
-        document.getElementById('btnTeknisiAdmin').addEventListener('click', function () {
-            selectedRole = "TeknisiAdmin";
-            this.classList.add('active');
-            document.getElementById('btnPelanggan').classList.remove('active');
-        });
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie) {
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    if (cookie.trim().startsWith(name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.trim().substring(name.length + 1));
-                    }
-                }
-            }
-            return cookieValue;
-        }
-
-        function showAlert(message, type = 'danger') {
-            const alertDiv = document.getElementById('alertMessage');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
-            alertDiv.style.display = 'block';
-            setTimeout(() => alertDiv.style.display = 'none', 3000);
-        }
-
-        window.addEventListener('load', () => {
-            const wrapper = document.getElementById('pageWrapper');
-            setTimeout(() => {
-                wrapper.classList.add('slide-in');
-            }, 0);
-        });
-
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value.trim();
+            selectedRole = "TeknisiAdmin";
+            const loginId = document.getElementById('login_id').value.trim();
             const password = document.getElementById('password').value.trim();
 
-            if (!username || !password) {
+            if (!loginId || !password) {
                 showAlert("Isi semua kolom!", "warning");
                 return;
             }
 
             try {
                 const formData = new FormData();
-                formData.append('username', username);
+                formData.append('login_id', loginId);
                 formData.append('password', password);
 
                 const response = await fetch('/auth/login/', {
@@ -417,57 +382,21 @@
                     wrapper.classList.add('slide-out');
 
                     setTimeout(() => {
-                        if (data.user.role === 'admin') {
+                        if (data.user && data.user.role === 'admin') {
                             window.location.href = '/admin/dashboard/';
-                        } else if (data.user.role === 'teknisi') {
+                        } else if (data.user && data.user.role === 'teknisi') {
                             window.location.href = '/teknisi/dashboard/';
                         } else {
                             window.location.href = '/user/dashboard/';
                         }
-                    }, 1000);
+                    }, 800);
                 } else {
-=======
-                if (response.ok) {
-                    showAlert("Login berhasil! Mengalihkan...", "success");
-
-                    const wrapper = document.getElementById('pageWrapper');
-                    wrapper.classList.remove('slide-in');
-                    wrapper.classList.add('slide-out');
-
-                    setTimeout(() => {
-                        if (data.user.role === 'admin') {
-                            window.location.href = '/admin/dashboard/';
-                        } else if (data.user.role === 'teknisi') {
-                            window.location.href = '/teknisi/dashboard/';
-                        } else {
-                            window.location.href = '/user/dashboard/';
-                        }
-                    }, 1000);
-                } else {
-=======
-                    showAlert("Login berhasil! Mengalihkan...", "success");
-
-                    const wrapper = document.getElementById('pageWrapper');
-                    wrapper.classList.remove('slide-in');
-                    wrapper.classList.add('slide-out');
-
-                    setTimeout(() => {
-                        if (selectedRole === 'TeknisiAdmin') {
-                            window.location.href = '/admin/dashboard/';
-                        } else {
-                            window.location.href = '/user/dashboard/';
-                        }
-                    }, 1000);
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
-                } else {
-                    showAlert(data.error || "Username atau password salah.");
+                    showAlert(data.error || data.detail || "Username atau password salah.");
                 }
             } catch (error) {
                 showAlert("Terjadi kesalahan koneksi.");
             }
         });
     </script>
-
 </body>
-
 </html>

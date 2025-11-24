@@ -16,8 +16,8 @@ class PelangganAdmin(admin.ModelAdmin):
 
 @admin.register(Teknisi)
 class TeknisiAdmin(admin.ModelAdmin):
-    list_display = ('id_teknisi', 'nama_teknisi', 'username', 'role_akses', 'no_telepon', 'id_area_layanan')
-    search_fields = ('nama_teknisi', 'username')
+    list_display = ('id_teknisi', 'nama_teknisi', 'role_akses', 'no_telepon', 'id_area_layanan')
+    search_fields = ('nama_teknisi', 'email')
     list_filter = ('role_akses', 'id_area_layanan')
 
 @admin.register(PaketLayanan)

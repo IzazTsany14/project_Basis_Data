@@ -92,7 +92,7 @@ class Pelanggan(models.Model):
 class Teknisi(models.Model):
     id_teknisi = models.AutoField(primary_key=True)
     nama_teknisi = models.CharField(max_length=100)
-    username = models.CharField(unique=True, max_length=50)
+    email = models.CharField(unique=True, max_length=100, blank=True, null=True)
     password_hash = models.CharField(max_length=255)
     role_akses = models.CharField(max_length=7)
     no_telepon = models.CharField(max_length=15, blank=True, null=True)

@@ -421,7 +421,7 @@
             };
 
             try {
-                const res = await fetch("/auth/registrasi/", {
+                const res = await fetch("/register/", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -438,7 +438,7 @@
                 showAlert("✔ Registrasi berhasil! Mengalihkan ke halaman login...", "success");
 
                 setTimeout(() => {
-                    window.location.href = "{% url 'login' %}";
+                    window.location.href = "{% url 'login_page' %}";
                 }, 2000);
 
             } catch (err) {

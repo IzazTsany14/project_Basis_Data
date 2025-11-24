@@ -54,7 +54,7 @@ def dashboard_redirect_view(request):
         return redirect('user_dashboard') # Assuming 'user_dashboard' is the name for pelanggan dashboard
     else:
         # Fallback if role is not recognized or not set
-        return redirect('login')
+        return redirect('login_page')
 
 def dashboard_pelanggan_view(request):
     print("Dashboard view called")
@@ -63,12 +63,12 @@ def dashboard_pelanggan_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
 
     try:
         pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
     except Pelanggan.DoesNotExist:
-        return redirect('login')
+        return redirect('login_page')
 
     langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
     riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
@@ -147,7 +147,7 @@ def speed_test_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
     return render(request, 'user/speed-test.html')
 
 def edit_profile_view(request):
@@ -156,7 +156,7 @@ def edit_profile_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
     
     try:
         pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
@@ -179,7 +179,7 @@ def packages_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
 
     try:
         # Ambil paket aktif pelanggan
@@ -212,7 +212,7 @@ def speed_history_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
     return render(request, 'user/speed-history.html')
 
 # --- Sisa Kode (API Views, dll) ---
@@ -640,13 +640,10 @@ def speed_test_api(request):
         data = request.data
         if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
             return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
-<<<<<<< HEAD
 
         # Validate speeds against package speed
         package_speed = paket.kecepatan_mbps
         measured_speed = float(data['download_speed_mbps'])
-=======
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
 
         try:
             # Coba ambil langganan aktif jika ada (opsional)
@@ -685,11 +682,7 @@ def speed_test_api(request):
 
             # Simpan hasil tes ke database (id_langganan bisa null)
             test = RiwayatTestingWifi.objects.create(
-<<<<<<< HEAD
-                id_langganan=langganan,
-=======
                 id_langganan=langganan,  # Bisa None jika tidak ada langganan aktif
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
                 download_speed_mbps=float(data['download_speed_mbps']),
                 upload_speed_mbps=float(data['upload_speed_mbps']),
                 ping_ms=int(data['ping_ms']),
@@ -1003,11 +996,6 @@ def admin_dashboard_stats(request):
         'pemesanan_menunggu': pemesanan_baru,  # Changed to all orders
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
-<<<<<<< HEAD
-
-
-
-
 
 @api_view(['GET'])
 def admin_dashboard_chart(request):
@@ -1240,11 +1228,3 @@ def admin_pelanggan(request, id_pelanggan=None):
             return Response({'message': 'Pelanggan berhasil dihapus'}, status=status.HTTP_200_OK)
         except Pelanggan.DoesNotExist:
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
-
-
-
-
-
-
-=======
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f

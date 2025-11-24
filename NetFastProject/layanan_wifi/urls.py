@@ -14,7 +14,6 @@ urlpatterns = [
 
     # Dashboard dan Halaman User
     path('user/dashboard/', views.dashboard_pelanggan_view, name='user_dashboard'), # Renamed from 'dashboard'
-    path('user/dashboard/', views.dashboard_pelanggan_view, name='user_index'),
 
     # User pages
     path('user/speed-test/', views.speed_test_view, name='speed_test'),
@@ -37,6 +36,9 @@ urlpatterns = [
 
     # User Pemesanan
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
+
+    # Registrasi Pelanggan (halaman & API)
+    path('register/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
 
     # Admin Endpoints
     path('admin/pemesanan-menunggu/', views.admin_pemesanan_menunggu, name='admin_pemesanan_menunggu'),
