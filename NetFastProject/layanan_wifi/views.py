@@ -222,17 +222,20 @@ def speed_history_view(request):
 def login(request):
     from rest_framework.parsers import FormParser, MultiPartParser
     request.parsers = [FormParser(), MultiPartParser()]
-    # Accept {login_id, password}
-    data = request.POST
-    password = data.get('password')
-    login_id = data.get('login_id') or data.get('email') or data.get('username')
+    # Accept JSON body (request.data) or form-encoded (request.POST)
+    data = getattr(request, 'data', None) or request.POST
+    # request.data for DRF contains parsed JSON when Content-Type=application/json
+    password = (data.get('password') or '').strip()
+    login_id = (data.get('login_id') or data.get('email') or data.get('username') or '').strip()
 
     if not login_id or not password:
         return JsonResponse({'error': 'login_id dan password diperlukan'}, status=400)
 
-    # Try Admin first (by username, role_akses = 'admin')
+    # Try Admin first (by username or email, role_akses = 'admin')
     try:
-        admin_user = Teknisi.objects.get(username=login_id, role_akses='admin')
+        tek_fields = [f.name for f in Teknisi._meta.get_fields()]
+        tek_lookup = 'username' if 'username' in tek_fields else 'email'
+        admin_user = Teknisi.objects.get(**{f"{tek_lookup}__iexact": login_id, 'role_akses': 'admin'})
         if admin_user.check_password(password):
             request.session['teknisi_id'] = admin_user.id_teknisi
             request.session['user_role'] = 'admin'
@@ -257,9 +260,11 @@ def login(request):
     except Teknisi.DoesNotExist:
         pass
 
-    # Try Teknisi (by username, exclude admin)
+    # Try Teknisi (by username or email, exclude admin)
     try:
-        teknisi = Teknisi.objects.exclude(role_akses='admin').get(username=login_id)
+        tek_fields = [f.name for f in Teknisi._meta.get_fields()]
+        tek_lookup = 'username' if 'username' in tek_fields else 'email'
+        teknisi = Teknisi.objects.exclude(role_akses='admin').get(**{f"{tek_lookup}__iexact": login_id})
         if teknisi.check_password(password):
             request.session['teknisi_id'] = teknisi.id_teknisi
             request.session['user_role'] = 'teknisi'
@@ -284,9 +289,13 @@ def login(request):
     except Teknisi.DoesNotExist:
         pass
 
-    # Try Pelanggan (by email)
+    # Try Pelanggan (by email or username)
     try:
-        pelanggan = Pelanggan.objects.get(email=login_id)
+        pel_fields = [f.name for f in Pelanggan._meta.get_fields()]
+        pel_lookup = 'email' if 'email' in pel_fields else ('username' if 'username' in pel_fields else None)
+        if not pel_lookup:
+            raise Pelanggan.DoesNotExist
+        pelanggan = Pelanggan.objects.get(**{f"{pel_lookup}__iexact": login_id})
         # Normal Django-hashed password
         if pelanggan.check_password(password):
             request.session['pelanggan_id'] = pelanggan.id_pelanggan
