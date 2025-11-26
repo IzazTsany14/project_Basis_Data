@@ -33,6 +33,8 @@ def login_page(request):
         return redirect('dashboard') # Redirect to the generic dashboard dispatcher
     return render(request, 'index.html')
 
+@api_view(['POST'])
+@csrf_exempt
 def logout(request):
     # Clear custom session flags and Django auth
     request.session.flush() # More thorough than popping individual keys
@@ -41,7 +43,7 @@ def logout(request):
     except Exception:
         pass
     # Return a simple JSON response so frontend can react
-    return Response({'message': 'Logged out'}, status=status.HTTP_200_OK)
+    return JsonResponse({'message': 'Logged out'}, status=200)
     
 def dashboard_redirect_view(request):
     user_role = request.session.get('user_role')
@@ -275,7 +277,7 @@ def login(request):
         except Pelanggan.DoesNotExist:
             pass
 
-        # Try Admin (by username only, role_akses = 'Admin')
+        # Try Admin (by username, role_akses = 'Admin')
         try:
             admin_user = Teknisi.objects.get(username__iexact=login_id, role_akses='Admin')
             if admin_user.check_password(password):
@@ -302,7 +304,7 @@ def login(request):
         except Teknisi.DoesNotExist:
             pass
 
-        # Try Teknisi (by username only, exclude admin)
+        # Try Teknisi (by username, exclude admin)
         try:
             teknisi = Teknisi.objects.exclude(role_akses='Admin').get(username__iexact=login_id)
             if teknisi.check_password(password):
