@@ -1,0 +1,234 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profil Teknisi - NetFast</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="{% static 'css/teknisi.css' %}" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="sidebar-item" onclick="navigateTo('dashboard')">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('tasks')">
+            <i class="fas fa-tasks"></i>
+            <span>Tugas Saya</span>
+        </div>
+        <div class="sidebar-item active" onclick="navigateTo('profile')">
+            <i class="fas fa-user"></i>
+            <span>Profil</span>
+        </div>
+        <div class="sidebar-item" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="/teknisi/dashboard/" class="bottom-nav-item" onclick="navigateTo('dashboard'); return false;">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/teknisi/detail-tugas/" class="bottom-nav-item" onclick="navigateTo('tasks'); return false;">
+            <i class="fas fa-tasks"></i>
+            <span>Tugas</span>
+        </a>
+        <a href="/teknisi/edit-profile/" class="bottom-nav-item active" onclick="navigateTo('profile'); return false;">
+            <i class="fas fa-user"></i>
+            <span>Profil</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Welcome Header -->
+        <div class="welcome-header">
+            <h1>Edit Profil Teknisi</h1>
+            <p>Kelola informasi pribadi Anda.</p>
+        </div>
+
+        <!-- Edit Profile Form -->
+        <div class="edit-profile-container" style="max-width: 600px; margin: 0 auto;">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-user-edit"></i>
+                    <h3>Informasi Pribadi</h3>
+                </div>
+                <div class="card-content">
+                    <form id="editProfileForm">
+                        <div class="mb-3">
+                            <label for="nama" class="form-label">Nama Lengkap</label>
+                            <input type="text" class="form-control" id="nama" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" readonly>
+                            <small class="text-muted">Username tidak dapat diubah</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="area" class="form-label">Area Layanan</label>
+                            <input type="text" class="form-control" id="area" readonly>
+                            <small class="text-muted">Hubungi admin untuk mengubah area layanan</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="noTelepon" class="form-label">Nomor Telepon</label>
+                            <input type="tel" class="form-control" id="noTelepon">
+                        </div>
+                        <div class="mb-3">
+                            <label for="alamat" class="form-label">Alamat</label>
+                            <textarea class="form-control" id="alamat" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Ubah Password (Opsional)</label>
+                            <input type="password" class="form-control" id="password" placeholder="Biarkan kosong jika tidak ingin mengubah">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Konfirmasi Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" placeholder="Biarkan kosong jika tidak ingin mengubah">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save"></i> Simpan Perubahan
+                        </button>
+                        <button type="button" class="btn btn-secondary w-100 mt-2" onclick="navigateTo('dashboard')">
+                            <i class="fas fa-times"></i> Batal
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 NetFast - Sistem Manajemen Layanan Internet</p>
+        </footer>
+    </div>
+
+    <script src="{% static 'js/teknisi.js' %}"></script>
+    <script>
+        // Load profile data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfileData();
+        });
+
+        function loadProfileData() {
+            fetch('/api/teknisi/profile/', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('nama').value = data.nama || '';
+                    document.getElementById('username').value = data.username || '';
+                    document.getElementById('area').value = data.area_layanan || '';
+                    document.getElementById('noTelepon').value = data.no_telepon || '';
+                    document.getElementById('alamat').value = data.alamat || '';
+                }
+            })
+            .catch(err => console.error('Error loading profile:', err));
+        }
+
+        // Handle form submission
+        document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nama = document.getElementById('nama').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const noTelepon = document.getElementById('noTelepon').value;
+            const alamat = document.getElementById('alamat').value;
+
+            if (password !== confirmPassword) {
+                alert('Password tidak cocok!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('nama', nama);
+            formData.append('no_telepon', noTelepon);
+            formData.append('alamat', alamat);
+            if (password) {
+                formData.append('password', password);
+            }
+
+            fetch('/api/teknisi/profile/', {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Profil berhasil diperbarui!');
+                    navigateTo('dashboard');
+                } else {
+                    alert('Error: ' + (data.message || 'Gagal memperbarui profil'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Terjadi kesalahan saat memperbarui profil');
+            });
+        });
+
+        // Navigation function
+        function navigateTo(page) {
+            switch(page) {
+                case 'dashboard':
+                    window.location.href = '/teknisi/dashboard/';
+                    break;
+                case 'tasks':
+                    window.location.href = '/teknisi/detail-tugas/';
+                    break;
+                case 'profile':
+                    window.location.href = '/teknisi/edit-profile/';
+                    break;
+                default:
+                    window.location.href = '/teknisi/dashboard/';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            fetch('/auth/logout/', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => {
+                window.location.href = '/';
+            }).catch(err => console.error('Logout error:', err));
+        }
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
