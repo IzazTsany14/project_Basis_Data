@@ -281,7 +281,7 @@
 
                 const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
                 const address = order.id_pelanggan?.alamat_pemasangan || 'N/A';
-                const serviceType = order.id_jenis_jasa?.nama_jasa || 'N/A';
+                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
                 const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
                 const scheduleDate = order.tanggal_jadwal ? new Date(order.tanggal_jadwal).toLocaleDateString('id-ID') : 'Belum dijadwalkan';
 
@@ -341,7 +341,7 @@
 
                 const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
                 const technicianName = order.id_teknisi?.nama_teknisi || 'Belum ditugaskan';
-                const serviceType = order.id_jenis_jasa?.nama_jasa || 'N/A';
+                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
                 const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
                 const scheduleDate = order.tanggal_jadwal ? new Date(order.tanggal_jadwal).toLocaleDateString('id-ID') : 'Belum dijadwalkan';
 

@@ -18,74 +18,33 @@
             font-family: 'Poppins', sans-serif;
             color: #333;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        /* ==== TOPBAR ==== */
-        .topbar {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* ==== NAVBAR ==== */
+        .navbar {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
-        .topbar h5 {
-            margin: 0;
-            font-weight: 600;
+        .navbar-brand {
+            font-weight: 700;
+            color: #fff !important;
         }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-info img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-
-        /* ==== SIDEBAR ==== */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 230px;
-            background: #fff;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            transform: translateX(0);
-            transition: transform 0.3s ease;
-        }
-        .sidebar .navbar-nav {
-            padding: 20px;
-        }
-        .sidebar .nav-link {
-            color: #333 !important;
+        .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.9) !important;
             font-weight: 500;
-            padding: 12px 15px;
-            margin-bottom: 5px;
-            border-radius: 8px;
             transition: all 0.3s ease;
         }
-        .sidebar .nav-link:hover {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea !important;
-        }
-        .sidebar .nav-link.active {
-            background: #667eea;
+        .navbar-nav .nav-link:hover {
             color: #fff !important;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
         }
 
         /* ==== MAIN CONTENT ==== */
         .main-content {
-            margin-left: 230px;
             padding: 30px 15px;
-            max-width: calc(100% - 230px);
-            margin-top: 0;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         /* ==== CARD ==== */
@@ -273,46 +232,32 @@
         }
 
         /* ==== RESPONSIVE ==== */
-        @media (max-width: 992px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 230px;
-                transition: transform 0.3s ease;
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px 10px;
             }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .topbar, .main-content {
-                margin-left: 0;
-            }
-            .hamburger {
-                display: block;
-                background: none;
-                border: none;
-                color: #444;
-                font-size: 20px;
-                margin-right: 15px;
-                cursor: pointer;
-            }
-            .chart-container {
-                height: 300px;
+            .card-title {
+                font-size: 16px;
             }
         }
     </style>
 </head>
 
 <body>
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <nav class="navbar">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">
-                    <i class="fas fa-wifi me-2"></i>NetFast
-                </a>
-                <ul class="navbar-nav">
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-wifi me-2"></i>NetFast
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                        <a class="nav-link active" href="{% url 'user_dashboard' %}">
+                            <i class="fas fa-chart-line me-2"></i>Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
@@ -326,7 +271,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'services' %}">
+                        <a class="nav-link" href="{% url 'user_pemesanan' %}">
                             <i class="fas fa-tools me-2"></i>Jasa
                         </a>
                     </li>
@@ -341,24 +286,19 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="logout()">
+                        <a class="nav-link" href="{% url 'edit_profile' %}">
+                            <i class="fas fa-user me-2"></i>Profil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout(); return false;">
                             <i class="fas fa-sign-out-alt me-2"></i>Keluar
                         </a>
                     </li>
                 </ul>
             </div>
-        </nav>
-    </div>
-
-    <!-- TOPBAR -->
-    <div class="topbar">
-        <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-        <h5>Selamat datang di Dashboard NetFast</h5>
-        <div class="user-info">
-            <span>{{ user.nama }}</span>
-            <img src="{% static 'images/profile.jpg' %}" alt="User">
         </div>
-    </div>
+    </nav>
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
@@ -366,7 +306,7 @@
         <div class="row g-4 mt-4">
             <!-- Uji Kecepatan Section -->
             <div class="col-lg-6">
-                <div class="card card-gradient" onclick="window.location.href='{% url 'speed_test' %}'" style="cursor: pointer;">
+                <div class="card card-gradient" onclick="navigateTo('speed_test')" style="cursor: pointer;">
                     <div class="card-body">
                         <h5 class="card-title">Uji Kecepatan Internet</h5>
                         <p class="text-white-50 mb-3">Lakukan tes kecepatan koneksi secara langsung</p>
@@ -401,7 +341,7 @@
 
             <!-- Paket Aktif Section -->
             <div class="col-lg-6">
-                <div class="card" onclick="window.location.href='{% url 'packages' %}'" style="cursor: pointer;">
+                <div class="card" onclick="navigateTo('packages')" style="cursor: pointer;">
                     <div class="card-body">
                         <h5 class="card-title">Paket Internet Aktif</h5>
                         <div id="currentPackageCard">
@@ -420,7 +360,7 @@
         <!-- Riwayat Uji dengan Grafik -->
         <div class="row g-4 mt-4">
             <div class="col-12">
-                <div class="card" onclick="window.location.href='{% url 'speed_history' %}'" style="cursor: pointer;">
+                <div class="card" onclick="navigateTo('speed_history')" style="cursor: pointer;">
                     <div class="card-body">
                         <h5 class="card-title">Riwayat Uji Kecepatan</h5>
                         <p class="text-muted mb-3">Grafik performa koneksi internet dari waktu ke waktu</p>
@@ -435,7 +375,7 @@
         <!-- Recent Activity -->
         <div class="row g-4 mt-4">
             <div class="col-lg-6">
-                <div class="card" onclick="window.location.href='{% url 'services_history' %}'" style="cursor: pointer;">
+                <div class="card" onclick="navigateTo('services_history')" style="cursor: pointer;">
                     <div class="card-body">
                         <h5 class="card-title">Riwayat Layanan Terakhir</h5>
                         <p class="text-muted mb-3">Aktivitas pemesanan jasa terbaru</p>
@@ -469,7 +409,7 @@
             </div>
 
             <div class="col-lg-6">
-                <div class="card" onclick="window.location.href='{% url 'speed_history' %}'" style="cursor: pointer;">
+                <div class="card" onclick="navigateTo('speed_history')" style="cursor: pointer;">
                     <div class="card-body">
                         <h5 class="card-title">Riwayat Uji Kecepatan Terakhir</h5>
                         <p class="text-muted mb-3">Hasil uji kecepatan terbaru</p>
@@ -852,11 +792,7 @@
             renderChart();
         });
 
-        // Toggle sidebar for mobile
-        function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            sidebar.classList.toggle('open');
-        }
+        // Sidebar removed — no toggle needed
     </script>
 </body>
 </html>

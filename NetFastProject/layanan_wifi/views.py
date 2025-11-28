@@ -230,6 +230,15 @@ def services_history_view(request):
         return redirect('login')
     return render(request, 'user/services-history.html')
 
+def service_detail_view(request, service_id):
+    """Render halaman detail layanan untuk pelanggan.
+    Template: templates/user/service-detail.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+    return render(request, 'user/service-detail.html')
+
 
 def speed_history_view(request):
     """Render halaman riwayat uji kecepatan (grafik) untuk pelanggan.
@@ -567,7 +576,8 @@ def admin_tugaskan_teknisi(request):
 @api_view(['GET'])
 def admin_list_teknisi(request):
     # Mengganti admin_teknisi_tersedia karena tidak ada status ketersediaan
-    teknisi = Teknisi.objects.all().order_by('nama_teknisi')
+    # Filter: hanya tampilkan Teknisi, exclude Admin role
+    teknisi = Teknisi.objects.exclude(role_akses__iexact='admin').order_by('nama_teknisi')
     serializer = TeknisiSerializer(teknisi, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -665,13 +675,6 @@ def speed_test_api(request):
         data = request.data
         if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
             return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
-<<<<<<< HEAD
-
-        # Validate speeds against package speed
-        package_speed = paket.kecepatan_mbps
-        measured_speed = float(data['download_speed_mbps'])
-=======
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
 
         try:
             # Coba ambil langganan aktif jika ada (opsional)
@@ -710,11 +713,7 @@ def speed_test_api(request):
 
             # Simpan hasil tes ke database (id_langganan bisa null)
             test = RiwayatTestingWifi.objects.create(
-<<<<<<< HEAD
-                id_langganan=langganan,
-=======
                 id_langganan=langganan,  # Bisa None jika tidak ada langganan aktif
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
                 download_speed_mbps=float(data['download_speed_mbps']),
                 upload_speed_mbps=float(data['upload_speed_mbps']),
                 ping_ms=int(data['ping_ms']),
@@ -1076,16 +1075,11 @@ def admin_dashboard_stats(request):
         'pemesanan_menunggu': pemesanan_baru,  # Changed to all orders
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
-<<<<<<< HEAD
-
-
-
-
 
 @api_view(['GET'])
 def admin_dashboard_chart(request):
     """Endpoint untuk data chart dashboard admin - pelanggan baru dan pesanan per bulan"""
-    from django.db.models.functions import TruncMonth
+    from django.db.models.functions import ExtractMonth, ExtractYear
     from django.db.models import Count
     from datetime import timedelta
     import calendar
@@ -1094,19 +1088,19 @@ def admin_dashboard_chart(request):
     six_months_ago = date.today() - timedelta(days=180)
     new_customers = (
         Pelanggan.objects.filter(tanggal_daftar__gte=six_months_ago)
-        .annotate(month=TruncMonth('tanggal_daftar'))
-        .values('month')
+        .annotate(year=ExtractYear('tanggal_daftar'), month=ExtractMonth('tanggal_daftar'))
+        .values('year', 'month')
         .annotate(count=Count('id_pelanggan'))
-        .order_by('month')
+        .order_by('year', 'month')
     )
 
     # Data pesanan baru per bulan (6 bulan terakhir)
     new_orders = (
         PemesananJasa.objects.filter(tanggal_pemesanan__gte=six_months_ago)
-        .annotate(month=TruncMonth('tanggal_pemesanan'))
-        .values('month')
+        .annotate(year=ExtractYear('tanggal_pemesanan'), month=ExtractMonth('tanggal_pemesanan'))
+        .values('year', 'month')
         .annotate(count=Count('id_pemesanan'))
-        .order_by('month')
+        .order_by('year', 'month')
     )
 
     # Siapkan data untuk 6 bulan terakhir
@@ -1119,10 +1113,10 @@ def admin_dashboard_chart(request):
         month_name = calendar.month_name[month_date.month] + ' ' + str(month_date.year)
         months.append(month_name)
 
-        # Cari data pelanggan untuk bulan ini
+        # Cari data pelanggan untuk bulan ini (compare year & month ints)
         customer_count = 0
         for item in new_customers:
-            if item['month'].year == month_date.year and item['month'].month == month_date.month:
+            if item.get('year') == month_date.year and item.get('month') == month_date.month:
                 customer_count = item['count']
                 break
         customer_data.append(customer_count)
@@ -1130,7 +1124,7 @@ def admin_dashboard_chart(request):
         # Cari data pesanan untuk bulan ini
         order_count = 0
         for item in new_orders:
-            if item['month'].year == month_date.year and item['month'].month == month_date.month:
+            if item.get('year') == month_date.year and item.get('month') == month_date.month:
                 order_count = item['count']
                 break
         order_data.append(order_count)
@@ -1159,8 +1153,8 @@ def admin_teknisi(request, id_teknisi=None):
             area_id = request.GET.get('area_id', '')
             sort_by = request.GET.get('sort_by', 'nama_teknisi')
 
-            # Base queryset
-            teknisi = Teknisi.objects.select_related('id_area_layanan')
+            # Base queryset - exclude Admin role
+            teknisi = Teknisi.objects.exclude(role_akses__iexact='admin').select_related('id_area_layanan')
 
             # Apply search filter
             if search:
@@ -1313,11 +1307,3 @@ def admin_pelanggan(request, id_pelanggan=None):
             return Response({'message': 'Pelanggan berhasil dihapus'}, status=status.HTTP_200_OK)
         except Pelanggan.DoesNotExist:
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
-
-
-
-
-
-
-=======
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f

@@ -426,40 +426,6 @@
                         }
                     }, 1000);
                 } else {
-=======
-                if (response.ok) {
-                    showAlert("Login berhasil! Mengalihkan...", "success");
-
-                    const wrapper = document.getElementById('pageWrapper');
-                    wrapper.classList.remove('slide-in');
-                    wrapper.classList.add('slide-out');
-
-                    setTimeout(() => {
-                        if (data.user.role === 'admin') {
-                            window.location.href = '/admin/dashboard/';
-                        } else if (data.user.role === 'teknisi') {
-                            window.location.href = '/teknisi/dashboard/';
-                        } else {
-                            window.location.href = '/user/dashboard/';
-                        }
-                    }, 1000);
-                } else {
-=======
-                    showAlert("Login berhasil! Mengalihkan...", "success");
-
-                    const wrapper = document.getElementById('pageWrapper');
-                    wrapper.classList.remove('slide-in');
-                    wrapper.classList.add('slide-out');
-
-                    setTimeout(() => {
-                        if (selectedRole === 'TeknisiAdmin') {
-                            window.location.href = '/admin/dashboard/';
-                        } else {
-                            window.location.href = '/user/dashboard/';
-                        }
-                    }, 1000);
->>>>>>> 5871e0f2112f2a668ba64d308a3c3aa076281f3f
-                } else {
                     showAlert(data.error || "Username atau password salah.");
                 }
             } catch (error) {
@@ -467,7 +433,5 @@
             }
         });
     </script>
-
 </body>
-
 </html>

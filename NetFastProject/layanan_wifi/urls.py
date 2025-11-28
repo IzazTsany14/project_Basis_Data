@@ -8,6 +8,10 @@ urlpatterns = [
     # Authentication
     path('auth/login/', views.login, name='login'),
     path('auth/logout/', views.logout, name='logout'),
+    # Registration API (match frontend fetch path)
+    path('auth/registrasi/', views.registrasi_pelanggan, name='registrasi_pelanggan_api'),
+    # Registration
+    path('registrasi/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
 
     # Generic Dashboard Redirect
     path('dashboard/', views.dashboard_redirect_view, name='dashboard'), # New generic dashboard
@@ -21,6 +25,7 @@ urlpatterns = [
     path('user/speed-history/', views.speed_history_view, name='speed_history'),
     path('user/packages/', views.packages_view, name='packages'),
     path('user/services-history/', views.services_history_view, name='services_history'),
+    path('user/service-detail/<int:service_id>/', views.service_detail_view, name='service_detail'),
     path('user/edit-profile/', views.edit_profile_view, name='edit_profile'),
 
     # API Endpoints
@@ -32,6 +37,7 @@ urlpatterns = [
     path('api/user/services/<int:service_id>/', views.service_detail_api, name='service_detail_api'),
     path('api/user/speed-history/', views.user_riwayat_testing, name='user_riwayat_testing'),
     path('api/services-history/', views.services_history_api, name='services_history_api'),
+    path('api/services/<int:service_id>/', views.service_detail_api, name='service_detail_api_alt'),
     path('api/ping-test/', views.ping_test_api, name='ping_test_api'),
     path('api/speed-test-upload/', views.speed_test_upload, name='speed_test_upload'),
 
@@ -55,6 +61,7 @@ urlpatterns = [
     # Admin Order Management
     path('api/admin/pesanan-menunggu/', views.admin_pemesanan_menunggu, name='admin_pesanan_menunggu'),
     path('api/admin/pesanan-aktif/', views.admin_pesanan_aktif, name='admin_pesanan_aktif'),
+    path('api/admin/tugaskan-teknisi/', views.admin_tugaskan_teknisi, name='admin_tugaskan_teknisi_api'),
     path('api/admin/teknisi/list/', views.admin_list_teknisi, name='admin_teknisi_list'),
     path('admin/paket/', views.admin_paket_layanan, name='admin_paket'),
     path('admin/paket/<int:id_paket>/', views.admin_paket_layanan, name='admin_paket_detail'),
