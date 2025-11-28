@@ -86,4 +86,8 @@ urlpatterns = [
     # --- Teknisi Pages ---
     path('teknisi/dashboard/', views.teknisi_dashboard_view, name='teknisi_dashboard'),
     path('teknisi/detail-tugas/', views.teknisi_detail_tugas_view, name='teknisi_detail_tugas'),
+    path('teknisi/edit-profile/', views.teknisi_edit_profile_view, name='teknisi_edit_profile'),
+    
+    # --- Teknisi API ---
+    path('api/teknisi/profile/', views.teknisi_profile_api, name='teknisi_profile_api'),
 ]

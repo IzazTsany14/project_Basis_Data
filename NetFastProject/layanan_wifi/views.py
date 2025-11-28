@@ -142,6 +142,31 @@ def teknisi_dashboard_view(request):
 def teknisi_detail_tugas_view(request):
     return render(request, 'teknisi/detail-tugas.html')
 
+@role_required(allowed_roles=['teknisi', 'admin'])
+def teknisi_edit_profile_view(request):
+    """Render halaman edit profil untuk teknisi.
+    Template: templates/teknisi/edit-profile.html
+    """
+    teknisi_id = request.session.get('teknisi_id')
+    if not teknisi_id:
+        return redirect('login_page')
+    
+    try:
+        teknisi = Teknisi.objects.get(id_teknisi=teknisi_id)
+    except Teknisi.DoesNotExist:
+        return redirect('login_page')
+    
+    context = {
+        'user': {
+            'nama': teknisi.nama_teknisi,
+            'username': teknisi.username,
+            'area_layanan': getattr(teknisi.id_area_layanan, 'nama_area', '') if teknisi.id_area_layanan else '',
+            'no_telepon': getattr(teknisi, 'no_telepon', ''),
+            'alamat': getattr(teknisi, 'alamat', '')
+        }
+    }
+    return render(request, 'teknisi/edit-profile.html', context)
+
 # --- Pelanggan Views (from ecdb7c0...) ---
 def speed_test_view(request):
     """Render halaman speed test untuk pelanggan.
@@ -744,6 +769,54 @@ def profile_api(request):
                 return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response({'error': 'Tidak ada data yang diperbarui'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'POST'])
+def teknisi_profile_api(request):
+    """
+    GET: Ambil data profil teknisi
+    POST: Update data profil teknisi
+    """
+    teknisi_id = request.session.get('teknisi_id')
+    if not teknisi_id:
+        return Response({'success': False, 'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    try:
+        teknisi = Teknisi.objects.get(id_teknisi=teknisi_id)
+    except Teknisi.DoesNotExist:
+        return Response({'success': False, 'error': 'Teknisi tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response({
+            'success': True,
+            'nama': teknisi.nama_teknisi,
+            'username': teknisi.username,
+            'area_layanan': getattr(teknisi.id_area_layanan, 'nama_area', '') if teknisi.id_area_layanan else '',
+            'no_telepon': getattr(teknisi, 'no_telepon', ''),
+            'alamat': getattr(teknisi, 'alamat', '')
+        }, status=status.HTTP_200_OK)
+
+    elif request.method == 'POST':
+        # Update teknisi profile
+        if 'nama' in request.data:
+            teknisi.nama_teknisi = request.data['nama']
+        
+        if 'no_telepon' in request.data:
+            teknisi.no_telepon = request.data['no_telepon']
+        
+        if 'alamat' in request.data:
+            teknisi.alamat = request.data['alamat']
+        
+        if 'password' in request.data and request.data['password']:
+            teknisi.set_password(request.data['password'])
+        
+        try:
+            teknisi.save()
+            return Response({
+                'success': True,
+                'message': 'Profil berhasil diperbarui'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def service_detail_api(request, service_id):

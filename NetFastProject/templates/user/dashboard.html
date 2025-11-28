@@ -517,16 +517,13 @@
             if (confirm('Apakah Anda yakin ingin keluar?')) {
                 fetch('/auth/logout/', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                    }
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
                 })
-                .then(response = response.json())
-                .then(data = {
+                .then(() => {
                     window.location.href = '/';
                 })
-                .catch(error = {
+                .catch(error => {
                     console.error('Logout error:', error);
                     window.location.href = '/';
                 });
@@ -548,7 +545,7 @@
                 if (!resp.ok) {
                     if (resp.status === 401) {
                         showAlert('Sesi Anda telah berakhir. Silakan login kembali.', 'warning');
-                        setTimeout(() = window.location.href = '/', 2000);
+                        setTimeout(() => { window.location.href = '/'; }, 2000);
                         return [];
                     }
                     throw new Error('Gagal memuat riwayat');
@@ -581,14 +578,14 @@
         function calculateStats(data) {
             if (!data || data.length === 0) return null;
 
-            const downloads = data.map(t = Number(t.download_speed_mbps || t.download_speed || 0));
-            const uploads = data.map(t = Number(t.upload_speed_mbps || t.upload_speed || 0));
-            const pings = data.map(t = Number(t.ping_ms || t.ping || 0));
+            const downloads = data.map(t => Number(t.download_speed_mbps || t.download_speed || 0));
+            const uploads = data.map(t => Number(t.upload_speed_mbps || t.upload_speed || 0));
+            const pings = data.map(t => Number(t.ping_ms || t.ping || 0));
 
             return {
-                avgDownload: downloads.reduce((a, b) = a + b, 0) / downloads.length,
-                avgUpload: uploads.reduce((a, b) = a + b, 0) / uploads.length,
-                avgPing: pings.reduce((a, b) = a + b, 0) / pings.length,
+                avgDownload: downloads.reduce((a, b) => a + b, 0) / downloads.length,
+                avgUpload: uploads.reduce((a, b) => a + b, 0) / uploads.length,
+                avgPing: pings.reduce((a, b) => a + b, 0) / pings.length,
                 maxDownload: Math.max(...downloads),
                 minDownload: Math.min(...downloads),
                 maxPing: Math.max(...pings),

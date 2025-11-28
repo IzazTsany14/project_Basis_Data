@@ -29,11 +29,12 @@ async function fetchWithAuth(url, options = {}) {
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
 
-    if (path.includes('dashboard.html')) {
+    // Check actual routes without .html extension
+    if (path.includes('/teknisi/dashboard')) {
         loadTugasTeknisi();
     }
 
-    if (path.includes('detail-tugas.html')) {
+    if (path.includes('/teknisi/detail-tugas')) {
         displayTugasDetail();
         setupUpdateStatusForm();
         setupCatatPerangkatForm();
@@ -50,7 +51,11 @@ async function loadTugasTeknisi() {
 
     try {
         // The backend now gets the technician ID from the session
-        const response = await fetch('/teknisi/tugas/');
+        const response = await fetch('/teknisi/tugas/', {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+        });
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
             throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
@@ -114,16 +119,19 @@ function setupUpdateStatusForm() {
         const newStatus = document.getElementById('status-pemesanan').value;
 
         try {
-            const result = await fetchWithAuth(`${API_BASE_URL}/teknisi/tugas/status-update/`, {
+            const response = await fetch(`/teknisi/pemesanan/${idPesanan}/update/`, {
                 method: 'PUT',
-                body: JSON.stringify({
-                    id_pemesanan: idPesanan,
-                    status_pemesanan: newStatus,
-                }),
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status_pemesanan: newStatus })
             });
+            
+            if (!response.ok) {
+                throw new Error('Gagal memperbarui status');
+            }
+            
             alert('Status berhasil diperbarui!');
-            console.log(result);
-            window.location.href = 'dashboard.html'; // Redirect after update
+            window.location.href = '/teknisi/dashboard/'; // Redirect to teknisi dashboard
         } catch (error) {
             console.error('Failed to update status:', error);
             alert(`Gagal memperbarui status: ${error.message}`);

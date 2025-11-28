@@ -481,18 +481,27 @@ footer {
 @media (min-width: 769px) {
     .sidebar {
         transform: translateX(0);
+        width: 280px;
+        position: fixed;
+        left: 0;
+        top: 0;
     }
 
     .main-content {
         margin-left: 280px;
+        padding-bottom: 2rem;
     }
 
     .sidebar-toggle {
-        display: block;
+        display: none;
+    }
+
+    .sidebar-overlay {
+        display: none !important;
     }
 
     .bottom-nav {
-        display: none;
+        display: none !important;
     }
 
     .card-full {

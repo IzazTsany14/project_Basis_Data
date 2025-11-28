@@ -38,19 +38,19 @@
 
     <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="#" class="bottom-nav-item active" onclick="navigateTo('dashboard')">
+        <a href="/teknisi/dashboard/" class="bottom-nav-item active" onclick="navigateTo('dashboard'); return false;">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
-        <a href="#" class="bottom-nav-item" onclick="navigateTo('tasks')">
+        <a href="/teknisi/detail-tugas/" class="bottom-nav-item" onclick="navigateTo('tasks'); return false;">
             <i class="fas fa-tasks"></i>
             <span>Tugas</span>
         </a>
-        <a href="#" class="bottom-nav-item" onclick="navigateTo('profile')">
+        <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
             <i class="fas fa-user"></i>
             <span>Profil</span>
         </a>
-        <a href="#" class="bottom-nav-item" onclick="logout()">
+        <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
             <i class="fas fa-sign-out-alt"></i>
             <span>Logout</span>
         </a>
@@ -144,5 +144,71 @@
     </div>
 
     <script src="{% static 'js/teknisi.js' %}"></script>
+    <script>
+        // Load teknisi profile data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTeknisiProfile();
+        });
+
+        function loadTeknisiProfile() {
+            fetch('/api/teknisi/profile/', {
+                method: 'GET',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('teknisi-nama').textContent = data.nama || '-';
+                    document.getElementById('teknisi-username').textContent = data.username || '-';
+                    document.getElementById('teknisi-area').textContent = data.area_layanan || '-';
+                }
+            })
+            .catch(err => console.error('Error loading teknisi profile:', err));
+        }
+
+        // Navigation function
+        function navigateTo(page) {
+            switch(page) {
+                case 'dashboard':
+                    window.location.href = '/teknisi/dashboard/';
+                    break;
+                case 'tasks':
+                    window.location.href = '/teknisi/detail-tugas/';
+                    break;
+                case 'profile':
+                    window.location.href = '/teknisi/edit-profile/';
+                    break;
+                default:
+                    window.location.href = '/teknisi/dashboard/';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            fetch('/auth/logout/', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            }).then(() => {
+                window.location.href = '/';
+            }).catch(err => console.error('Logout error:', err));
+        }
+
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        }
+    </script>
 </body>
 </html>
