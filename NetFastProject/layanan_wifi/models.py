@@ -74,9 +74,12 @@ class Pelanggan(models.Model):
     alamat_pemasangan = models.TextField()
     no_telepon = models.CharField(max_length=15, blank=True, null=True)
     tanggal_daftar = models.DateField(blank=True, null=True, auto_now_add=True)
+<<<<<<< HEAD
     # Note: the original SQL dump for `pelanggan` in this project does not include
     # an `id_area_layanan` column. Do NOT define this field so Django won't try
     # to select a non-existent column when serializing/querying.
+=======
+>>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
 
     class Meta:
         managed = False
@@ -94,7 +97,7 @@ class Pelanggan(models.Model):
 class Teknisi(models.Model):
     id_teknisi = models.AutoField(primary_key=True)
     nama_teknisi = models.CharField(max_length=100)
-    username = models.CharField(unique=True, max_length=50)
+    username = models.CharField(max_length=50)
     password_hash = models.CharField(max_length=255)
     role_akses = models.CharField(max_length=7)
     no_telepon = models.CharField(max_length=15, blank=True, null=True)

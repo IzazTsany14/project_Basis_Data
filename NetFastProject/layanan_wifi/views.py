@@ -33,6 +33,8 @@ def login_page(request):
         return redirect('dashboard') # Redirect to the generic dashboard dispatcher
     return render(request, 'index.html')
 
+@api_view(['POST'])
+@csrf_exempt
 def logout(request):
     # Clear custom session flags and Django auth
     request.session.flush() # More thorough than popping individual keys
@@ -41,7 +43,7 @@ def logout(request):
     except Exception:
         pass
     # Return a simple JSON response so frontend can react
-    return Response({'message': 'Logged out'}, status=status.HTTP_200_OK)
+    return JsonResponse({'message': 'Logged out'}, status=200)
     
 def dashboard_redirect_view(request):
     user_role = request.session.get('user_role')
@@ -54,7 +56,7 @@ def dashboard_redirect_view(request):
         return redirect('user_dashboard') # Assuming 'user_dashboard' is the name for pelanggan dashboard
     else:
         # Fallback if role is not recognized or not set
-        return redirect('login')
+        return redirect('login_page')
 
 def dashboard_pelanggan_view(request):
     print("Dashboard view called")
@@ -63,12 +65,12 @@ def dashboard_pelanggan_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
 
     try:
         pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
     except Pelanggan.DoesNotExist:
-        return redirect('login')
+        return redirect('login_page')
 
     langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
     riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
@@ -172,7 +174,7 @@ def speed_test_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
     return render(request, 'user/speed-test.html')
 
 def edit_profile_view(request):
@@ -181,7 +183,7 @@ def edit_profile_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
     
     try:
         pelanggan = Pelanggan.objects.get(id_pelanggan=pelanggan_id)
@@ -204,7 +206,7 @@ def packages_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
 
     try:
         # Ambil paket aktif pelanggan
@@ -246,7 +248,7 @@ def speed_history_view(request):
     """
     pelanggan_id = request.session.get('pelanggan_id')
     if not pelanggan_id:
-        return redirect('login')
+        return redirect('login_page')
     return render(request, 'user/speed-history.html')
 
 # --- Sisa Kode (API Views, dll) ---
@@ -256,111 +258,120 @@ def speed_history_view(request):
 def login(request):
     from rest_framework.parsers import FormParser, MultiPartParser
     request.parsers = [FormParser(), MultiPartParser()]
-    # Accept {login_id, password}
-    data = request.POST
-    password = data.get('password')
-    login_id = data.get('login_id') or data.get('email') or data.get('username')
+    # Accept JSON body (request.data) or form-encoded (request.POST)
+    data = getattr(request, 'data', None) or request.POST
+    # request.data for DRF contains parsed JSON when Content-Type=application/json
+    password = (data.get('password') or '').strip()
+    login_id = (data.get('login_id') or data.get('email') or data.get('username') or '').strip()
 
     if not login_id or not password:
         return JsonResponse({'error': 'login_id dan password diperlukan'}, status=400)
 
-    # Try Admin first (by username, role_akses = 'admin')
+    import traceback
     try:
-        admin_user = Teknisi.objects.get(username=login_id, role_akses='admin')
-        if admin_user.check_password(password):
-            request.session['teknisi_id'] = admin_user.id_teknisi
-            request.session['user_role'] = 'admin'
-            request.session.cycle_key()
-            request.session.save()
-            return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
+        # Try Pelanggan FIRST (by email) - Most common login
+        try:
+            pelanggan = Pelanggan.objects.get(email__iexact=login_id)
+            # Normal Django-hashed password
+            if pelanggan.check_password(password):
+                request.session['pelanggan_id'] = pelanggan.id_pelanggan
+                request.session['user_role'] = 'pelanggan'
+                request.session.save()
+                return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=200)
 
-        # Admin legacy fallbacks
-        aph = getattr(admin_user, 'password_hash', None)
-        if aph:
-            if aph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == aph:
+            # Legacy fallbacks: plaintext or MD5 stored passwords
+            legacy_ok = False
+            # plaintext stored in 'password' field
+            if hasattr(pelanggan, 'password') and getattr(pelanggan, 'password'):
+                if getattr(pelanggan, 'password') == password:
+                    legacy_ok = True
+
+            # password_hash stored as raw (not Django hash) or MD5
+            ph = getattr(pelanggan, 'password_hash', None)
+            if not legacy_ok and ph:
+                if ph == password:
+                    legacy_ok = True
+                else:
+                    try:
+                        if hashlib.md5(password.encode('utf-8')).hexdigest() == ph:
+                            legacy_ok = True
+                    except Exception:
+                        pass
+
+            if legacy_ok:
+                # Upgrade to Django hash for future logins
                 try:
-                    admin_user.set_password(password)
-                    admin_user.save()
-                except Exception:
-                    pass
+                    pelanggan.set_password(password)
+                    pelanggan.save()
+                except Exception as e:
+                    print(f"Warning: couldn't upgrade legacy password for pelanggan {getattr(pelanggan,'id_pelanggan',None)}: {e}")
+                request.session['pelanggan_id'] = pelanggan.id_pelanggan
+                request.session['user_role'] = 'pelanggan'
+                return JsonResponse({'message': 'Login berhasil (legacy) - password upgraded', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=200)
+        except Pelanggan.DoesNotExist:
+            pass
+
+        # Try Admin (by username, role_akses = 'Admin')
+        try:
+            admin_user = Teknisi.objects.get(username__iexact=login_id, role_akses='Admin')
+            if admin_user.check_password(password):
                 request.session['teknisi_id'] = admin_user.id_teknisi
                 request.session['user_role'] = 'admin'
                 request.session.cycle_key()
                 request.session.save()
-                return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
-    except Teknisi.DoesNotExist:
-        pass
+                return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
 
-    # Try Teknisi (by username, exclude admin)
-    try:
-        teknisi = Teknisi.objects.exclude(role_akses='admin').get(username=login_id)
-        if teknisi.check_password(password):
-            request.session['teknisi_id'] = teknisi.id_teknisi
-            request.session['user_role'] = 'teknisi'
-            request.session.cycle_key()
-            request.session.save()
-            return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'teknisi', 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
+            # Admin legacy fallbacks
+            aph = getattr(admin_user, 'password_hash', None)
+            if aph:
+                if aph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == aph:
+                    try:
+                        admin_user.set_password(password)
+                        admin_user.save()
+                    except Exception:
+                        pass
+                    request.session['teknisi_id'] = admin_user.id_teknisi
+                    request.session['user_role'] = 'admin'
+                    request.session.cycle_key()
+                    request.session.save()
+                    return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'admin', 'id': admin_user.id_teknisi, 'nama': admin_user.nama_teknisi}}, status=200)
+        except Teknisi.DoesNotExist:
+            pass
 
-        # Teknisi legacy fallbacks
-        tph = getattr(teknisi, 'password_hash', None)
-        if tph:
-            if tph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == tph:
-                try:
-                    teknisi.set_password(password)
-                    teknisi.save()
-                except Exception:
-                    pass
+        # Try Teknisi (by username, exclude admin)
+        try:
+            teknisi = Teknisi.objects.exclude(role_akses='Admin').get(username__iexact=login_id)
+            if teknisi.check_password(password):
                 request.session['teknisi_id'] = teknisi.id_teknisi
                 request.session['user_role'] = 'teknisi'
                 request.session.cycle_key()
                 request.session.save()
-                return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'teknisi', 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
-    except Teknisi.DoesNotExist:
-        pass
+                return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'teknisi', 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
 
-    # Try Pelanggan (by email)
-    try:
-        pelanggan = Pelanggan.objects.get(email=login_id)
-        # Normal Django-hashed password
-        if pelanggan.check_password(password):
-            request.session['pelanggan_id'] = pelanggan.id_pelanggan
-            request.session['user_role'] = 'pelanggan'
-            request.session.save()
-            return JsonResponse({'message': 'Login berhasil', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=200)
+            # Teknisi legacy fallbacks
+            tph = getattr(teknisi, 'password_hash', None)
+            if tph:
+                if tph == password or hashlib.md5(password.encode('utf-8')).hexdigest() == tph:
+                    try:
+                        teknisi.set_password(password)
+                        teknisi.save()
+                    except Exception:
+                        pass
+                    request.session['teknisi_id'] = teknisi.id_teknisi
+                    request.session['user_role'] = 'teknisi'
+                    request.session.cycle_key()
+                    request.session.save()
+                    return JsonResponse({'message': 'Login berhasil (legacy)', 'user': {'role': 'teknisi', 'id': teknisi.id_teknisi, 'nama': teknisi.nama_teknisi}}, status=200)
+        except Teknisi.DoesNotExist:
+            pass
 
-        # Legacy fallbacks: plaintext or MD5 stored passwords
-        legacy_ok = False
-        # plaintext stored in 'password' field
-        if hasattr(pelanggan, 'password') and getattr(pelanggan, 'password'):
-            if getattr(pelanggan, 'password') == password:
-                legacy_ok = True
-
-        # password_hash stored as raw (not Django hash) or MD5
-        ph = getattr(pelanggan, 'password_hash', None)
-        if not legacy_ok and ph:
-            if ph == password:
-                legacy_ok = True
-            else:
-                try:
-                    if hashlib.md5(password.encode('utf-8')).hexdigest() == ph:
-                        legacy_ok = True
-                except Exception:
-                    pass
-
-        if legacy_ok:
-            # Upgrade to Django hash for future logins
-            try:
-                pelanggan.set_password(password)
-                pelanggan.save()
-            except Exception as e:
-                print(f"Warning: couldn't upgrade legacy password for pelanggan {getattr(pelanggan,'id_pelanggan',None)}: {e}")
-            request.session['pelanggan_id'] = pelanggan.id_pelanggan
-            request.session['user_role'] = 'pelanggan'
-            return JsonResponse({'message': 'Login berhasil (legacy) - password upgraded', 'user': {'role': 'pelanggan', 'id': pelanggan.id_pelanggan, 'nama': getattr(pelanggan, 'nama_lengkap', '')}}, status=200)
-    except Pelanggan.DoesNotExist:
-        pass
-
-    return JsonResponse({'error': 'Email/username atau password salah'}, status=401)
+        return JsonResponse({'error': 'Email/username atau password salah'}, status=401)
+    except Exception as e:
+        tb = traceback.format_exc()
+        print("[LOGIN ERROR]", e)
+        print(tb)
+        # Return a JSON error response so frontend can show it
+        return JsonResponse({'error': 'Terjadi kesalahan internal pada server', 'detail': str(e)}, status=500)
 
 
 @api_view(['POST'])
@@ -671,6 +682,7 @@ def speed_test_api(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
+<<<<<<< HEAD
         # Validasi data tes
         data = request.data
         if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
@@ -728,6 +740,20 @@ def speed_test_api(request):
 
         except (ValueError, TypeError):
             return Response({'error': 'Format data speed test tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+=======
+        # Use serializer to validate input; attach pelanggan_id
+        input_data = request.data.copy()
+        input_data['id_pelanggan'] = pelanggan_id
+
+        create_serializer = RiwayatTestingWifiCreateSerializer(data=input_data)
+        if not create_serializer.is_valid():
+            return Response({'error': 'Data speed test tidak valid', 'details': create_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            test = create_serializer.save()
+            out = RiwayatTestingWifiSerializer(test)
+            return Response({'message': 'Speed test berhasil disimpan ke riwayat', 'test': out.data}, status=status.HTTP_201_CREATED)
+>>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
         except Exception as e:
             return Response({'error': f'Gagal menyimpan speed test: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1306,4 +1332,8 @@ def admin_pelanggan(request, id_pelanggan=None):
             pelanggan.delete()
             return Response({'message': 'Pelanggan berhasil dihapus'}, status=status.HTTP_200_OK)
         except Pelanggan.DoesNotExist:
+<<<<<<< HEAD
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+=======
+            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+>>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0

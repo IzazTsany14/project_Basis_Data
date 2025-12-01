@@ -31,28 +31,25 @@ class PelangganSerializer(serializers.ModelSerializer):
 
 class PelangganRegistrasiSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
-    area_layanan = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Pelanggan
-        fields = ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan', 'password', 'area_layanan']
+        fields = ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan', 'password']
 
     def create(self, validated_data):
-        area_name = validated_data.pop('area_layanan', None)
         password = validated_data.pop('password')
 
-        # Find the area by name
-        area = None
-        if area_name:
-            try:
-                area = AreaLayanan.objects.get(nama_area=area_name)
-            except AreaLayanan.DoesNotExist:
-                pass  # Leave as None if not found
+        # Ensure only valid fields are passed to Pelanggan constructor
+        pelanggan_data = {k: v for k, v in validated_data.items() if k in ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan']}
 
+<<<<<<< HEAD
         pelanggan = Pelanggan(**validated_data)
         # Assign area only if the Pelanggan model actually defines it
         if area and hasattr(pelanggan, 'id_area_layanan'):
             pelanggan.id_area_layanan = area
+=======
+        pelanggan = Pelanggan(**pelanggan_data)
+>>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
         pelanggan.set_password(password)
         pelanggan.save()
         return pelanggan
@@ -140,41 +137,73 @@ class PemesananJasaCreateSerializer(serializers.ModelSerializer):
         
 
 class RiwayatTestingWifiSerializer(serializers.ModelSerializer):
-    nama_pelanggan = serializers.CharField(source='id_langganan.id_pelanggan.nama_lengkap', read_only=True)
-    nama_paket = serializers.CharField(source='id_langganan.id_paket.nama_paket', read_only=True)
+    nama_pelanggan = serializers.CharField(source='id_langganan.id_pelanggan.nama_lengkap', read_only=True, allow_null=True)
+    nama_paket = serializers.CharField(source='id_langganan.id_paket.nama_paket', read_only=True, allow_null=True)
+    connection_type = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = RiwayatTestingWifi
         # Note: model `RiwayatTestingWifi` (from .sql) does not have a 'connection_type' column.
         # Do not include it here to avoid ImproperlyConfigured errors.
         fields = ['id_testing', 'id_langganan', 'nama_pelanggan', 'nama_paket',
+<<<<<<< HEAD
                   'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms']
+=======
+              'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms', 'connection_type']
+>>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
         read_only_fields = ['id_testing', 'waktu_testing']
+
+    def get_connection_type(self, obj):
+        # Determine connection type heuristically from download speed
+        try:
+            download = float(obj.download_speed_mbps) if obj.download_speed_mbps is not None else 0.0
+        except Exception:
+            return 'Unknown'
+
+        if download >= 100:
+            return 'Fiber Optic'
+        if download >= 50:
+            return 'Cable Broadband'
+        if download >= 25:
+            return 'DSL'
+        if download >= 10:
+            return 'Mobile Data'
+        return 'Slow Connection'
 
 
 class RiwayatTestingWifiCreateSerializer(serializers.Serializer):
     id_pelanggan = serializers.IntegerField(write_only=True)
-    download_speed_mbps = serializers.DecimalField(max_digits=5, decimal_places=2)
-    upload_speed_mbps = serializers.DecimalField(max_digits=5, decimal_places=2)
+    download_speed_mbps = serializers.DecimalField(max_digits=7, decimal_places=2)
+    upload_speed_mbps = serializers.DecimalField(max_digits=7, decimal_places=2)
     ping_ms = serializers.IntegerField()
+    connection_type = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def create(self, validated_data):
         id_pelanggan = validated_data.pop('id_pelanggan')
+        # pop optional connection_type so it won't be used in model create
+        connection_type = validated_data.pop('connection_type', None)
 
         try:
             # Temukan langganan aktif milik pelanggan
             langganan = Langganan.objects.filter(
                 id_pelanggan=id_pelanggan,
-                status_langganan='Aktif'
+                status_langganan__iexact='aktif'
             ).latest('tanggal_mulai') # Ambil yang terbaru
         except Langganan.DoesNotExist:
-            raise serializers.ValidationError("Tidak ada langganan aktif untuk pelanggan ini")
+            langganan = None
 
-        # Buat riwayat tes dengan ID langganan yang ditemukan
+        # Buat riwayat tes dengan ID langganan yang ditemukan (boleh None)
         testing = RiwayatTestingWifi.objects.create(
             id_langganan=langganan,
-            **validated_data
+            download_speed_mbps=validated_data.get('download_speed_mbps'),
+            upload_speed_mbps=validated_data.get('upload_speed_mbps'),
+            ping_ms=validated_data.get('ping_ms')
         )
+
+        # Attach optional connection_type to instance for serializer output (non-persistent)
+        if connection_type:
+            setattr(testing, '_connection_type', connection_type)
+
         return testing
 
 
