@@ -74,6 +74,9 @@ class Pelanggan(models.Model):
     alamat_pemasangan = models.TextField()
     no_telepon = models.CharField(max_length=15, blank=True, null=True)
     tanggal_daftar = models.DateField(blank=True, null=True, auto_now_add=True)
+    # Note: the original SQL dump for `pelanggan` in this project does not include
+    # an `id_area_layanan` column. Do NOT define this field so Django won't try
+    # to select a non-existent column when serializing/querying.
 
     class Meta:
         managed = False

@@ -41,7 +41,10 @@ class PelangganRegistrasiSerializer(serializers.ModelSerializer):
 
         # Ensure only valid fields are passed to Pelanggan constructor
         pelanggan_data = {k: v for k, v in validated_data.items() if k in ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan']}
-
+        pelanggan = Pelanggan(**validated_data)
+        # Assign area only if the Pelanggan model actually defines it
+        if area and hasattr(pelanggan, 'id_area_layanan'):
+            pelanggan.id_area_layanan = area
         pelanggan = Pelanggan(**pelanggan_data)
         pelanggan.set_password(password)
         pelanggan.save()
@@ -80,17 +83,47 @@ class LanggananSerializer(serializers.ModelSerializer):
 
 
 class PemesananJasaSerializer(serializers.ModelSerializer):
-    nama_pelanggan = serializers.CharField(source='id_pelanggan.nama_lengkap', read_only=True)
-    alamat_pemasangan = serializers.CharField(source='id_pelanggan.alamat_pemasangan', read_only=True) # Added this line
-    nama_teknisi = serializers.CharField(source='id_teknisi.nama_teknisi', read_only=True, allow_null=True)
+    # Return related objects as nested serializers/objects so frontend can access
+    id_pelanggan = PelangganSerializer(read_only=True)
+    id_teknisi = TeknisiSerializer(read_only=True, allow_null=True)
     nama_jasa = serializers.CharField(source='id_jenis_jasa.nama_jasa', read_only=True)
+    alamat_pemasangan = serializers.CharField(source='id_pelanggan.alamat_pemasangan', read_only=True)
+    # Try to provide area info: from pelanggan relation (if present), infer from address, or fallback to teknisi area
+    area_layanan = serializers.SerializerMethodField()
 
     class Meta:
         model = PemesananJasa
         fields = ['id_pemesanan', 'id_pelanggan', 'id_teknisi', 'id_jenis_jasa',
-                  'nama_pelanggan', 'alamat_pemasangan', 'nama_teknisi', 'nama_jasa', # Added alamat_pemasangan here
+                  'alamat_pemasangan', 'nama_jasa', 'area_layanan',
                   'tanggal_pemesanan', 'tanggal_jadwal', 'status_pemesanan', 'catatan']
         read_only_fields = ['id_pemesanan', 'tanggal_pemesanan']
+
+    def get_area_layanan(self, obj):
+        # 1) If pelanggan has id_area_layanan (older schema), use it
+        pelanggan = getattr(obj, 'id_pelanggan', None)
+        if pelanggan is not None:
+            if hasattr(pelanggan, 'id_area_layanan') and getattr(pelanggan, 'id_area_layanan'):
+                return getattr(pelanggan.id_area_layanan, 'nama_area', None)
+
+            # 2) Try to infer from alamat_pemasangan by checking AreaLayanan names
+            alamat = getattr(pelanggan, 'alamat_pemasangan', '') or ''
+            if alamat:
+                from .models import AreaLayanan
+                try:
+                    areas = AreaLayanan.objects.all()
+                    alamat_lower = alamat.lower()
+                    for a in areas:
+                        if a.nama_area and a.nama_area.lower() in alamat_lower:
+                            return a.nama_area
+                except Exception:
+                    pass
+
+        # 3) Fallback: if teknisi assigned, return teknisi area
+        teknisi = getattr(obj, 'id_teknisi', None)
+        if teknisi and hasattr(teknisi, 'id_area_layanan') and teknisi.id_area_layanan:
+            return getattr(teknisi.id_area_layanan, 'nama_area', None)
+
+        return None
 
 class PemesananJasaCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -106,7 +139,10 @@ class RiwayatTestingWifiSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RiwayatTestingWifi
+        # Note: model `RiwayatTestingWifi` (from .sql) does not have a 'connection_type' column.
+        # Do not include it here to avoid ImproperlyConfigured errors.
         fields = ['id_testing', 'id_langganan', 'nama_pelanggan', 'nama_paket',
+                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms'
               'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms', 'connection_type']
         read_only_fields = ['id_testing', 'waktu_testing']
 

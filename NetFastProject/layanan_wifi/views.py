@@ -232,6 +232,15 @@ def services_history_view(request):
         return redirect('login')
     return render(request, 'user/services-history.html')
 
+def service_detail_view(request, service_id):
+    """Render halaman detail layanan untuk pelanggan.
+    Template: templates/user/service-detail.html
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return redirect('login')
+    return render(request, 'user/service-detail.html')
+
 
 def speed_history_view(request):
     """Render halaman riwayat uji kecepatan (grafik) untuk pelanggan.
@@ -578,7 +587,8 @@ def admin_tugaskan_teknisi(request):
 @api_view(['GET'])
 def admin_list_teknisi(request):
     # Mengganti admin_teknisi_tersedia karena tidak ada status ketersediaan
-    teknisi = Teknisi.objects.all().order_by('nama_teknisi')
+    # Filter: hanya tampilkan Teknisi, exclude Admin role
+    teknisi = Teknisi.objects.exclude(role_akses__iexact='admin').order_by('nama_teknisi')
     serializer = TeknisiSerializer(teknisi, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -672,6 +682,63 @@ def speed_test_api(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
+        # Validasi data tes
+        data = request.data
+        if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
+            return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Coba ambil langganan aktif jika ada (opsional)
+            langganan = None
+            try:
+                langganan = Langganan.objects.filter(
+                    id_pelanggan=pelanggan_id,
+                    status_langganan='AKTIF'
+                ).latest('tanggal_mulai')
+
+                # Log perbandingan dengan paket jika ada langganan aktif
+                if langganan.id_paket:
+                    package_speed = langganan.id_paket.kecepatan_mbps
+                    measured_speed = float(data['download_speed_mbps'])
+                    print(f"Package speed: {package_speed} Mbps, Measured: {measured_speed} Mbps")
+
+            except Langganan.DoesNotExist:
+                # Tidak ada langganan aktif, tapi tetap izinkan tes kecepatan
+                print(f"No active subscription for pelanggan {pelanggan_id}, but allowing speed test anyway")
+
+            # Deteksi tipe koneksi
+            connection_type = data.get('connection_type', 'Unknown')
+            if not connection_type or connection_type == 'Unknown':
+                # Coba deteksi otomatis berdasarkan kecepatan
+                download_speed = float(data['download_speed_mbps'])
+                if download_speed >= 100:
+                    connection_type = 'Fiber Optic'
+                elif download_speed >= 50:
+                    connection_type = 'Cable Broadband'
+                elif download_speed >= 25:
+                    connection_type = 'DSL'
+                elif download_speed >= 10:
+                    connection_type = 'Mobile Data'
+                else:
+                    connection_type = 'Slow Connection'
+
+            # Simpan hasil tes ke database (id_langganan bisa null)
+            test = RiwayatTestingWifi.objects.create(
+                id_langganan=langganan,  # Bisa None jika tidak ada langganan aktif
+                download_speed_mbps=float(data['download_speed_mbps']),
+                upload_speed_mbps=float(data['upload_speed_mbps']),
+                ping_ms=int(data['ping_ms']),
+                waktu_testing=datetime.now()
+            )
+
+            serializer = RiwayatTestingWifiSerializer(test)
+            return Response({
+                'message': 'Speed test berhasil disimpan ke riwayat',
+                'test': serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        except (ValueError, TypeError):
+            return Response({'error': 'Format data speed test tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
         # Use serializer to validate input; attach pelanggan_id
         input_data = request.data.copy()
         input_data['id_pelanggan'] = pelanggan_id
@@ -679,7 +746,6 @@ def speed_test_api(request):
         create_serializer = RiwayatTestingWifiCreateSerializer(data=input_data)
         if not create_serializer.is_valid():
             return Response({'error': 'Data speed test tidak valid', 'details': create_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             test = create_serializer.save()
             out = RiwayatTestingWifiSerializer(test)
@@ -1035,7 +1101,7 @@ def admin_dashboard_stats(request):
 @api_view(['GET'])
 def admin_dashboard_chart(request):
     """Endpoint untuk data chart dashboard admin - pelanggan baru dan pesanan per bulan"""
-    from django.db.models.functions import TruncMonth
+    from django.db.models.functions import ExtractMonth, ExtractYear
     from django.db.models import Count
     from datetime import timedelta
     import calendar
@@ -1044,19 +1110,19 @@ def admin_dashboard_chart(request):
     six_months_ago = date.today() - timedelta(days=180)
     new_customers = (
         Pelanggan.objects.filter(tanggal_daftar__gte=six_months_ago)
-        .annotate(month=TruncMonth('tanggal_daftar'))
-        .values('month')
+        .annotate(year=ExtractYear('tanggal_daftar'), month=ExtractMonth('tanggal_daftar'))
+        .values('year', 'month')
         .annotate(count=Count('id_pelanggan'))
-        .order_by('month')
+        .order_by('year', 'month')
     )
 
     # Data pesanan baru per bulan (6 bulan terakhir)
     new_orders = (
         PemesananJasa.objects.filter(tanggal_pemesanan__gte=six_months_ago)
-        .annotate(month=TruncMonth('tanggal_pemesanan'))
-        .values('month')
+        .annotate(year=ExtractYear('tanggal_pemesanan'), month=ExtractMonth('tanggal_pemesanan'))
+        .values('year', 'month')
         .annotate(count=Count('id_pemesanan'))
-        .order_by('month')
+        .order_by('year', 'month')
     )
 
     # Siapkan data untuk 6 bulan terakhir
@@ -1069,10 +1135,10 @@ def admin_dashboard_chart(request):
         month_name = calendar.month_name[month_date.month] + ' ' + str(month_date.year)
         months.append(month_name)
 
-        # Cari data pelanggan untuk bulan ini
+        # Cari data pelanggan untuk bulan ini (compare year & month ints)
         customer_count = 0
         for item in new_customers:
-            if item['month'].year == month_date.year and item['month'].month == month_date.month:
+            if item.get('year') == month_date.year and item.get('month') == month_date.month:
                 customer_count = item['count']
                 break
         customer_data.append(customer_count)
@@ -1080,7 +1146,7 @@ def admin_dashboard_chart(request):
         # Cari data pesanan untuk bulan ini
         order_count = 0
         for item in new_orders:
-            if item['month'].year == month_date.year and item['month'].month == month_date.month:
+            if item.get('year') == month_date.year and item.get('month') == month_date.month:
                 order_count = item['count']
                 break
         order_data.append(order_count)
@@ -1109,8 +1175,8 @@ def admin_teknisi(request, id_teknisi=None):
             area_id = request.GET.get('area_id', '')
             sort_by = request.GET.get('sort_by', 'nama_teknisi')
 
-            # Base queryset
-            teknisi = Teknisi.objects.select_related('id_area_layanan')
+            # Base queryset - exclude Admin role
+            teknisi = Teknisi.objects.exclude(role_akses__iexact='admin').select_related('id_area_layanan')
 
             # Apply search filter
             if search:
@@ -1262,4 +1328,5 @@ def admin_pelanggan(request, id_pelanggan=None):
             pelanggan.delete()
             return Response({'message': 'Pelanggan berhasil dihapus'}, status=status.HTTP_200_OK)
         except Pelanggan.DoesNotExist:
+            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)

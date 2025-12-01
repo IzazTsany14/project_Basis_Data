@@ -1,0 +1,403 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detail Layanan - NetFast{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+    .service-detail-container {
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+
+    .detail-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-bottom: 20px;
+    }
+
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .detail-header h2 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .status-menunggu {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-ditugaskan {
+        background-color: #cfe2ff;
+        color: #084298;
+    }
+
+    .status-dikerjakan {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+
+    .status-selesai {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-batal {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+
+    .detail-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .info-item {
+        margin-bottom: 20px;
+    }
+
+    .info-label {
+        font-size: 13px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        font-size: 16px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .technician-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+    .technician-info .info-value {
+        font-size: 15px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .btn-custom {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-back {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background: #5a6268;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #007bff;
+        text-decoration: none;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+
+    .back-link:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+
+    .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .timeline-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+    }
+
+    .timeline-item.completed {
+        border-left-color: #28a745;
+    }
+
+    .timeline-icon {
+        flex-shrink: 0;
+        width: 30px;
+        height: 30px;
+        background: #007bff;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+
+    .timeline-item.completed .timeline-icon {
+        background: #28a745;
+    }
+
+    .timeline-content h4 {
+        margin: 0 0 5px 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .timeline-content p {
+        margin: 0;
+        font-size: 13px;
+        color: #666;
+    }
+
+    @media (max-width: 768px) {
+        .detail-info {
+            grid-template-columns: 1fr;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="service-detail-container">
+    <a href="javascript:history.back()" class="back-link">
+        <i class="fas fa-arrow-left"></i> Kembali
+    </a>
+
+    <div class="detail-card">
+        <div class="detail-header">
+            <div>
+                <h2 id="serviceTitle">Memuat...</h2>
+                <p id="serviceId" style="color: #999; margin: 5px 0 0 0;">ID: -</p>
+            </div>
+            <span id="statusBadge" class="status-badge">-</span>
+        </div>
+
+        <div class="detail-info">
+            <!-- Kolom Kiri -->
+            <div>
+                <div class="info-item">
+                    <div class="info-label">Jenis Layanan</div>
+                    <div class="info-value" id="serviceType">-</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Tanggal Pemesanan</div>
+                    <div class="info-value" id="orderDate">-</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Pelanggan</div>
+                    <div class="info-value" id="customerName">-</div>
+                    <div class="technician-info">
+                        <div class="info-label">Alamat</div>
+                        <div class="info-value" id="customerAddress">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan -->
+            <div>
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value" id="statusText">-</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Teknisi yang Ditugaskan</div>
+                    <div class="info-value" id="technicianName">Belum ditugaskan</div>
+                    <div class="technician-info" id="technicianDetails" style="display: none;">
+                        <div class="info-label">Nomor Telepon</div>
+                        <div class="info-value" id="technicianPhone">-</div>
+                        <div class="info-label" style="margin-top: 10px;">Area Layanan</div>
+                        <div class="info-value" id="technicianArea">-</div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Daerah Layanan</div>
+                    <div class="info-value" id="serviceArea">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Status -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+            <h4 style="margin-bottom: 20px; font-weight: 600;">Riwayat Status</h4>
+            <div class="timeline" id="statusTimeline">
+                <!-- Akan diisi oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const serviceId = new URLSearchParams(window.location.search).get('id') || 
+                     window.location.pathname.split('/').pop();
+
+    async function loadServiceDetail() {
+        try {
+            const response = await fetch(`/api/services/${serviceId}/`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    showError('Layanan tidak ditemukan');
+                } else {
+                    showError('Gagal memuat detail layanan');
+                }
+                return;
+            }
+
+            const service = await response.json();
+            displayServiceDetail(service);
+        } catch (error) {
+            console.error('Error loading service detail:', error);
+            showError('Terjadi kesalahan saat memuat data');
+        }
+    }
+
+    function displayServiceDetail(service) {
+        // Header
+        document.getElementById('serviceTitle').textContent = service.nama_jasa || '-';
+        document.getElementById('serviceId').textContent = `ID: ${service.id_pemesanan || '-'}`;
+
+        // Status
+        const status = service.status_pemesanan || '-';
+        document.getElementById('statusBadge').textContent = status;
+        document.getElementById('statusBadge').className = `status-badge status-${status.toLowerCase().replace(/\s+/g, '')}`;
+        document.getElementById('statusText').textContent = status;
+
+        // Layanan Info
+        document.getElementById('serviceType').textContent = service.nama_jasa || '-';
+        document.getElementById('serviceArea').textContent = service.area_layanan || '-';
+
+        // Tanggal
+        if (service.tanggal_pemesanan) {
+            const date = new Date(service.tanggal_pemesanan);
+            document.getElementById('orderDate').textContent = date.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Pelanggan
+        if (service.id_pelanggan) {
+            const customer = service.id_pelanggan;
+            document.getElementById('customerName').textContent = customer.nama_lengkap || '-';
+            document.getElementById('customerAddress').textContent = customer.alamat_pemasangan || '-';
+        }
+
+        // Teknisi
+        if (service.id_teknisi && service.id_teknisi.id_teknisi) {
+            const tech = service.id_teknisi;
+            document.getElementById('technicianName').textContent = tech.nama_teknisi || 'Belum ditugaskan';
+            document.getElementById('technicianPhone').textContent = tech.no_telepon || '-';
+            document.getElementById('technicianArea').textContent = tech.id_area_layanan?.nama_area || '-';
+            document.getElementById('technicianDetails').style.display = 'block';
+        } else {
+            document.getElementById('technicianName').textContent = 'Belum ditugaskan';
+            document.getElementById('technicianDetails').style.display = 'none';
+        }
+
+        // Timeline
+        displayStatusTimeline(status);
+    }
+
+    function displayStatusTimeline(currentStatus) {
+        const statuses = [
+            'Menunggu Penugasan',
+            'Ditugaskan',
+            'Dikerjakan',
+            'Selesai'
+        ];
+
+        const statusIcons = {
+            'Menunggu Penugasan': 'fas fa-hourglass-half',
+            'Ditugaskan': 'fas fa-check-circle',
+            'Dikerjakan': 'fas fa-wrench',
+            'Selesai': 'fas fa-check-double'
+        };
+
+        const timeline = document.getElementById('statusTimeline');
+        timeline.innerHTML = '';
+
+        statuses.forEach(status => {
+            const isCompleted = statuses.indexOf(status) <= statuses.indexOf(currentStatus);
+            const item = document.createElement('div');
+            item.className = `timeline-item ${isCompleted ? 'completed' : ''}`;
+            item.innerHTML = `
+                <div class="timeline-icon">
+                    <i class="${statusIcons[status]}"></i>
+                </div>
+                <div class="timeline-content">
+                    <h4>${status}</h4>
+                    <p>${isCompleted ? 'Selesai' : 'Belum dimulai'}</p>
+                </div>
+            `;
+            timeline.appendChild(item);
+        });
+    }
+
+    function showError(message) {
+        document.querySelector('.service-detail-container').innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> ${message}
+                <br><br>
+                <a href="javascript:history.back()" class="btn btn-primary">Kembali</a>
+            </div>
+        `;
+    }
+
+    // Load detail saat halaman dimuat
+    loadServiceDetail();
+</script>
+{% endblock %}
