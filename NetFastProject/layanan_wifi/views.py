@@ -682,7 +682,6 @@ def speed_test_api(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == 'POST':
-<<<<<<< HEAD
         # Validasi data tes
         data = request.data
         if not all(key in data for key in ['download_speed_mbps', 'upload_speed_mbps', 'ping_ms']):
@@ -740,7 +739,6 @@ def speed_test_api(request):
 
         except (ValueError, TypeError):
             return Response({'error': 'Format data speed test tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
-=======
         # Use serializer to validate input; attach pelanggan_id
         input_data = request.data.copy()
         input_data['id_pelanggan'] = pelanggan_id
@@ -748,12 +746,10 @@ def speed_test_api(request):
         create_serializer = RiwayatTestingWifiCreateSerializer(data=input_data)
         if not create_serializer.is_valid():
             return Response({'error': 'Data speed test tidak valid', 'details': create_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
             test = create_serializer.save()
             out = RiwayatTestingWifiSerializer(test)
             return Response({'message': 'Speed test berhasil disimpan ke riwayat', 'test': out.data}, status=status.HTTP_201_CREATED)
->>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
         except Exception as e:
             return Response({'error': f'Gagal menyimpan speed test: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1332,8 +1328,5 @@ def admin_pelanggan(request, id_pelanggan=None):
             pelanggan.delete()
             return Response({'message': 'Pelanggan berhasil dihapus'}, status=status.HTTP_200_OK)
         except Pelanggan.DoesNotExist:
-<<<<<<< HEAD
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
-=======
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
->>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0

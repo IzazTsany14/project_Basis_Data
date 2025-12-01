@@ -41,15 +41,11 @@ class PelangganRegistrasiSerializer(serializers.ModelSerializer):
 
         # Ensure only valid fields are passed to Pelanggan constructor
         pelanggan_data = {k: v for k, v in validated_data.items() if k in ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan']}
-
-<<<<<<< HEAD
         pelanggan = Pelanggan(**validated_data)
         # Assign area only if the Pelanggan model actually defines it
         if area and hasattr(pelanggan, 'id_area_layanan'):
             pelanggan.id_area_layanan = area
-=======
         pelanggan = Pelanggan(**pelanggan_data)
->>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
         pelanggan.set_password(password)
         pelanggan.save()
         return pelanggan
@@ -146,11 +142,8 @@ class RiwayatTestingWifiSerializer(serializers.ModelSerializer):
         # Note: model `RiwayatTestingWifi` (from .sql) does not have a 'connection_type' column.
         # Do not include it here to avoid ImproperlyConfigured errors.
         fields = ['id_testing', 'id_langganan', 'nama_pelanggan', 'nama_paket',
-<<<<<<< HEAD
-                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms']
-=======
+                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms'
               'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms', 'connection_type']
->>>>>>> 6157ad60beb2f26fe9d06079f942ccd44fbc00d0
         read_only_fields = ['id_testing', 'waktu_testing']
 
     def get_connection_type(self, obj):
