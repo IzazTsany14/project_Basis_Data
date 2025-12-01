@@ -133,18 +133,25 @@ class PemesananJasaCreateSerializer(serializers.ModelSerializer):
         
 
 class RiwayatTestingWifiSerializer(serializers.ModelSerializer):
-    nama_pelanggan = serializers.CharField(source='id_langganan.id_pelanggan.nama_lengkap', read_only=True, allow_null=True)
-    nama_paket = serializers.CharField(source='id_langganan.id_paket.nama_paket', read_only=True, allow_null=True)
+    nama_pelanggan = serializers.SerializerMethodField()
+    nama_paket = serializers.SerializerMethodField()
     connection_type = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = RiwayatTestingWifi
-        # Note: model `RiwayatTestingWifi` (from .sql) does not have a 'connection_type' column.
-        # Do not include it here to avoid ImproperlyConfigured errors.
         fields = ['id_testing', 'id_langganan', 'nama_pelanggan', 'nama_paket',
-                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms'
-              'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms', 'connection_type']
+                  'waktu_testing', 'download_speed_mbps', 'upload_speed_mbps', 'ping_ms', 'connection_type']
         read_only_fields = ['id_testing', 'waktu_testing']
+
+    def get_nama_pelanggan(self, obj):
+        if obj.id_langganan and obj.id_langganan.id_pelanggan:
+            return obj.id_langganan.id_pelanggan.nama_lengkap
+        return None
+
+    def get_nama_paket(self, obj):
+        if obj.id_langganan and obj.id_langganan.id_paket:
+            return obj.id_langganan.id_paket.nama_paket
+        return None
 
     def get_connection_type(self, obj):
         # Determine connection type heuristically from download speed

@@ -73,7 +73,6 @@ def dashboard_pelanggan_view(request):
         return redirect('login_page')
 
     langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
-    riwayat_test = RiwayatTestingWifi.objects.filter(id_langganan__id_pelanggan=pelanggan_id).order_by('-waktu_testing')[:5]
     pemesanan_terakhir = PemesananJasa.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_pemesanan')[:5]
 
     # Build context matching template variable names
@@ -112,7 +111,6 @@ def dashboard_pelanggan_view(request):
         'user': user_ctx,
         'subscription': subscription_ctx,
         'recent_services': recent_services,
-        'recent_tests': riwayat_test,
     }
     return render(request, 'user/dashboard.html', context)
 
@@ -688,23 +686,27 @@ def speed_test_api(request):
             return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Coba ambil langganan aktif jika ada (opsional)
-            langganan = None
+            # Coba ambil langganan aktif jika ada
             try:
                 langganan = Langganan.objects.filter(
                     id_pelanggan=pelanggan_id,
                     status_langganan='AKTIF'
                 ).latest('tanggal_mulai')
-
-                # Log perbandingan dengan paket jika ada langganan aktif
-                if langganan.id_paket:
-                    package_speed = langganan.id_paket.kecepatan_mbps
-                    measured_speed = float(data['download_speed_mbps'])
-                    print(f"Package speed: {package_speed} Mbps, Measured: {measured_speed} Mbps")
-
             except Langganan.DoesNotExist:
-                # Tidak ada langganan aktif, tapi tetap izinkan tes kecepatan
-                print(f"No active subscription for pelanggan {pelanggan_id}, but allowing speed test anyway")
+                # Jika tidak ada aktif, ambil langganan terbaru
+                try:
+                    langganan = Langganan.objects.filter(
+                        id_pelanggan=pelanggan_id
+                    ).latest('tanggal_mulai')
+                except Langganan.DoesNotExist:
+                    # Jika tidak ada langganan sama sekali, tidak bisa simpan tes
+                    return Response({'error': 'Tidak dapat menyimpan hasil tes: tidak ada data langganan'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Log perbandingan dengan paket jika ada langganan aktif
+            if langganan.status_langganan == 'AKTIF' and langganan.id_paket:
+                package_speed = langganan.id_paket.kecepatan_mbps
+                measured_speed = float(data['download_speed_mbps'])
+                print(f"Package speed: {package_speed} Mbps, Measured: {measured_speed} Mbps")
 
             # Deteksi tipe koneksi
             connection_type = data.get('connection_type', 'Unknown')
@@ -739,19 +741,6 @@ def speed_test_api(request):
 
         except (ValueError, TypeError):
             return Response({'error': 'Format data speed test tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
-        # Use serializer to validate input; attach pelanggan_id
-        input_data = request.data.copy()
-        input_data['id_pelanggan'] = pelanggan_id
-
-        create_serializer = RiwayatTestingWifiCreateSerializer(data=input_data)
-        if not create_serializer.is_valid():
-            return Response({'error': 'Data speed test tidak valid', 'details': create_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            test = create_serializer.save()
-            out = RiwayatTestingWifiSerializer(test)
-            return Response({'message': 'Speed test berhasil disimpan ke riwayat', 'test': out.data}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({'error': f'Gagal menyimpan speed test: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def user_riwayat_testing(request):
