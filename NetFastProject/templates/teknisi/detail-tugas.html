@@ -15,12 +15,47 @@
         <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
 
         <!-- Icon Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-icon icon-dashboard" title="Dashboard" onclick="window.location.href='/teknisi/dashboard/'">📊</div>
-            <div class="sidebar-icon icon-tasks active" title="Tugas">📋</div>
-            <div class="sidebar-icon icon-profile" title="Profil">👤</div>
-            <div class="sidebar-icon icon-logout" title="Logout" onclick="logout()">🚪</div>
-        </aside>
+       <aside class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="sidebar-item active" onclick="navigateTo('dashboard')">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('tasks')">
+            <i class="fas fa-tasks"></i>
+            <span>Tugas Saya</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('profile')">
+            <i class="fas fa-user"></i>
+            <span>Profil</span>
+        </div>
+        <div class="sidebar-item" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="/teknisi/dashboard/" class="bottom-nav-item active" onclick="navigateTo('dashboard'); return false;">
+            <i class="fas fa-tachometer-alt"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/teknisi/detail-tugas/" class="bottom-nav-item" onclick="navigateTo('tasks'); return false;">
+            <i class="fas fa-tasks"></i>
+            <span>Tugas</span>
+        </a>
+        <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
+            <i class="fas fa-user"></i>
+            <span>Profil</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </nav>
 
         <!-- Main Content -->
         <div class="main-content">
