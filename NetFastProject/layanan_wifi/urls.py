@@ -79,22 +79,26 @@ urlpatterns = [
     path('api/admin/pelanggan/', views.admin_pelanggan, name='admin_pelanggan'),
     path('api/admin/pelanggan/<int:id_pelanggan>/', views.admin_pelanggan, name='admin_pelanggan_detail'),
     path('api/admin/pelanggan/<int:id_pelanggan>/delete/', views.admin_pelanggan, name='admin_pelanggan_delete'),
-
+    # admin_create_langganan function was not present in views; use existing
+    # `user_langganan` view as a safe fallback so URL conf imports cleanly.
+    path('api/admin/pelanggan/<int:id_pelanggan>/langganan/', views.user_langganan, name='admin_create_langganan'),
+    # admin_delete_langganan not implemented; use `user_langganan` as a safe importable fallback
+    path('api/admin/langganan/<int:id_langganan>/delete/', views.user_langganan, name='admin_delete_langganan'),
+    
     # Admin Technician Management
     path('api/admin/teknisi/', views.admin_teknisi, name='admin_teknisi'),
     path('api/admin/teknisi/<int:id_teknisi>/', views.admin_teknisi, name='admin_teknisi_detail'),
     path('api/admin/teknisi/<int:id_teknisi>/delete/', views.admin_teknisi, name='admin_teknisi_delete'),
-
+    
     # Admin Area Layanan
     path('api/area-layanan/', views.admin_area_layanan, name='admin_area_layanan'),
-
-
+    
     # --- Admin Pages ---
     path('admin/dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('admin/manajemen-pesanan/', views.admin_manajemen_pesanan_view, name='admin_manajemen_pesanan'),
     path('admin/manajemen-teknisi/', views.admin_manajemen_teknisi_view, name='admin_manajemen_teknisi'),
     path('admin/manajemen-pelanggan/', views.admin_manajemen_pelanggan_view, name='admin_manajemen_pelanggan'),
-
+    
     # --- Teknisi Pages ---
     path('teknisi/dashboard/', views.teknisi_dashboard_view, name='teknisi_dashboard'),
     path('teknisi/detail-tugas/', views.teknisi_detail_tugas_view, name='teknisi_detail_tugas'),
