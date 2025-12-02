@@ -113,10 +113,44 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Detail Pesanan</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button id="pay-order-btn" class="btn btn-primary" style="padding:6px 10px;" onclick="openPaymentModal()">Bayar</button>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
             </div>
             <div class="modal-body" id="order-detail-content">
                 <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="payment-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Pilih Metode Pembayaran</h3>
+                <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="payment-choice-form" onsubmit="event.preventDefault(); submitPaymentChoice();">
+                    <div>
+                        <label><input type="radio" name="payment_method" value="transfer" checked> Transfer Bank</label>
+                    </div>
+                    <div>
+                        <label><input type="radio" name="payment_method" value="cash"> Tunai (Bayar di Tempat)</label>
+                    </div>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <button type="submit" class="btn btn-primary">Lanjutkan</button>
+                        <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Batal</button>
+                    </div>
+                </form>
+                <div id="transfer-instructions" class="hidden" style="margin-top:12px;">
+                    <h4>Instruksi Transfer</h4>
+                    <div id="bank-info">
+                        <!-- Bank info will be filled by script -->
+                    </div>
+                    <p>Setelah melakukan transfer, silakan unggah bukti pembayaran pada bagian "Riwayat Pembayaran".</p>
+                </div>
             </div>
         </div>
     </div>
@@ -160,10 +194,94 @@
             filterOrders();
         }
 
+        // Track current order id when opening detail modal
         function viewOrderDetail(orderId) {
+            window.currentOrderId = orderId;
             // Load and display order details in modal
-            loadOrderDetail(orderId);
+            if (typeof loadOrderDetail === 'function') loadOrderDetail(orderId);
             document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        // Payment modal handlers
+        function openPaymentModal() {
+            document.getElementById('payment-modal').classList.remove('hidden');
+            document.getElementById('transfer-instructions').classList.add('hidden');
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.add('hidden');
+        }
+
+        function submitPaymentChoice() {
+            const form = document.getElementById('payment-choice-form');
+            const method = form.payment_method.value;
+            if (method === 'transfer') {
+                // show transfer instructions (client-side guidance)
+                const bankInfoEl = document.getElementById('bank-info');
+                bankInfoEl.innerHTML = `
+                    <p><strong>Nama Bank:</strong> BCA</p>
+                    <p><strong>Nomor Rekening:</strong> 1234567890</p>
+                    <p><strong>Atas Nama:</strong> PT. NetFast</p>
+                    <p><strong>Jumlah:</strong> Silakan cek jumlah pada tabel Pembayaran</p>
+                `;
+                document.getElementById('transfer-instructions').classList.remove('hidden');
+            } else {
+                alert('Pilih "Tunai" — teknisi akan menerima pembayaran saat layanan selesai.');
+            }
+            // close modal after showing instructions so user can proceed to upload
+            setTimeout(() => {
+                closePaymentModal();
+                // guide user to payments section
+                document.getElementById('payments-table')?.scrollIntoView({behavior:'smooth'});
+            }, 800);
+        }
+
+        // Upload proof form (adds a small upload area if user wants to upload directly)
+        function openUploadFormFor(paymentId) {
+            // ensure upload form exists
+            let uploadArea = document.getElementById('upload-proof-area');
+            if (!uploadArea) {
+                const container = document.createElement('div');
+                container.id = 'upload-proof-area';
+                container.style.marginTop = '12px';
+                container.innerHTML = `
+                    <h4>Unggah Bukti Pembayaran</h4>
+                    <input type="file" id="upload-proof-file" />
+                    <input type="hidden" id="upload-proof-payment-id" />
+                    <button class="btn btn-primary" onclick="uploadProof()">Unggah Bukti</button>
+                    <div id="upload-proof-status" style="margin-top:8px;"></div>
+                `;
+                document.querySelector('.main-content')?.appendChild(container);
+                uploadArea = container;
+            }
+            document.getElementById('upload-proof-payment-id').value = paymentId || '';
+            uploadArea.scrollIntoView({behavior:'smooth'});
+        }
+
+        async function uploadProof() {
+            const fileInput = document.getElementById('upload-proof-file');
+            const paymentId = document.getElementById('upload-proof-payment-id').value;
+            const statusEl = document.getElementById('upload-proof-status');
+            if (!paymentId) { statusEl.textContent = 'ID pembayaran tidak diset. Pilih pembayaran terlebih dahulu.'; return; }
+            if (!fileInput.files || fileInput.files.length === 0) { statusEl.textContent = 'Pilih file terlebih dahulu.'; return; }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const token = localStorage.getItem('userToken');
+                const res = await fetch(`/api/user/payments/${paymentId}/upload-proof/`, {
+                    method: 'POST',
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+                    body: formData
+                });
+                if (!res.ok) throw new Error('Upload gagal');
+                const data = await res.json();
+                statusEl.textContent = 'Unggah berhasil. Menunggu verifikasi.';
+                // refresh payments list
+                if (typeof loadPaymentsHistory === 'function') loadPaymentsHistory();
+            } catch (err) {
+                statusEl.textContent = 'Terjadi kesalahan saat mengunggah: ' + err.message;
+            }
         }
 
         function closeModal() {

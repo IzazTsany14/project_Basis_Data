@@ -44,6 +44,10 @@ urlpatterns = [
     # User Pemesanan
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
     path('api/user-pemesanan/', views.user_pemesanan, name='api_user_pemesanan'),
+    # Create payment for an existing pemesanan
+    path('api/user/pemesanan/<int:id_pemesanan>/create-payment/', views.create_payment_for_pesanan, name='api_create_payment_for_pesanan'),
+    # Upload payment proof (multipart/form-data with key 'file')
+    path('api/user/payments/<int:id_pembayaran>/upload-proof/', views.upload_payment_proof, name='api_upload_payment_proof'),
 
     # Registrasi Pelanggan (halaman & API)
     path('register/', views.registrasi_pelanggan, name='registrasi_pelanggan'),

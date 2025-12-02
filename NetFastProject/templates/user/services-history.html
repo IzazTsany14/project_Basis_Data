@@ -92,6 +92,26 @@
             font-weight: 600;
             text-transform: uppercase;
         }
+
+        /* small payment badge used inside Detail button */
+        .payment-badge-small {
+            background: linear-gradient(135deg,#20c997,#17a2b8);
+            color: #fff;
+            margin-left: 8px;
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* Action buttons container with symmetric spacing */
+        .action-buttons {
+            display: inline-flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: flex-end;
+        }
         .status-selesai {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
@@ -325,6 +345,84 @@
     <!-- JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Payment modal for services-history page
+        const paymentModalEl = document.createElement('div');
+        paymentModalEl.innerHTML = `
+        <div class="modal fade" id="servicePaymentModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-credit-card me-2"></i>Pilih Metode Pembayaran</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <label><input type="radio" name="svc_payment_method" value="transfer" checked> Transfer Bank</label>
+                        </div>
+                        <div>
+                            <label><input type="radio" name="svc_payment_method" value="cash"> Tunai (Bayar di Tempat)</label>
+                        </div>
+                        <div id="svc-transfer-info" class="mt-3 d-none">
+                            <p><strong>Bank:</strong> BCA</p>
+                            <p><strong>No Rek:</strong> 1234567890</p>
+                            <p><strong>Atas Nama:</strong> PT. NetFast</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" id="svc-pay-now-btn">Buat Pembayaran</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.appendChild(paymentModalEl);
+        const svcPaymentModal = new bootstrap.Modal(document.getElementById('servicePaymentModal'));
+
+        let svcCurrentPemesanan = null;
+        function openServicePaymentModal(pemesananId) {
+            svcCurrentPemesanan = pemesananId;
+            // reset radio
+            document.querySelectorAll('input[name="svc_payment_method"]').forEach(r => r.checked = false);
+            document.querySelector('input[name="svc_payment_method"][value="transfer"]').checked = true;
+            document.getElementById('svc-transfer-info').classList.add('d-none');
+            svcPaymentModal.show();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.matches('input[name="svc_payment_method"]')) {
+                const v = document.querySelector('input[name="svc_payment_method"]:checked').value;
+                if (v === 'transfer') document.getElementById('svc-transfer-info').classList.remove('d-none');
+                else document.getElementById('svc-transfer-info').classList.add('d-none');
+            }
+        });
+
+        document.getElementById('svc-pay-now-btn').addEventListener('click', async function() {
+            const method = document.querySelector('input[name="svc_payment_method"]:checked').value;
+            if (!svcCurrentPemesanan) return alert('ID pesanan tidak tersedia');
+            try {
+                const resp = await fetch(`/api/user/pemesanan/${svcCurrentPemesanan}/create-payment/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    },
+                    body: JSON.stringify({ payment_method: method })
+                });
+                const jr = await resp.json();
+                if (resp.ok) {
+                    showAlert('Pembayaran berhasil dibuat. Silakan cek Riwayat Pembayaran untuk mengunggah bukti.', 'success');
+                    svcPaymentModal.hide();
+                    loadServiceHistory();
+                } else {
+                    showAlert(jr.error || 'Gagal membuat pembayaran', 'danger');
+                }
+            } catch (err) {
+                console.error('Create payment error', err);
+                showAlert('Terjadi kesalahan saat membuat pembayaran', 'danger');
+            }
+        });
+
         const serviceDetailsModal = new bootstrap.Modal(document.getElementById('serviceDetailsModal'));
         const newServiceModal = new bootstrap.Modal(document.getElementById('newServiceModal'));
 
@@ -360,6 +458,9 @@
                 const container = document.getElementById('historyContainer');
                 const services = data.services || [];
 
+                // DEBUG: log payload to help diagnose missing payment fields
+                console.log('services-history payload:', data);
+
                 if (!services || services.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
@@ -375,16 +476,28 @@
                 }
 
                 container.innerHTML = services.map(service => {
-                    const statusClass = service.status_pemesanan.toLowerCase().replace(/\s+/g, '-');
-                    const tanggal = new Date(service.tanggal_pemesanan).toLocaleDateString('id-ID', {
+                    const statusClass = (service.status_pemesanan || '').toLowerCase().replace(/\s+/g, '-');
+                    const tanggal = service.tanggal_pemesanan ? new Date(service.tanggal_pemesanan).toLocaleDateString('id-ID', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
-                    });
-                    const waktu = new Date(service.tanggal_pemesanan).toLocaleTimeString('id-ID', {
+                    }) : '-';
+                    const waktu = service.tanggal_pemesanan ? new Date(service.tanggal_pemesanan).toLocaleTimeString('id-ID', {
                         hour: '2-digit',
                         minute: '2-digit'
-                    });
+                    }) : '';
+
+                    // prepare payment badge and clean catatan for display
+                    const paymentStatus = service.payment_status || null;
+                    const paymentBadge = paymentStatus ? `<span class="status-badge" style="background:linear-gradient(135deg,#20c997,#17a2b8);color:#fff;margin-left:8px;">${paymentStatus}</span>` : '';
+                    const rawCat = service.catatan || '';
+                    const catatanText = (service.catatan_display || rawCat).replace(/\[PaymentId:\d+\]/g, '').replace(/\[BuktiPembayaran:[^\]]+\]/g, '').trim();
+                    const catatanPreview = catatanText ? (catatanText.length > 80 ? catatanText.substring(0,80)+'...' : catatanText) : 'Tidak ada catatan';
+
+                    // Determine whether to show Pay button: hide when payment_id exists or payment_status indicates paid
+                    const hasPayment = !!service.payment_id;
+                    const paidStatuses = ['lunas', 'lunas', 'terverifikasi', 'paid'];
+                    const isPaid = service.payment_status ? paidStatuses.includes(service.payment_status.toLowerCase()) : false;
 
                     return `
                         <div class="service-card">
@@ -397,15 +510,21 @@
                                 </div>
                                 <div class="col-lg-5 col-md-4">
                                     <h6 class="mb-1">${service.nama_jasa || 'Layanan'}</h6>
-                                    <p class="text-muted mb-0 small">${service.catatan ? service.catatan.substring(0, 80) + '...' : 'Tidak ada catatan'}</p>
+                                    <p class="text-muted mb-0 small">${catatanPreview}</p>
                                 </div>
                                 <div class="col-lg-2 col-md-2">
                                     <span class="status-badge status-${statusClass}">${service.status_pemesanan}</span>
                                 </div>
                                 <div class="col-lg-2 col-md-2 text-end">
-                                    <button class="btn btn-outline-primary btn-sm" onclick="showServiceDetails('${service.id_pemesanan}')">
-                                        <i class="fas fa-eye me-1"></i>Detail
-                                    </button>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-outline-primary btn-sm d-flex align-items-center" onclick="showServiceDetails('${service.id_pemesanan}')">
+                                            <i class="fas fa-eye me-1"></i>
+                                            <span>Detail</span>
+                                        </button>
+                                        ${ (!hasPayment && !isPaid) ? `<button class="btn btn-primary btn-sm" onclick="openServicePaymentModal('${service.id_pemesanan}')">
+                                            <i class="fas fa-credit-card me-1"></i>Bayar
+                                        </button>` : '' }
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -430,6 +549,9 @@
                 });
                 const waktu = new Date(service.tanggal_pemesanan).toLocaleTimeString('id-ID');
 
+                // show payment status in details modal when available
+                const paymentStatusDetail = service.payment_status ? `<div class="col-md-6"><div class="mb-3"><label class="fw-bold text-muted">Status Pembayaran</label><p class="mb-0"><span class=\"payment-badge-small\">${service.payment_status.toUpperCase()}</span></p></div></div>` : '';
+
                 document.getElementById('serviceDetailsContent').innerHTML = `
                     <div class="row">
                         <div class="col-md-6">
@@ -446,6 +568,7 @@
                                 </p>
                             </div>
                         </div>
+                        ${paymentStatusDetail}
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="fw-bold text-muted">Tanggal Pemesanan</label>
@@ -521,8 +644,19 @@
 
                 if (response.ok) {
                     showAlert('Pesanan layanan berhasil dibuat!', 'success');
-                    newServiceModal.hide();
-                    loadServiceHistory(); // Reload the history
+                            newServiceModal.hide();
+                            loadServiceHistory(); // Reload the history
+                            // Optionally open payment modal for the newly created order
+                            try {
+                                const resJson = await response.json();
+                                const pemesananId = resJson.pemesanan && resJson.pemesanan.id_pemesanan ? resJson.pemesanan.id_pemesanan : null;
+                                if (pemesananId) {
+                                    // show payment modal after short delay
+                                    setTimeout(() => openServicePaymentModal(pemesananId), 600);
+                                }
+                            } catch (e) {
+                                // ignore parse error
+                            }
                 } else {
                     showAlert(data.error || 'Gagal membuat pesanan', 'danger');
                 }

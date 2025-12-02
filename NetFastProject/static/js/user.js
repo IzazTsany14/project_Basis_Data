@@ -291,20 +291,43 @@ async function loadOrdersHistory() {
         if (response && response.ok) {
             const data = await response.json();
             
+            console.log('loadOrdersHistory:', data);
             if (data.orders && data.orders.length > 0) {
-                tbody.innerHTML = data.orders.map(order => `
+                tbody.innerHTML = data.orders.map(order => {
+                    // determine payment actions: prefer to use payment_id if provided by API
+                    const paymentId = order.payment_id || order.id_pembayaran || null;
+                    let paymentActionBtn = '';
+
+                    if (paymentId) {
+                        // show upload button if payment still pending or not paid
+                        const status = (order.payment_status || '').toLowerCase();
+                        if (status.includes('menunggu') || status.includes('belum') || status.includes('pending')) {
+                            paymentActionBtn = `<button class="btn-primary" onclick="openUploadFormFor(${paymentId})">Unggah Bukti</button>`;
+                        } else if (status.includes('lunas') || status.includes('bayar')) {
+                            paymentActionBtn = `<button class="btn-outline" onclick="openUploadFormFor(${paymentId})">Lihat Bukti</button>`;
+                        } else {
+                            paymentActionBtn = `<button class="btn-outline" onclick="openUploadFormFor(${paymentId})">Bayar / Bukti</button>`;
+                        }
+                    } else {
+                        // no payment row yet: offer to choose payment method via modal
+                        paymentActionBtn = `<button class="btn-primary" onclick="(function(){ window.currentOrderId = ${order.id}; openPaymentModal(); })()">Pilih Metode</button>`;
+                    }
+
+                    return `
                     <tr>
                         <td>#${order.id}</td>
                         <td>${order.jenis_jasa}</td>
-                        <td>${formatDate(order.tanggal_pesanan)}</td>
+                        <td>${formatDate(order.tanggal_pemesanan)}</td>
                         <td>${formatDate(order.tanggal_jadwal)} ${order.waktu_jadwal || ''}</td>
                         <td><span class="status-badge ${getStatusClass(order.status_pemesanan)}">${order.status_pemesanan}</span></td>
                         <td>${order.teknisi_nama || 'Belum ditugaskan'}</td>
                         <td>
                             <button class="btn-outline" onclick="viewOrderDetail(${order.id})">Detail</button>
+                            ${paymentActionBtn}
                         </td>
                     </tr>
-                `).join('');
+                `;
+                }).join('');
             } else {
                 tbody.innerHTML = '<tr><td colspan="7" class="no-data">Belum ada pesanan</td></tr>';
             }
@@ -325,9 +348,19 @@ async function loadPaymentsHistory() {
         
         if (response && response.ok) {
             const data = await response.json();
+            console.log('loadPaymentsHistory:', data);
             
             if (data.payments && data.payments.length > 0) {
-                tbody.innerHTML = data.payments.map(payment => `
+                tbody.innerHTML = data.payments.map(payment => {
+                    const status = (payment.status_pembayaran || '').toLowerCase();
+                    let actionBtn = `<button class="btn-outline" onclick="downloadInvoice(${payment.id})">Invoice</button>`;
+                    if (status.includes('menunggu') || status.includes('belum') || status.includes('pending')) {
+                        actionBtn = `<button class="btn-primary" onclick="openUploadFormFor(${payment.id})">Unggah Bukti</button>`;
+                    } else if (status.includes('verifikasi') || status.includes('menunggu verifikasi')) {
+                        actionBtn = `<button class="btn-outline" onclick="openUploadFormFor(${payment.id})">Lihat Bukti</button>`;
+                    }
+
+                    return `
                     <tr>
                         <td>#${payment.id}</td>
                         <td>${formatDate(payment.tanggal_pembayaran)}</td>
@@ -336,10 +369,11 @@ async function loadPaymentsHistory() {
                         <td><span class="status-badge ${getStatusClass(payment.status_pembayaran)}">${payment.status_pembayaran}</span></td>
                         <td>${payment.periode_tagihan}</td>
                         <td>
-                            <button class="btn-outline" onclick="downloadInvoice(${payment.id})">Invoice</button>
+                            ${actionBtn}
                         </td>
                     </tr>
-                `).join('');
+                `;
+                }).join('');
             } else {
                 tbody.innerHTML = '<tr><td colspan="7" class="no-data">Belum ada riwayat pembayaran</td></tr>';
             }

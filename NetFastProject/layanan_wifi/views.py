@@ -476,6 +476,157 @@ def user_pemesanan(request):
 
 
 @api_view(['POST'])
+@csrf_exempt
+def create_payment_for_pesanan(request, id_pemesanan):
+    """Create a Pembayaran record linked to an existing PemesananJasa.
+
+    POST body: { "payment_method": "transfer" | "cash" }
+    """
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        pemesanan = PemesananJasa.objects.select_related('id_pelanggan', 'id_jenis_jasa').get(id_pemesanan=id_pemesanan)
+    except PemesananJasa.DoesNotExist:
+        return Response({'error': 'Pemesanan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Ensure pemesanan belongs to logged-in pelanggan
+    if getattr(pemesanan.id_pelanggan, 'id_pelanggan', None) != pelanggan_id:
+        return Response({'error': 'Akses ditolak'}, status=status.HTTP_403_FORBIDDEN)
+
+    payment_method = (request.data.get('payment_method') or '').strip().lower()
+    from datetime import datetime, date
+    # Find metode pembayaran
+    metode = None
+    try:
+        from .models import MetodePembayaran, Pembayaran, Langganan, PaketLayanan
+        metode = MetodePembayaran.objects.filter(nama_metode__icontains=payment_method).first()
+        if not metode:
+            metode = MetodePembayaran.objects.first()
+    except Exception:
+        metode = None
+
+    # Find or create a langganan to attach payment to
+    langganan = None
+    try:
+        langganan = Langganan.objects.filter(id_pelanggan=pemesanan.id_pelanggan).order_by('-tanggal_mulai').first()
+        if not langganan:
+            # fallback: create a temporary langganan using first paket if exists
+            paket = PaketLayanan.objects.first()
+            if paket:
+                langganan = Langganan.objects.create(id_pelanggan=pemesanan.id_pelanggan, id_paket=paket, tanggal_mulai=date.today(), status_langganan='NONAKTIF')
+    except Exception:
+        langganan = None
+
+    if not langganan:
+        return Response({'error': 'Tidak ada langganan terkait untuk membuat pembayaran'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Determine amount from jenis_jasa.biaya if available
+    amount = 0
+    try:
+        amount = float(getattr(pemesanan.id_jenis_jasa, 'biaya', 0) or 0)
+    except Exception:
+        amount = 0
+
+    # Map payment method to initial status:
+    # - transfer -> Lunas (already paid via bank transfer)
+    # - cash / bayar di tempat -> Belum Bayar (will become Lunas when teknisi arrives)
+    if 'transfer' in payment_method:
+        status_label = 'Lunas'
+    else:
+        # default to 'Belum Bayar' for cash / pay on site
+        status_label = 'Belum Bayar'
+
+    try:
+        pembayaran = Pembayaran.objects.create(
+            id_langganan=langganan,
+            id_metode_bayar=metode if metode else None,
+            jumlah_bayar=amount,
+            tanggal_bayar=datetime.now(),
+            periode_tagihan=date.today(),
+            status_pembayaran=status_label
+        )
+        # Append marker to pemesanan.catatan for traceability
+        note = pemesanan.catatan or ''
+        note += f"\n[PaymentId:{pembayaran.id_pembayaran}]"
+        pemesanan.catatan = note
+        pemesanan.save(update_fields=['catatan'])
+
+        return Response({
+            'message': 'Pembayaran dibuat',
+            'pembayaran_id': pembayaran.id_pembayaran,
+            'status': pembayaran.status_pembayaran
+        }, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@csrf_exempt
+def upload_payment_proof(request, id_pembayaran):
+    """Accept multipart file upload for a pembayaran, save file and mark status as Menunggu Verifikasi."""
+    pelanggan_id = request.session.get('pelanggan_id')
+    if not pelanggan_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        from .models import Pembayaran, PemesananJasa
+        pembayaran = Pembayaran.objects.get(id_pembayaran=id_pembayaran)
+    except Pembayaran.DoesNotExist:
+        return Response({'error': 'Pembayaran tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Basic ownership check: ensure pembayaran linked to a langganan that belongs to this pelanggan
+    try:
+        if pembayaran.id_langganan and pembayaran.id_langganan.id_pelanggan and pembayaran.id_langganan.id_pelanggan.id_pelanggan != pelanggan_id:
+            return Response({'error': 'Akses ditolak'}, status=status.HTTP_403_FORBIDDEN)
+    except Exception:
+        pass
+
+    # Get file
+    file_obj = None
+    if 'file' in request.FILES:
+        file_obj = request.FILES['file']
+    else:
+        return Response({'error': 'File tidak ditemukan di request (key="file")'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Save file to media/pembayaran_proofs/
+    import os, time
+    from django.conf import settings
+    media_root = getattr(settings, 'MEDIA_ROOT', None) or os.path.join(os.getcwd(), 'media')
+    dest_dir = os.path.join(media_root, 'pembayaran_proofs')
+    os.makedirs(dest_dir, exist_ok=True)
+
+    filename = f"pembayaran_{id_pembayaran}_{int(time.time())}_{file_obj.name}".replace(' ', '_')
+    dest_path = os.path.join(dest_dir, filename)
+    with open(dest_path, 'wb') as out_f:
+        for chunk in file_obj.chunks():
+            out_f.write(chunk)
+
+    # Update pembayaran status
+    pembayaran.status_pembayaran = 'Menunggu Verifikasi'
+    try:
+        pembayaran.save()
+    except Exception:
+        # ignore save problems but continue
+        pass
+
+    # Try to find PemesananJasa that referenced this pembayaran via catatan marker
+    try:
+        marker = f"[PaymentId:{id_pembayaran}]"
+        pemesanan = PemesananJasa.objects.filter(catatan__contains=marker).first()
+        if pemesanan:
+            note = pemesanan.catatan or ''
+            note += f"\n[BuktiPembayaran:{os.path.join('pembayaran_proofs', filename)}]"
+            pemesanan.catatan = note
+            pemesanan.save(update_fields=['catatan'])
+    except Exception:
+        pass
+
+    return Response({'message': 'File diterima, pembayaran menunggu verifikasi', 'file': os.path.join('pembayaran_proofs', filename)}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
 def save_speed_test(request):
     serializer = RiwayatTestingWifiCreateSerializer(data=request.data)
     if serializer.is_valid():
@@ -593,6 +744,41 @@ def teknisi_update_status(request, id_pemesanan):
         
         # (Logika Notifikasi dihapus)
 
+        # If teknisi starts working (technician arrived), update related payment for cash payments
+        try:
+            if status_baru == 'Dikerjakan':
+                import re
+                from .models import Pembayaran
+                cat = pemesanan.catatan or ''
+                m = re.search(r"\[PaymentId:(\d+)\]", cat)
+                if m:
+                    pid = int(m.group(1))
+                    pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                    if pay:
+                        # If payment not already marked as Lunas, and likely a cash payment, mark as Lunas
+                        current_status = (getattr(pay, 'status_pembayaran', '') or '').lower()
+                        method_name = None
+                        try:
+                            method_name = pay.id_metode_bayar.nama_metode.lower() if pay.id_metode_bayar else None
+                        except Exception:
+                            method_name = None
+
+                        is_cash_like = False
+                        if method_name:
+                            if any(k in method_name for k in ['cash', 'tunai', 'bayar di tempat', 'cod', 'cod']):
+                                is_cash_like = True
+                        # Also treat ambiguous cases where status was 'Belum Bayar' or 'Bayar Ditempat'
+                        if (current_status in ['', 'belum bayar', 'bayar ditempat']) or is_cash_like:
+                            pay.status_pembayaran = 'Lunas'
+                            try:
+                                from datetime import datetime
+                                pay.tanggal_bayar = datetime.now()
+                            except Exception:
+                                pass
+                            pay.save()
+        except Exception:
+            # Do not block status update if payment update fails
+            pass
         return Response({
             'message': 'Status pemesanan berhasil diperbarui',
             'pemesanan': PemesananJasaSerializer(pemesanan).data
@@ -1121,7 +1307,43 @@ def service_detail_api(request, service_id):
             id_pelanggan=pelanggan_id
         )
         serializer = PemesananJasaSerializer(service)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        item = dict(serializer.data)
+
+        # Augment with payment info (parse catatan markers)
+        try:
+            import re
+            from .models import Pembayaran
+            cat = item.get('catatan') or ''
+            m = re.search(r"\[PaymentId:(\d+)\]", cat)
+            if m:
+                pid = int(m.group(1))
+                pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                if pay:
+                    item['payment_id'] = getattr(pay, 'id_pembayaran', None)
+                    item['payment_status'] = getattr(pay, 'status_pembayaran', None)
+                    try:
+                        item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                    except Exception:
+                        item['payment_amount'] = None
+                    try:
+                        item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
+                    except Exception:
+                        item['payment_method'] = None
+            else:
+                item['payment_id'] = None
+                item['payment_status'] = None
+                item['payment_amount'] = None
+                item['payment_method'] = None
+
+            # clean catatan
+            clean = re.sub(r"\[PaymentId:\d+\]", '', cat)
+            clean = re.sub(r"\[BuktiPembayaran:[^\]]+\]", '', clean).strip()
+            item['catatan_display'] = clean or None
+        except Exception:
+            # If augmentation fails, still return base data
+            pass
+
+        return Response(item, status=status.HTTP_200_OK)
     except PemesananJasa.DoesNotExist:
         return Response({'error': 'Service not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
@@ -1294,16 +1516,57 @@ def services_history_api(request):
         
     try:
         # Get all services with related data
-        services = PemesananJasa.objects.filter(
+        services_qs = PemesananJasa.objects.filter(
             id_pelanggan=pelanggan_id
         ).select_related(
             'id_jenis_jasa',
             'id_teknisi'
         ).order_by('-tanggal_pemesanan')
-        
-        serializer = PemesananJasaSerializer(services, many=True)
+
+        # Use serializer for base fields then augment with payment info
+        serializer = PemesananJasaSerializer(services_qs, many=True)
+        services_data = serializer.data
+
+        import re
+        from .models import Pembayaran
+        augmented = []
+        for s in services_data:
+            # copy
+            item = dict(s)
+            cat = item.get('catatan') or ''
+            # find PaymentId marker
+            m = re.search(r"\[PaymentId:(\d+)\]", cat)
+            if m:
+                pid = int(m.group(1))
+                try:
+                    pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                    if pay:
+                        item['payment_id'] = getattr(pay, 'id_pembayaran', None)
+                        item['payment_status'] = getattr(pay, 'status_pembayaran', None)
+                        item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                        # try to get metode name
+                        try:
+                            item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
+                        except Exception:
+                            item['payment_method'] = None
+                except Exception:
+                    item['payment_id'] = None
+                    item['payment_status'] = None
+            else:
+                item['payment_id'] = None
+                item['payment_status'] = None
+                item['payment_amount'] = None
+                item['payment_method'] = None
+
+            # clean catatan for display: remove markers
+            clean = re.sub(r"\[PaymentId:\d+\]", '', cat)
+            clean = re.sub(r"\[BuktiPembayaran:[^\]]+\]", '', clean).strip()
+            item['catatan_display'] = clean or None
+
+            augmented.append(item)
+
         return Response({
-            'services': serializer.data
+            'services': augmented
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
