@@ -153,6 +153,8 @@
                                         <th>Email</th>
                                         <th>No. Telepon</th>
                                         <th>Alamat Pemasangan</th>
+                                        <th>Area Layanan</th>
+                                        <th>Paket Aktif</th>
                                         <th>Tanggal Daftar</th>
                                         <th>Aksi</th>
                                     </tr>
@@ -250,7 +252,7 @@
             tbody.innerHTML = '';
 
             if (customers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data pelanggan</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data pelanggan</td></tr>';
                 return;
             }
 
@@ -262,6 +264,8 @@
                     <td>${customer.email || '-'}</td>
                     <td>${customer.no_telepon || '-'}</td>
                     <td>${customer.alamat_pemasangan}</td>
+                    <td>${customer.area_layanan || '-'}</td>
+                    <td>${customer.paket_aktif || '-'}</td>
                     <td>${customer.tanggal_daftar || '-'}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary me-1" onclick="editCustomer(${customer.id_pelanggan})">

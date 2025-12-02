@@ -605,6 +605,126 @@ def admin_pemesanan_menunggu(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@csrf_exempt
+def admin_pelanggan(request, id_pelanggan=None):
+    """Admin API for managing customers.
+
+    GET /api/admin/pelanggan/ -> list customers with area_layanan and paket_aktif
+    GET /api/admin/pelanggan/<id>/ -> detail customer
+    POST -> create
+    PUT -> update
+    DELETE -> delete
+    """
+    # LIST
+    if request.method == 'GET' and id_pelanggan is None:
+        pelanggan_qs = Pelanggan.objects.all().order_by('-tanggal_daftar')
+        results = []
+        # load all areas for simple matching
+        areas = list(AreaLayanan.objects.all())
+        for p in pelanggan_qs:
+            # find latest langganan for paket aktif
+            paket_aktif = None
+            try:
+                lang = Langganan.objects.filter(id_pelanggan=p).order_by('-tanggal_mulai').first()
+                if lang and getattr(lang, 'status_langganan', '').upper() == 'AKTIF':
+                    paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
+                elif lang:
+                    # if not active, still show latest paket name
+                    paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
+            except Exception:
+                paket_aktif = None
+
+            # best-effort area mapping by substring match on address
+            area_name = None
+            addr = (p.alamat_pemasangan or '').lower()
+            for a in areas:
+                if a.nama_area and a.nama_area.lower() in addr:
+                    area_name = a.nama_area
+                    break
+
+            results.append({
+                'id_pelanggan': p.id_pelanggan,
+                'nama_lengkap': p.nama_lengkap,
+                'email': p.email,
+                'no_telepon': p.no_telepon,
+                'alamat_pemasangan': p.alamat_pemasangan,
+                'tanggal_daftar': p.tanggal_daftar.isoformat() if p.tanggal_daftar else None,
+                'area_layanan': area_name,
+                'paket_aktif': paket_aktif,
+            })
+
+        return Response(results, status=status.HTTP_200_OK)
+
+    # DETAIL
+    if request.method == 'GET' and id_pelanggan:
+        try:
+            p = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
+        except Pelanggan.DoesNotExist:
+            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+        paket_aktif = None
+        try:
+            lang = Langganan.objects.filter(id_pelanggan=p).order_by('-tanggal_mulai').first()
+            if lang and getattr(lang, 'status_langganan', '').upper() == 'AKTIF':
+                paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
+            elif lang:
+                paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
+        except Exception:
+            paket_aktif = None
+
+        area_name = None
+        addr = (p.alamat_pemasangan or '').lower()
+        for a in AreaLayanan.objects.all():
+            if a.nama_area and a.nama_area.lower() in addr:
+                area_name = a.nama_area
+                break
+
+        data = {
+            'id_pelanggan': p.id_pelanggan,
+            'nama_lengkap': p.nama_lengkap,
+            'email': p.email,
+            'no_telepon': p.no_telepon,
+            'alamat_pemasangan': p.alamat_pemasangan,
+            'tanggal_daftar': p.tanggal_daftar.isoformat() if p.tanggal_daftar else None,
+            'area_layanan': area_name,
+            'paket_aktif': paket_aktif,
+        }
+        return Response(data, status=status.HTTP_200_OK)
+
+    # CREATE
+    if request.method == 'POST' and id_pelanggan is None:
+        serializer = PelangganSerializer(data=request.data)
+        if serializer.is_valid():
+            p = serializer.save()
+            return Response(PelangganSerializer(p).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # UPDATE
+    if request.method == 'PUT' and id_pelanggan:
+        try:
+            p = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
+        except Pelanggan.DoesNotExist:
+            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PelangganSerializer(p, data=request.data, partial=True)
+        if serializer.is_valid():
+            p = serializer.save()
+            return Response(PelangganSerializer(p).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # DELETE
+    if request.method == 'DELETE' and id_pelanggan:
+        try:
+            p = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
+            p.delete()
+            return Response({'message': 'Pelanggan dihapus'}, status=status.HTTP_200_OK)
+        except Pelanggan.DoesNotExist:
+            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    return Response({'error': 'Method tidak didukung'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
 @api_view(['GET'])
 def admin_pesanan_aktif(request):
     pemesanan = PemesananJasa.objects.exclude(

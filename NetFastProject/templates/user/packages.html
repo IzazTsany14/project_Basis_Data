@@ -257,42 +257,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- Service Request Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h4 class="fw-bold mb-3">Panggil Teknisi</h4>
-                <p class="text-muted">Butuh bantuan instalasi atau perbaikan? Panggil teknisi kami</p>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-lg-6 mb-4">
-                <div class="card p-4 service-card">
-                    <div class="text-center mb-3">
-                        <i class="fas fa-tools fa-3x text-primary mb-3"></i>
-                        <h5 class="fw-bold">Instalasi Baru</h5>
-                        <p class="text-muted">Instalasi router dan konfigurasi jaringan untuk pelanggan baru</p>
-                    </div>
-                    <button class="btn btn-primary w-100" onclick="requestService('Instalasi')">
-                        <i class="fas fa-plus me-2"></i>Panggil Teknisi Instalasi
-                    </button>
-                </div>
-            </div>
-            <div class="col-lg-6 mb-4">
-                <div class="card p-4 service-card">
-                    <div class="text-center mb-3">
-                        <i class="fas fa-wrench fa-3x text-warning mb-3"></i>
-                        <h5 class="fw-bold">Perbaikan</h5>
-                        <p class="text-muted">Perbaikan koneksi internet, router, atau masalah teknis lainnya</p>
-                    </div>
-                    <button class="btn btn-warning w-100" onclick="requestService('Perbaikan')">
-                        <i class="fas fa-wrench me-2"></i>Panggil Teknisi Perbaikan
-                    </button>
-                </div>
-            </div>
-        </div>
-
+        
         <!-- Available Packages Section -->
         <div class="row mb-4">
             <div class="col-12">
@@ -369,14 +334,12 @@
                                     <li><i class="fas fa-shield-alt"></i>Jaminan Kualitas Layanan</li>
                                 </ul>
                             </div>
-                            <div class="col-md-4 text-center">
+                                <div class="col-md-4 text-center">
                                 <div class="package-price mb-3">
                                     Rp ${pkg.harga_bulanan ? pkg.harga_bulanan.toLocaleString() : 'N/A'}
                                     <small class="text-muted d-block">per bulan</small>
                                 </div>
-                                <button class="btn btn-outline-primary" onclick="showPackageDetails(${pkg.id_paket})">
-                                    <i class="fas fa-info-circle me-2"></i>Lihat Detail
-                                </button>
+                                <!-- Lihat Detail button removed as requested -->
                             </div>
                         </div>
                     `;
@@ -415,6 +378,23 @@
                     const isActive = pkg.id_paket === currentPackageId;
                     const card = document.createElement('div');
                     card.className = 'col-lg-4 col-md-6 mb-4';
+
+                    // Remove action buttons for the specific package name 'Home Pro 100 Mbps'
+                    const blockedName = 'Home Pro 100 Mbps';
+                    let actionHtml = '';
+
+                    if (isActive) {
+                        actionHtml = '<div class="btn-group w-100" role="group">' +
+                            '<button class="btn btn-success" disabled><i class="fas fa-check me-2"></i>Paket Aktif</button>';
+                        if (pkg.nama_paket !== blockedName) {
+                            actionHtml += '<button class="btn btn-danger" onclick="deletePackage()"><i class="fas fa-trash me-2"></i>Hapus</button>';
+                        }
+                        actionHtml += '</div>';
+                    } else {
+                        // Do not render any 'Ganti Paket' button for non-active packages
+                        actionHtml = '';
+                    }
+
                     card.innerHTML = `
                         <div class="package-card ${isActive ? 'active' : ''}">
                             <div class="text-center mb-3">
@@ -429,13 +409,7 @@
                                 <li><i class="fas fa-tools"></i>Free Installation</li>
                             </ul>
                             <div class="text-center mt-4">
-                                ${isActive ?
-                                    '<div class="btn-group w-100" role="group">' +
-                                        '<button class="btn btn-success" disabled><i class="fas fa-check me-2"></i>Paket Aktif</button>' +
-                                        '<button class="btn btn-danger" onclick="deletePackage()"><i class="fas fa-trash me-2"></i>Hapus</button>' +
-                                    '</div>' :
-                                    `<button class="btn btn-primary w-100" onclick="changePackage(${pkg.id_paket})"><i class="fas fa-exchange-alt me-2"></i>Ganti Paket</button>`
-                                }
+                                ${actionHtml}
                             </div>
                         </div>
                     `;
