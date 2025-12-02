@@ -31,20 +31,24 @@ class PelangganSerializer(serializers.ModelSerializer):
 
 class PelangganRegistrasiSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    username = serializers.CharField(max_length=50, required=False)
 
     class Meta:
         model = Pelanggan
-        fields = ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan', 'password']
+        fields = ['nama_lengkap', 'username', 'email', 'no_telepon', 'alamat_pemasangan', 'password']
+
+    def validate_username(self, value):
+        from .models import Teknisi
+        if Teknisi.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Username sudah digunakan.")
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password')
+        username = validated_data.pop('username', None)  # Remove username since it's not stored (optional)
 
         # Ensure only valid fields are passed to Pelanggan constructor
         pelanggan_data = {k: v for k, v in validated_data.items() if k in ['nama_lengkap', 'email', 'no_telepon', 'alamat_pemasangan']}
-        pelanggan = Pelanggan(**validated_data)
-        # Assign area only if the Pelanggan model actually defines it
-        if area and hasattr(pelanggan, 'id_area_layanan'):
-            pelanggan.id_area_layanan = area
         pelanggan = Pelanggan(**pelanggan_data)
         pelanggan.set_password(password)
         pelanggan.save()
@@ -223,6 +227,14 @@ class RiwayatTestingWifiCreateSerializer(serializers.Serializer):
 
 class AreaLayananSerializer(serializers.ModelSerializer):
     class Meta:
+        model = AreaLayanan
+        fields = ['id_area_layanan', 'nama_area', 'kode_pos']
+
+
+class JenisPerangkatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JenisPerangkat
+        fields = ['id_jenis_perangkat', 'nama_jenis']
         model = AreaLayanan
         fields = ['id_area_layanan', 'nama_area', 'kode_pos']
 

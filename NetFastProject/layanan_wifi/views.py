@@ -419,16 +419,26 @@ def registrasi_pelanggan(request):
     if request.method == 'GET':
         return render(request, 'register.html')
 
-    # POST -> terima data registrasi (JSON) dan simpan ke DB
-    serializer = PelangganRegistrasiSerializer(data=request.data)
+    # POST -> terima data registrasi
+    # Cek apakah data dari form POST atau JSON
+    if request.content_type == 'application/json':
+        data = request.data
+    else:
+        # Form POST biasa
+        data = request.POST.dict()
+    
+    print("Registration data:", data)  # Debug
+    
+    serializer = PelangganRegistrasiSerializer(data=data)
     if serializer.is_valid():
         pelanggan = serializer.save()
-        # Create default subscription or handle as needed
-        # For now, just register the user
         return Response({
             'message': 'Registrasi berhasil',
             'pelanggan': PelangganSerializer(pelanggan).data
         }, status=status.HTTP_201_CREATED)
+    
+    # Print errors untuk debugging
+    print("Serializer errors:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
