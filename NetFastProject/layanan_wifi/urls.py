@@ -59,6 +59,7 @@ urlpatterns = [
     path('teknisi/tugas/', views.teknisi_tugas, name='teknisi_tugas'),
     path('api/teknisi/tugas/', views.teknisi_tugas, name='api_teknisi_tugas'),
     path('api/teknisi/tugas/<int:id_pemesanan>/', views.teknisi_tugas_detail, name='api_teknisi_tugas_detail'),
+    path('api/teknisi/update-status/<int:id_pemesanan>/', views.teknisi_update_status, name='api_teknisi_update_status'),
     path('teknisi/pemesanan/<int:id_pemesanan>/update/', views.teknisi_update_status, name='teknisi_update'),
 
     # Admin Routes
