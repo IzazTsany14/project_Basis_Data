@@ -257,7 +257,6 @@
                             <th>Alamat</th>
                             <th>Tanggal</th>
                             <th>Status</th>
-                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tugas-teknisi-list">
@@ -404,7 +403,7 @@
                     latestTasks.forEach(task => {
                         let badgeClass = 'badge-secondary';
                         if(task.status_pemesanan === 'Ditugaskan') badgeClass = 'badge-warning';
-                        else if(task.status_pemesasan === 'Dikerjakan') badgeClass = 'badge-primary';
+                        else if(task.status_pemesanan === 'Dikerjakan') badgeClass = 'badge-primary';
                         else if(task.status_pemesanan === 'Selesai') badgeClass = 'badge-success';
 
                         const row = listBody.insertRow();
@@ -415,9 +414,6 @@
                             <td>${task.id_pelanggan?.alamat_pemasangan || '-'}</td>
                             <td>${new Date(task.tanggal_pemesanan).toLocaleDateString('id-ID')}</td>
                             <td><span class="badge ${badgeClass}">${task.status_pemesanan}</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-info" onclick="navigateToDetail(${task.id_pemesanan})">Detail</button>
-                            </td>
                         `;
                     });
                     tableEl.style.display = 'block';
@@ -438,10 +434,6 @@
             } finally {
                 loadingEl.style.display = 'none';
             }
-        }
-
-        function navigateToDetail(taskId) {
-            window.location.href = `/teknisi/detail-tugas/${taskId}/`;
         }
 
         // --- INIT ---
