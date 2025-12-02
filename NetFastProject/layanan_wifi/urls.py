@@ -42,6 +42,7 @@ urlpatterns = [
 
     # User Pemesanan
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
+    path('api/user-pemesanan/', views.user_pemesanan, name='api_user_pemesanan'),
 
     # Registrasi Pelanggan (halaman & API)
     path('register/', views.registrasi_pelanggan, name='registrasi_pelanggan'),
@@ -55,6 +56,7 @@ urlpatterns = [
 
     # Teknisi Endpoints
     path('teknisi/tugas/', views.teknisi_tugas, name='teknisi_tugas'),
+    path('api/teknisi/tugas/', views.teknisi_tugas, name='api_teknisi_tugas'),
     path('teknisi/pemesanan/<int:id_pemesanan>/update/', views.teknisi_update_status, name='teknisi_update'),
 
     # Admin Routes
