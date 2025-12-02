@@ -539,10 +539,10 @@
                 return;
             }
 
-            const labels = tests.map(t = formatDateLabel(t.waktu_testing || t.tanggal_testing || t.waktu_testing));
-            const downloadData = tests.map(t = Number(t.download_speed_mbps || t.download_speed || 0));
-            const uploadData = tests.map(t = Number(t.upload_speed_mbps || t.upload_speed || 0));
-            const pingData = tests.map(t = Number(t.ping_ms || t.ping || 0));
+            const labels = tests.map(t => formatDateLabel(t.waktu_testing || t.tanggal_testing || t.waktu_testing));
+            const downloadData = tests.map(t => Number(t.download_speed_mbps || t.download_speed || 0));
+            const uploadData = tests.map(t => Number(t.upload_speed_mbps || t.upload_speed || 0));
+            const pingData = tests.map(t => Number(t.ping_ms || t.ping || 0));
 
             const datasets = [
                 {

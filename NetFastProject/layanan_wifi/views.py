@@ -74,6 +74,12 @@ def dashboard_pelanggan_view(request):
 
     langganan = Langganan.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_mulai').first()
     pemesanan_terakhir = PemesananJasa.objects.filter(id_pelanggan=pelanggan).order_by('-tanggal_pemesanan')[:5]
+    
+    # Get latest speed tests for dashboard
+    langganan_ids = Langganan.objects.filter(id_pelanggan=pelanggan).values_list('id_langganan', flat=True)
+    recent_tests = RiwayatTestingWifi.objects.filter(
+        id_langganan__in=langganan_ids
+    ).order_by('-waktu_testing')[:5]
 
     # Build context matching template variable names
     user_ctx = {
@@ -111,6 +117,7 @@ def dashboard_pelanggan_view(request):
         'user': user_ctx,
         'subscription': subscription_ctx,
         'recent_services': recent_services,
+        'recent_tests': recent_tests,  # Add latest speed tests
     }
     return render(request, 'user/dashboard.html', context)
 
@@ -686,11 +693,12 @@ def speed_test_api(request):
             return Response({'error': 'Semua parameter speed test diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Coba ambil langganan aktif jika ada
+            # Coba ambil langganan aktif
+            langganan = None
             try:
                 langganan = Langganan.objects.filter(
                     id_pelanggan=pelanggan_id,
-                    status_langganan='AKTIF'
+                    status_langganan__iexact='AKTIF'
                 ).latest('tanggal_mulai')
             except Langganan.DoesNotExist:
                 # Jika tidak ada aktif, ambil langganan terbaru
@@ -699,48 +707,53 @@ def speed_test_api(request):
                         id_pelanggan=pelanggan_id
                     ).latest('tanggal_mulai')
                 except Langganan.DoesNotExist:
-                    # Jika tidak ada langganan sama sekali, tidak bisa simpan tes
-                    return Response({'error': 'Tidak dapat menyimpan hasil tes: tidak ada data langganan'}, status=status.HTTP_400_BAD_REQUEST)
+                    # Jika tidak ada langganan sama sekali, WAJIB buat default
+                    print(f"No langganan found for pelanggan {pelanggan_id}, creating default")
+                    paket = PaketLayanan.objects.first()
+                    if not paket:
+                        return Response({'error': 'Tidak ada paket layanan tersedia'}, status=status.HTTP_400_BAD_REQUEST)
+                    from datetime import date
+                    langganan = Langganan.objects.create(
+                        id_pelanggan_id=pelanggan_id,
+                        id_paket=paket,
+                        tanggal_mulai=date.today(),
+                        status_langganan='AKTIF'
+                    )
+                    print(f"Created default langganan: {langganan.id_langganan}")
 
             # Log perbandingan dengan paket jika ada langganan aktif
-            if langganan.status_langganan == 'AKTIF' and langganan.id_paket:
+            if langganan and langganan.status_langganan.upper() == 'AKTIF' and langganan.id_paket:
                 package_speed = langganan.id_paket.kecepatan_mbps
                 measured_speed = float(data['download_speed_mbps'])
                 print(f"Package speed: {package_speed} Mbps, Measured: {measured_speed} Mbps")
 
-            # Deteksi tipe koneksi
-            connection_type = data.get('connection_type', 'Unknown')
-            if not connection_type or connection_type == 'Unknown':
-                # Coba deteksi otomatis berdasarkan kecepatan
-                download_speed = float(data['download_speed_mbps'])
-                if download_speed >= 100:
-                    connection_type = 'Fiber Optic'
-                elif download_speed >= 50:
-                    connection_type = 'Cable Broadband'
-                elif download_speed >= 25:
-                    connection_type = 'DSL'
-                elif download_speed >= 10:
-                    connection_type = 'Mobile Data'
-                else:
-                    connection_type = 'Slow Connection'
+            # Simpan hasil tes ke database - id_langganan WAJIB ada
+            if not langganan:
+                return Response({'error': 'Tidak dapat menyimpan hasil tes: tidak ada data langganan'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Simpan hasil tes ke database (id_langganan bisa null)
             test = RiwayatTestingWifi.objects.create(
-                id_langganan=langganan,  # Bisa None jika tidak ada langganan aktif
+                id_langganan=langganan,
                 download_speed_mbps=float(data['download_speed_mbps']),
                 upload_speed_mbps=float(data['upload_speed_mbps']),
-                ping_ms=int(data['ping_ms']),
-                waktu_testing=datetime.now()
+                ping_ms=int(data['ping_ms'])
             )
+            print(f"Speed test saved: {test.id_testing}")
 
             serializer = RiwayatTestingWifiSerializer(test)
             return Response({
-                'message': 'Speed test berhasil disimpan ke riwayat',
-                'test': serializer.data
+                'message': 'Speed test berhasil disimpan ke database',
+                'test': serializer.data,
+                'id_testing': test.id_testing
             }, status=status.HTTP_201_CREATED)
 
-        except (ValueError, TypeError):
-            return Response({'error': 'Format data speed test tidak valid'}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError) as e:
+            print(f"Speed test error: {str(e)}")
+            return Response({'error': f'Format data speed test tidak valid: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Speed test exception: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response({'error': f'Gagal menyimpan hasil: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def user_riwayat_testing(request):

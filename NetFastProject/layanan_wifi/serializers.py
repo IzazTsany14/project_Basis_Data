@@ -61,12 +61,19 @@ class TeknisiSerializer(serializers.ModelSerializer):
 
 
 class PaketLayananSerializer(serializers.ModelSerializer):
-    harga_bulanan = serializers.DecimalField(source='harga', max_digits=10, decimal_places=2, read_only=True)
+    # Return numeric price so frontend can safely call numeric methods like toLocaleString
+    harga_bulanan = serializers.SerializerMethodField()
 
     class Meta:
         model = PaketLayanan
         fields = ['id_paket', 'nama_paket', 'kecepatan_mbps', 'harga', 'harga_bulanan', 'deskripsi']
         read_only_fields = ['id_paket']
+
+    def get_harga_bulanan(self, obj):
+        try:
+            return float(obj.harga) if obj.harga is not None else None
+        except Exception:
+            return None
 
 
 class LanggananSerializer(serializers.ModelSerializer):
@@ -126,10 +133,17 @@ class PemesananJasaSerializer(serializers.ModelSerializer):
         return None
 
 class PemesananJasaCreateSerializer(serializers.ModelSerializer):
+    # Accept primary keys for related fields and create model instance
+    id_pelanggan = serializers.PrimaryKeyRelatedField(queryset=Pelanggan.objects.all(), write_only=True)
+    id_jenis_jasa = serializers.PrimaryKeyRelatedField(queryset=JenisJasa.objects.all())
+
     class Meta:
         model = PemesananJasa
-        # id_pelanggan dan id_jenis_jasa harus dikirim dari frontend
         fields = ['id_pelanggan', 'id_jenis_jasa', 'tanggal_jadwal', 'catatan']
+
+    def create(self, validated_data):
+        # Ensure status_pemesanan is set by the view, but default in model if not provided
+        return PemesananJasa.objects.create(**validated_data)
         
 
 class RiwayatTestingWifiSerializer(serializers.ModelSerializer):

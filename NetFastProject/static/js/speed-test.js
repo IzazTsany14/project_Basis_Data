@@ -220,7 +220,20 @@ const NetFastSpeedTest = {
      */
     async saveTestResult() {
         try {
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+            if (!this.results || !this.results.download_speed_mbps) {
+                throw new Error('No test results to save');
+            }
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+            // Prepare data for sending
+            const payload = {
+                download_speed_mbps: parseFloat(this.results.download_speed_mbps) || 0,
+                upload_speed_mbps: parseFloat(this.results.upload_speed_mbps) || 0,
+                ping_ms: parseInt(this.results.ping_ms) || 0
+            };
+
+            console.log('Sending payload:', payload);
 
             const response = await fetch('/api/speed-test/', {
                 method: 'POST',
@@ -228,16 +241,17 @@ const NetFastSpeedTest = {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify(this.results)
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save results');
+                throw new Error(errorData.error || `Failed to save results: ${response.status}`);
             }
 
             const data = await response.json();
-            console.log('Results saved:', data);
+            console.log('Results saved successfully:', data);
             return data;
 
         } catch (error) {

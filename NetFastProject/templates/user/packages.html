@@ -332,7 +332,7 @@
 
         async function loadCurrentPackage() {
             try {
-                const response = await fetch('/api/packages/');
+                const response = await fetch('/api/packages/', { credentials: 'same-origin' });
                 const data = await response.json();
 
                 const card = document.getElementById('currentPackageCard');
@@ -404,7 +404,7 @@
 
         async function loadPackages() {
             try {
-                const response = await fetch('/api/packages/');
+                const response = await fetch('/api/packages/', { credentials: 'same-origin' });
                 const data = await response.json();
                 const packages = data.available_packages || [];
 
@@ -499,7 +499,8 @@
                         'Content-Type': 'application/json',
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
                     },
-                    body: JSON.stringify({ package_id: packageId })
+                    body: JSON.stringify({ package_id: packageId }),
+                    credentials: 'same-origin'
                 });
 
                 if (response.ok) {
@@ -512,6 +513,31 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Terjadi kesalahan saat mengganti paket');
+            }
+        }
+
+        async function deletePackage() {
+            if (!confirm('Yakin ingin menghapus paket aktif?')) return;
+            try {
+                const response = await fetch('/api/packages/delete/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                    },
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok) {
+                    alert('Paket berhasil dihapus');
+                    location.reload();
+                } else {
+                    const err = await response.json();
+                    alert('Gagal menghapus paket: ' + (err.error || 'Unknown'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Terjadi kesalahan saat menghapus paket');
             }
         }
 
