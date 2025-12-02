@@ -3,7 +3,7 @@
 from rest_framework import serializers
 from .models import (
     Pelanggan, Teknisi, PaketLayanan, Langganan,
-    PemesananJasa, RiwayatTestingWifi, JenisJasa, AreaLayanan
+    PemesananJasa, RiwayatTestingWifi, JenisJasa, AreaLayanan, JenisPerangkat
 )
 
 # --- Serializer untuk Login ---
@@ -225,3 +225,9 @@ class AreaLayananSerializer(serializers.ModelSerializer):
     class Meta:
         model = AreaLayanan
         fields = ['id_area_layanan', 'nama_area', 'kode_pos']
+
+
+class JenisPerangkatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JenisPerangkat
+        fields = ['id_jenis_perangkat', 'nama_jenis']

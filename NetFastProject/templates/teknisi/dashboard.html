@@ -8,12 +8,149 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="{% static 'css/teknisi.css' %}" rel="stylesheet">
+    <style>
+        /* CSS INI TELAH DIUBAH UNTUK MENGGUNAKAN GRADIENT PADA SEMUA HEADER */
+        
+        /* 1. Header Utama */
+        .welcome-header {
+            background: linear-gradient(135deg, #7b5afc 0%, #a078ff 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            /* Padding card diset nol dulu, diisi di card-content */
+            padding: 0; 
+            transition: transform 0.2s;
+            overflow: hidden; /* Penting untuk border-radius header */
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* 2. Header Card - Diberi Gradient Ungu */
+        .card-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            /* Gradient Ungu */
+            background: linear-gradient(135deg, #7b5afc 0%, #a078ff 100%);
+            color: white; /* Ikon dan Teks Header Card menjadi putih */
+        }
+        .card-header i {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+            color: white; 
+        }
+        .card-header h3 {
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 600;
+            color: white; 
+        }
+        
+        /* Konten Card (Diisi padding di sini) */
+        .card-content {
+            padding: 1.5rem;
+        }
+        .card-content p {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .card-content strong {
+            color: #475569;
+        }
+        .card-content span {
+            font-weight: 500;
+            color: #1e293b;
+        }
+        
+        /* Badge Styles */
+        .badge {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
+        }
+        .badge-primary { background-color: #7b5afc; color: white; }
+        .badge-success { background-color: #10b981; color: white; }
+        .badge-warning { background-color: #f59e0b; color: #1e293b; }
+        .badge-info { background-color: #3b82f6; color: white; }
+
+        /* Tasks Section */
+        .tasks-section h2 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+        .table {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* 3. Header Tabel - Diberi Gradient Ungu */
+        .table thead th {
+            /* Gradient Ungu */
+            background: linear-gradient(135deg, #7b5afc 0%, #a078ff 100%);
+            color: white; /* Teks header tabel menjadi putih */
+            font-weight: 600;
+            vertical-align: middle;
+            font-size: 0.9rem;
+        }
+        
+        /* 4. Baris Data Tabel - Dipertahankan Putih/Abu */
+        .table tbody tr:hover {
+            background-color: #f7fafc;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #7b5afc;
+            animation: spin 1s ease infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-    <!-- Desktop Sidebar -->
     <aside class="sidebar" id="sidebar">
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
             <i class="fas fa-bars"></i>
@@ -36,7 +173,6 @@
         </div>
     </aside>
 
-    <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="/teknisi/dashboard/" class="bottom-nav-item active" onclick="navigateTo('dashboard'); return false;">
             <i class="fas fa-tachometer-alt"></i>
@@ -56,17 +192,13 @@
         </a>
     </nav>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Welcome Header -->
         <div class="welcome-header">
             <h1>Selamat Datang, Teknisi!</h1>
             <p>Kelola tugas pemasangan dan perbaikan Anda dengan mudah dan cepat.</p>
         </div>
 
-        <!-- Dashboard Cards -->
         <div class="dashboard-cards">
-            <!-- Info Card -->
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-user-circle"></i>
@@ -80,21 +212,19 @@
                 </div>
             </div>
 
-            <!-- Tasks Card -->
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-clipboard-list"></i>
                     <h3>Status Tugas</h3>
                 </div>
                 <div class="card-content">
-                    <p><strong>Tugas Aktif:</strong> <span id="tugas-aktif">0</span></p>
-                    <p><strong>Menunggu:</strong> <span id="tugas-menunggu">0</span></p>
+                    <p><strong>Tugas Aktif (Dikerjakan):</strong> <span id="tugas-aktif">0</span></p>
+                    <p><strong>Menunggu (Ditugaskan):</strong> <span id="tugas-menunggu">0</span></p>
                     <p><strong>Selesai Hari Ini:</strong> <span id="tugas-selesai">0</span></p>
                     <div class="badge badge-primary">Tugas Tersedia</div>
                 </div>
             </div>
 
-            <!-- Stats Card -->
             <div class="card">
                 <div class="card-header">
                     <i class="fas fa-chart-line"></i>
@@ -109,9 +239,8 @@
             </div>
         </div>
 
-        <!-- Tasks Section -->
         <div class="tasks-section">
-            <h2>Daftar Tugas Anda</h2>
+            <h2>Daftar Tugas Terbaru</h2>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -132,9 +261,12 @@
                         </tr>
                     </thead>
                     <tbody id="tugas-teknisi-list">
-                        <!-- Data akan diisi oleh JavaScript -->
-                    </tbody>
+                        </tbody>
                 </table>
+            </div>
+            
+            <div id="empty-tasks-state" style="display:none; text-align:center; margin-top:1rem; color:#94a3b8;">
+                <p>Tidak ada tugas aktif atau baru saat ini.</p>
             </div>
         </div>
 
@@ -143,13 +275,45 @@
         </footer>
     </div>
 
-    <script src="{% static 'js/teknisi.js' %}"></script>
     <script>
-        // Load teknisi profile data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTeknisiProfile();
-        });
+        // --- UTILITY FUNCTIONS ---
+        function navigateTo(page) {
+            const urls = {
+                'dashboard': '/teknisi/dashboard/',
+                'tasks': '/teknisi/detail-tugas/',
+                'profile': '/teknisi/edit-profile/'
+            };
+            window.location.href = urls[page] || '/teknisi/dashboard/';
+        }
+        function logout() {
+            if(confirm('Keluar aplikasi?')) {
+                // Asumsi endpoint logout POST /auth/logout/
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(() => {
+                    window.location.href = '/';
+                }).catch(err => {
+                    console.error('Logout error:', err);
+                    window.location.href = '/'; // Fallback
+                });
+            }
+        }
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('active');
+            document.getElementById('sidebar-overlay').classList.remove('active');
+        }
 
+        // --- DASHBOARD DATA LOADING ---
+
+        // 1. Load Profile Data (As previously requested)
         function loadTeknisiProfile() {
             fetch('/api/teknisi/profile/', {
                 method: 'GET',
@@ -167,48 +331,124 @@
             .catch(err => console.error('Error loading teknisi profile:', err));
         }
 
-        // Navigation function
-        function navigateTo(page) {
-            switch(page) {
-                case 'dashboard':
-                    window.location.href = '/teknisi/dashboard/';
-                    break;
-                case 'tasks':
-                    window.location.href = '/teknisi/detail-tugas/';
-                    break;
-                case 'profile':
-                    window.location.href = '/teknisi/edit-profile/';
-                    break;
-                default:
-                    window.location.href = '/teknisi/dashboard/';
+        // 2. Load Task Stats and List (NEW FUNCTION)
+        async function loadTaskStatsAndList() {
+            const loadingEl = document.getElementById('loading');
+            const tableEl = document.getElementById('tasks-table');
+            const listBody = document.getElementById('tugas-teknisi-list');
+            const emptyState = document.getElementById('empty-tasks-state');
+
+            loadingEl.style.display = 'block';
+            tableEl.style.display = 'none';
+            emptyState.style.display = 'none';
+            listBody.innerHTML = '';
+
+            try {
+                // Ganti dengan endpoint API tugas yang sebenarnya
+                const response = await fetch('/api/teknisi/tugas/', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                }); 
+                
+                if (!response.ok) throw new Error('Gagal memuat data tugas');
+                
+                const tasks = await response.json();
+                
+                // --- A. Hitung Statistik Tugas ---
+                let activeTasks = 0; // Dikerjakan
+                let pendingTasks = 0; // Ditugaskan
+                let finishedToday = 0; // Selesai hari ini
+                let finishedThisMonth = 0; // Selesai bulan ini
+
+                const today = new Date().toDateString();
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+
+                tasks.forEach(task => {
+                    const status = task.status_pemesanan;
+                    const taskDate = new Date(task.tanggal_pemesanan);
+                    
+                    if (status === 'Dikerjakan') {
+                        activeTasks++;
+                    } else if (status === 'Ditugaskan') {
+                        pendingTasks++;
+                    }
+
+                    // Logika untuk menghitung tugas Selesai hari ini dan bulan ini
+                    if (status === 'Selesai') {
+                        // Cek apakah tanggal selesai sama dengan hari ini (perlu data tanggal selesai yang akurat, di sini menggunakan tanggal pemesanan sebagai placeholder)
+                        // ASUMSI: Jika status 'Selesai', kita cek tanggal pemesanan, atau idealnya, tanggal selesai (jika ada di API)
+                        if (taskDate.toDateString() === today) {
+                            finishedToday++;
+                        }
+                        if (taskDate.getMonth() === currentMonth && taskDate.getFullYear() === currentYear) {
+                             finishedThisMonth++;
+                        }
+                    }
+                });
+
+                // Isi statistik ke dalam card
+                document.getElementById('tugas-aktif').textContent = activeTasks;
+                document.getElementById('tugas-menunggu').textContent = pendingTasks;
+                document.getElementById('tugas-selesai').textContent = finishedToday;
+                document.getElementById('tugas-bulan').textContent = finishedThisMonth;
+                
+                // --- B. Tampilkan Daftar Tugas di Tabel ---
+                if (tasks.length > 0) {
+                    // Hanya tampilkan 5 tugas terbaru (misalnya, berdasarkan tanggal pemesanan)
+                    const latestTasks = tasks
+                        .sort((a, b) => new Date(b.tanggal_pemesanan) - new Date(a.tanggal_pemesanan))
+                        .slice(0, 5); 
+
+                    latestTasks.forEach(task => {
+                        let badgeClass = 'badge-secondary';
+                        if(task.status_pemesanan === 'Ditugaskan') badgeClass = 'badge-warning';
+                        else if(task.status_pemesasan === 'Dikerjakan') badgeClass = 'badge-primary';
+                        else if(task.status_pemesanan === 'Selesai') badgeClass = 'badge-success';
+
+                        const row = listBody.insertRow();
+                        row.innerHTML = `
+                            <td>#${task.id_pemesanan}</td>
+                            <td>${task.id_jenis_jasa?.nama_jasa || 'N/A'}</td>
+                            <td>${task.id_pelanggan?.nama_lengkap || 'Tanpa Nama'}</td>
+                            <td>${task.id_pelanggan?.alamat_pemasangan || '-'}</td>
+                            <td>${new Date(task.tanggal_pemesanan).toLocaleDateString('id-ID')}</td>
+                            <td><span class="badge ${badgeClass}">${task.status_pemesanan}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="navigateToDetail(${task.id_pemesanan})">Detail</button>
+                            </td>
+                        `;
+                    });
+                    tableEl.style.display = 'block';
+                } else {
+                    emptyState.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error loading task data:', error);
+                // Menampilkan pesan error atau set statistik ke 0
+                document.getElementById('tugas-aktif').textContent = 0;
+                document.getElementById('tugas-menunggu').textContent = 0;
+                document.getElementById('tugas-selesai').textContent = 0;
+                document.getElementById('tugas-bulan').textContent = 0;
+                emptyState.textContent = 'Gagal memuat data tugas.';
+                emptyState.style.display = 'block';
+
+            } finally {
+                loadingEl.style.display = 'none';
             }
         }
 
-        // Logout function
-        function logout() {
-            fetch('/auth/logout/', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' }
-            }).then(() => {
-                window.location.href = '/';
-            }).catch(err => console.error('Logout error:', err));
+        function navigateToDetail(taskId) {
+            window.location.href = `/teknisi/detail-tugas/${taskId}/`;
         }
 
-        // Sidebar toggle
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        }
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTeknisiProfile();
+            loadTaskStatsAndList();
+        });
     </script>
 </body>
 </html>
