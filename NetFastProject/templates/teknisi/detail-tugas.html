@@ -4,76 +4,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Tugas - NetFast</title>
+    <title>Daftar & Detail Tugas - NetFast</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="{% static 'css/teknisi.css' %}" rel="stylesheet">
+    <style>
+        /* CSS INI TELAH DIUBAH MENJADI TAMPILAN LIST/BARIS */
+        
+        /* Container List: Menghapus layout grid */
+        .task-list-container {
+            display: block; /* Menjadi blok normal */
+            gap: 0;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden; /* Penting untuk border-radius */
+        }
+        
+        /* Header List (Menyerupai Header Tabel) */
+        .task-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #7b5afc 0%, #a078ff 100%);
+            color: white;
+            font-weight: bold;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Item List (Menggantikan Kartu) */
+        .task-list-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #f1f5f9; /* Garis pemisah antar baris */
+        }
+        .task-list-item:hover {
+            background-color: #f7fafc; /* Efek hover halus */
+        }
+        .task-list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Struktur Konten Baris */
+        .task-id {
+            font-weight: bold;
+            color: #64748b;
+            font-size: 0.9rem;
+            min-width: 60px; /* Kolom ID */
+        }
+        .task-info-main {
+            flex-grow: 1;
+            padding: 0 1.5rem;
+        }
+        .task-customer {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0;
+        }
+        .task-address {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 0;
+        }
+        .task-info-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            min-width: 300px; /* Kolom Tanggal dan Status */
+            justify-content: flex-end;
+        }
+        .task-date {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        .badge-custom {
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            border-radius: 0.375rem;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        /* Media Query untuk Tampilan Mobile */
+        @media (max-width: 768px) {
+            .task-list-header, .task-list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1rem;
+            }
+            .task-info-main {
+                padding: 0;
+                margin-top: 0.5rem;
+            }
+            .task-info-meta {
+                justify-content: flex-start;
+                margin-top: 0.5rem;
+                min-width: auto;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            .task-id {
+                order: -1;
+            }
+        }
+
+        /* Tombol Kembali */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-back:hover { color: #1e293b; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Mobile Toggle Button -->
         <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
 
-        <!-- Icon Sidebar -->
-       <aside class="sidebar" id="sidebar">
-        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
-            <i class="fas fa-bars"></i>
-        </button>
-        <div class="sidebar-item active" onclick="navigateTo('dashboard')">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-        </div>
-        <div class="sidebar-item" onclick="navigateTo('tasks')">
-            <i class="fas fa-tasks"></i>
-            <span>Tugas Saya</span>
-        </div>
-        <div class="sidebar-item" onclick="navigateTo('profile')">
-            <i class="fas fa-user"></i>
-            <span>Profil</span>
-        </div>
-        <div class="sidebar-item" onclick="logout()">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </div>
-    </aside>
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="sidebar-item" onclick="navigateTo('dashboard')">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="sidebar-item active" onclick="navigateTo('tasks')">
+                <i class="fas fa-tasks"></i>
+                <span>Tugas Saya</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('profile')">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </div>
+            <div class="sidebar-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </div>
+        </aside>
 
-    <!-- Mobile Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="/teknisi/dashboard/" class="bottom-nav-item active" onclick="navigateTo('dashboard'); return false;">
-            <i class="fas fa-tachometer-alt"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="/teknisi/detail-tugas/" class="bottom-nav-item" onclick="navigateTo('tasks'); return false;">
-            <i class="fas fa-tasks"></i>
-            <span>Tugas</span>
-        </a>
-        <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
-            <i class="fas fa-user"></i>
-            <span>Profil</span>
-        </a>
-        <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Logout</span>
-        </a>
-    </nav>
+        <nav class="bottom-nav">
+            <a href="/teknisi/dashboard/" class="bottom-nav-item" onclick="navigateTo('dashboard'); return false;">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/teknisi/detail-tugas/" class="bottom-nav-item active" onclick="navigateTo('tasks'); return false;">
+                <i class="fas fa-tasks"></i>
+                <span>Tugas</span>
+            </a>
+            <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </a>
+            <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <!-- Welcome Header -->
             <div class="welcome-header">
-                <h1>Detail Tugas</h1>
-                <p>Kelola detail pengerjaan tugas Anda</p>
+                <h1 id="page-title">Daftar Tugas</h1>
+                <p id="page-subtitle">Pilih tugas untuk melihat detail</p>
             </div>
 
-            <!-- Loading State -->
             <div class="loading" id="loading" style="display: none;">
                 <div class="spinner"></div>
-                <p>Memuat detail tugas...</p>
+                <p>Memuat data...</p>
             </div>
 
-            <!-- Content Grid -->
-            <div class="content-grid" id="content" style="display: none;">
-                <!-- Customer Info Card -->
+            <div id="list-view" style="display: none;">
+                
+                <div class="task-list-header d-none d-sm-flex">
+                    <span style="min-width: 60px;">ID</span>
+                    <span style="flex-grow: 1; padding: 0 1.5rem;">Pelanggan & Lokasi</span>
+                    <span style="min-width: 100px; text-align: center;">Tanggal</span>
+                    <span style="min-width: 100px; text-align: center;">Status</span>
+                    <span style="min-width: 50px;"></span>
+                </div>
+                
+                <div id="task-list-container" class="task-list-container">
+                    </div>
+                
+                <div id="empty-state" style="display:none; text-align:center; margin-top:3rem; color:#94a3b8;">
+                    <i class="fas fa-clipboard-check fa-3x mb-3"></i>
+                    <p>Tidak ada tugas yang ditugaskan saat ini.</p>
+                </div>
+            </div>
+
+            <div class="content-grid" id="detail-view" style="display: none;">
+                
+                <div style="grid-column: 1 / -1;">
+                    <a onclick="goBackToList()" class="btn-back">
+                        <i class="fas fa-arrow-left"></i> Kembali ke Daftar Tugas
+                    </a>
+                </div>
+
                 <div class="info-card">
                     <div class="card-header">
                         <span class="icon">👤</span>
@@ -81,18 +219,17 @@
                     </div>
                     <div class="card-content">
                         <p><strong>Nama:</strong> <span id="detail-nama-pelanggan">-</span></p>
-                        <p><strong>Alamat Pemasangan:</strong> <span id="detail-alamat-pelanggan">-</span></p>
-                        <p><strong>Jenis Jasa:</strong> <span id="detail-jenis-jasa">-</span></p>
-                        <p><strong>Tanggal Pemesanan:</strong> <span id="detail-tanggal-pemesanan">-</span></p>
+                        <p><strong>Alamat:</strong> <span id="detail-alamat-pelanggan">-</span></p>
+                        <p><strong>Jasa:</strong> <span id="detail-jenis-jasa">-</span></p>
+                        <p><strong>Tanggal:</strong> <span id="detail-tanggal-pemesanan">-</span></p>
                         <p><strong>Catatan:</strong> <span id="detail-catatan">-</span></p>
                     </div>
                 </div>
 
-                <!-- Status Update Card -->
                 <div class="status-card">
                     <div class="card-header">
                         <span class="icon">📋</span>
-                        <span>Update Status Pengerjaan</span>
+                        <span>Update Status</span>
                     </div>
                     <div class="card-content">
                         <p><strong>Status Saat Ini:</strong> <span id="current-status">-</span></p>
@@ -100,47 +237,44 @@
                         <form id="form-update-status" style="display:none;">
                             <input type="hidden" id="id-pesanan" name="id_pesanan">
                             <div class="form-group">
-                                <label for="status-pemesanan">Update Status</label>
-                                <select id="status-pemesanan" name="status_pemesanan" required>
+                                <label>Pilih Status Baru</label>
+                                <select id="status-pemesanan" name="status_pemesanan" class="form-control" required>
                                     <option value="">Pilih Status</option>
                                     <option value="Dikerjakan">Mulai Dikerjakan</option>
                                     <option value="Selesai">Selesai</option>
                                     <option value="Batal">Batal</option>
                                 </select>
                             </div>
-                            <button type="submit" class="btn">Update Status</button>
+                            <button type="submit" class="btn mt-3">Simpan Status</button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Device Recording Card -->
                 <div class="device-card">
                     <div class="card-header">
                         <span class="icon">🔧</span>
-                        <span>Pencatatan Perangkat Terpasang</span>
+                        <span>Pencatatan Perangkat</span>
                     </div>
                     <div class="card-content">
                         <form id="form-catat-perangkat">
                             <input type="hidden" id="id-langganan-perangkat" name="id_langganan">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                 <div class="form-group">
-                                    <label for="serial-number">Serial Number Perangkat</label>
-                                    <input type="text" id="serial-number" name="serial_number" placeholder="Masukkan serial number" required>
+                                    <label>Serial Number</label>
+                                    <input type="text" id="serial-number" name="serial_number" placeholder="SN..." required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="id-perangkat">Jenis Perangkat</label>
+                                    <label>Jenis Perangkat</label>
                                     <select id="id-perangkat" name="id_perangkat" required>
-                                        <option value="">Pilih Jenis Perangkat</option>
-                                        <!-- Options will be populated by JS -->
+                                        <option value="">Pilih...</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <label for="catatan-perangkat">Catatan Perangkat</label>
-                                <textarea id="catatan-perangkat" name="catatan" placeholder="Catatan tambahan tentang perangkat" rows="3"></textarea>
+                            <div class="form-group mt-2">
+                                <label>Catatan Alat</label>
+                                <textarea id="catatan-perangkat" name="catatan" rows="2"></textarea>
                             </div>
-                            <button type="submit" class="btn">Simpan Perangkat</button>
-                            <a href="/teknisi/dashboard/" class="btn-secondary" style="margin-left: 1rem;">Kembali ke Dashboard</a>
+                            <button type="submit" class="btn mt-3">Simpan Perangkat</button>
                         </form>
                     </div>
                 </div>
@@ -153,242 +287,231 @@
     </div>
 
     <script>
-        // Toggle sidebar untuk mobile
+        // --- 1. NAVIGASI & UI DASAR ---
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
+            document.getElementById('sidebar').classList.toggle('active');
         }
 
-        // Close sidebar saat klik di luar (mobile)
-        function closeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        }
-
-        // Navigation function
         function navigateTo(page) {
-            if (page === 'dashboard') {
-                window.location.href = '/teknisi/dashboard/';
-            } else if (page === 'tasks') {
-                // Already on tasks page
-            } else if (page === 'profile') {
-                // Navigate to profile page if exists
-                alert('Halaman profil sedang dalam pengembangan');
+            if (page === 'tasks') {
+                window.history.pushState({}, '', '/teknisi/detail-tugas/');
+                initPage();
+            } else {
+                const urls = {
+                    'dashboard': '/teknisi/dashboard/',
+                    'profile': '/teknisi/edit-profile/'
+                };
+                window.location.href = urls[page] || '/teknisi/dashboard/';
             }
         }
 
-        // Fungsi logout
-        function logout() {
-            if (confirm('Apakah Anda yakin ingin keluar?')) {
-                fetch('/auth/logout/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    window.location.href = '/';
-                })
-                .catch(error => {
-                    console.error('Logout error:', error);
-                    window.location.href = '/';
-                });
-            }
+        function goBackToList() {
+            window.history.pushState({}, '', '/teknisi/detail-tugas/');
+            initPage();
         }
 
-        // Get task ID from URL (robust: last non-empty segment)
         function getTaskIdFromPath() {
             const parts = window.location.pathname.split('/').filter(Boolean);
             const last = parts.length ? parts[parts.length - 1] : '';
-            return last;
+            return /^\d+$/.test(last) ? last : null;
         }
 
-        // Fungsi untuk memuat detail tugas (hanya jika ID numerik)
-        async function loadTaskDetail(taskId) {
-            if (!taskId || !/^\d+$/.test(String(taskId))) {
-                // bukan ID numerik => bukan halaman detail, skip
+        // --- 2. LOGIKA UTAMA (INIT) ---
+        document.addEventListener('DOMContentLoaded', initPage);
+        window.onpopstate = initPage;
+
+        function initPage() {
+            const taskId = getTaskIdFromPath();
+            
+            // Reset Tampilan
+            document.getElementById('list-view').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            if (taskId) {
+                // Mode Detail
+                document.getElementById('page-title').textContent = "Detail Tugas";
+                document.getElementById('page-subtitle').textContent = "Informasi lengkap pengerjaan";
+                loadTaskDetail(taskId);
+                loadDeviceTypes();
+            } else {
+                // Mode List (Daftar)
+                document.getElementById('page-title').textContent = "Daftar Tugas Saya";
+                document.getElementById('page-subtitle').textContent = "Berikut adalah tugas yang ditugaskan admin kepada Anda";
+                loadTaskList();
+            }
+        }
+
+        // --- 3. FETCH API DAFTAR TUGAS ---
+        async function loadTaskList() {
+            try {
+                const response = await fetch('/api/teknisi/tugas/'); 
+                if (response.ok) {
+                    const tasks = await response.json();
+                    renderTaskList(tasks);
+                } else {
+                    throw new Error('Gagal mengambil daftar tugas');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('task-list-container').innerHTML = '<p class="text-danger p-3">Gagal memuat daftar tugas.</p>';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('list-view').style.display = 'block';
+            }
+        }
+
+        function renderTaskList(tasks) {
+            const container = document.getElementById('task-list-container');
+            const emptyState = document.getElementById('empty-state');
+            container.innerHTML = '';
+
+            if (tasks.length === 0) {
+                emptyState.style.display = 'block';
                 return;
             }
 
+            emptyState.style.display = 'none';
+            tasks.forEach(task => {
+                let badgeClass = 'bg-secondary';
+                if(task.status_pemesanan === 'Ditugaskan') badgeClass = 'bg-warning text-dark';
+                else if(task.status_pemesanan === 'Dikerjakan') badgeClass = 'bg-primary';
+                else if(task.status_pemesanan === 'Selesai') badgeClass = 'bg-success';
+
+                const card = document.createElement('div');
+                // PERUBAHAN: Mengganti class task-card-summary menjadi task-list-item
+                card.className = `task-list-item status-${task.status_pemesanan.toLowerCase()}`;
+                card.onclick = () => {
+                    window.history.pushState({}, '', `/teknisi/detail-tugas/${task.id_pemesanan}/`);
+                    initPage();
+                };
+
+                // PERUBAHAN: Menyusun ulang konten agar menjadi baris horizontal
+                card.innerHTML = `
+                    <span class="task-id">#${task.id_pemesanan}</span>
+                    <div class="task-info-main">
+                        <div class="task-customer">${task.id_pelanggan?.nama_lengkap || 'Tanpa Nama'}</div>
+                        <p class="task-address"><i class="fas fa-map-marker-alt me-2"></i>${task.id_pelanggan?.alamat_pemasangan || '-'}</p>
+                    </div>
+                    <div class="task-info-meta">
+                        <span class="task-date d-none d-sm-block">${new Date(task.tanggal_pemesanan).toLocaleDateString('id-ID')}</span>
+                        <span class="badge ${badgeClass} badge-custom">${task.status_pemesanan}</span>
+                        <small class="text-primary d-none d-sm-block"><i class="fas fa-chevron-right ms-1"></i></small>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        // --- 4. FETCH API DETAIL TUGAS (Sama seperti sebelumnya) ---
+        async function loadTaskDetail(taskId) {
             try {
                 const response = await fetch(`/api/teknisi/tugas/${taskId}/`);
                 if (response.ok) {
                     const task = await response.json();
                     displayTaskDetail(task);
                 } else {
-                    throw new Error('Failed to load task detail');
+                    throw new Error('Gagal load detail');
                 }
             } catch (error) {
-                console.error('Error loading task detail:', error);
-                document.getElementById('loading').innerHTML = '<p style="color: #ef4444;">Gagal memuat detail tugas. Silakan refresh halaman.</p>';
+                console.error(error);
+                alert("Gagal memuat detail tugas.");
+                goBackToList();
+            } finally {
+                document.getElementById('loading').style.display = 'none';
             }
         }
 
-        // Fungsi untuk menampilkan detail tugas
         function displayTaskDetail(task) {
-            // Customer info
-            document.getElementById('detail-nama-pelanggan').textContent = task.id_pelanggan?.nama_lengkap || 'N/A';
-            document.getElementById('detail-alamat-pelanggan').textContent = task.id_pelanggan?.alamat_pemasangan || 'N/A';
-            document.getElementById('detail-jenis-jasa').textContent = task.id_jenis_jasa?.nama_jasa || 'N/A';
+            document.getElementById('detail-view').style.display = 'grid';
+
+            // Isi Data
+            document.getElementById('detail-nama-pelanggan').textContent = task.id_pelanggan?.nama_lengkap || '-';
+            document.getElementById('detail-alamat-pelanggan').textContent = task.id_pelanggan?.alamat_pemasangan || '-';
+            document.getElementById('detail-jenis-jasa').textContent = task.id_jenis_jasa?.nama_jasa || '-';
             document.getElementById('detail-tanggal-pemesanan').textContent = new Date(task.tanggal_pemesanan).toLocaleDateString('id-ID');
-            document.getElementById('detail-catatan').textContent = task.catatan || 'Tidak ada catatan';
+            document.getElementById('detail-catatan').textContent = task.catatan || '-';
+            
+            // Status Logic
+            const statusEl = document.getElementById('current-status');
+            statusEl.textContent = task.status_pemesanan;
+            statusEl.className = 'status-badge';
+            if (task.status_pemesanan === 'Dikerjakan') statusEl.classList.add('status-dikerjakan');
+            else if (task.status_pemesanan === 'Selesai') statusEl.classList.add('status-selesai');
+            else statusEl.classList.add('status-menunggu');
 
-            // Status
-            document.getElementById('current-status').textContent = task.status_pemesanan;
             document.getElementById('id-pesanan').value = task.id_pemesanan;
-
-            // Set status badge class
-            const statusElement = document.getElementById('current-status');
-            statusElement.className = 'status-badge';
-            if (task.status_pemesanan === 'Dikerjakan') statusElement.classList.add('status-dikerjakan');
-            else if (task.status_pemesanan === 'Selesai') statusElement.classList.add('status-selesai');
-            else if (task.status_pemesanan === 'Batal') statusElement.classList.add('status-batal');
-            else statusElement.classList.add('status-menunggu');
-
-            // Teknisi action logic
+            
+            // Action Buttons
             const actionArea = document.getElementById('teknisi-action-area');
             const formUpdate = document.getElementById('form-update-status');
             formUpdate.style.display = 'none';
             actionArea.innerHTML = '';
 
             if (task.status_pemesanan === 'Ditugaskan') {
-                // Show accept button
                 const btn = document.createElement('button');
-                btn.className = 'btn btn-success';
-                btn.textContent = 'Terima Pesanan';
-                btn.onclick = function() {
+                btn.className = 'btn btn-success w-100';
+                btn.textContent = 'Terima & Kerjakan Tugas';
+                btn.onclick = () => {
                     document.getElementById('status-pemesanan').value = 'Dikerjakan';
                     formUpdate.style.display = 'block';
                     actionArea.innerHTML = '';
                 };
                 actionArea.appendChild(btn);
             } else if (task.status_pemesanan === 'Dikerjakan') {
-                // Show form to mark as selesai
                 formUpdate.style.display = 'block';
-                document.getElementById('status-pemesanan').value = 'Selesai';
-            } else if (task.status_pemesanan === 'Menunggu Penugasan') {
-                actionArea.innerHTML = '<span class="text-warning">Menunggu admin menugaskan pesanan...</span>';
-            } else if (task.status_pemesanan === 'Selesai') {
-                actionArea.innerHTML = '<span class="text-success">Pesanan sudah selesai.</span>';
-            } else if (task.status_pemesanan === 'Batal') {
-                actionArea.innerHTML = '<span class="text-danger">Pesanan dibatalkan.</span>';
             }
-
-            // Hide loading and show content
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('content').style.display = 'grid';
         }
 
-        // Fungsi untuk memuat jenis perangkat
+        // --- 5. FUNGSI PENDUKUNG LAINNYA ---
         async function loadDeviceTypes() {
             try {
                 const response = await fetch('/api/jenis-perangkat/');
                 if (response.ok) {
                     const devices = await response.json();
                     const select = document.getElementById('id-perangkat');
-                    devices.forEach(device => {
-                        const option = document.createElement('option');
-                        option.value = device.id_jenis_perangkat;
-                        option.textContent = device.nama_jenis;
-                        select.appendChild(option);
+                    select.innerHTML = '<option value="">Pilih Jenis Perangkat</option>';
+                    devices.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id_jenis_perangkat;
+                        opt.textContent = d.nama_jenis;
+                        select.appendChild(opt);
                     });
                 }
-            } catch (error) {
-                console.error('Error loading device types:', error);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // Form update status handler
+        // Form Submit Handlers (Update Status & Perangkat)
         document.getElementById('form-update-status').addEventListener('submit', async function(e) {
             e.preventDefault();
-
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-
-            try {
-                const response = await fetch(`/api/teknisi/update-status/${data.id_pesanan}/`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    showAlert('Status berhasil diperbarui!', 'success');
-                    // Reload page to show updated status
-                    setTimeout(() => window.location.reload(), 1500);
-                } else {
-                    throw new Error('Failed to update status');
-                }
-            } catch (error) {
-                console.error('Error updating status:', error);
-                showAlert('Gagal memperbarui status. Silakan coba lagi.', 'error');
-            }
+            await submitForm(this, `/api/teknisi/update-status/${this.id_pesanan.value}/`, 'PUT', 'Status diperbarui!');
         });
 
-        // Form catat perangkat handler
         document.getElementById('form-catat-perangkat').addEventListener('submit', async function(e) {
             e.preventDefault();
+            await submitForm(this, '/api/teknisi/catat-perangkat/', 'POST', 'Perangkat dicatat!');
+        });
 
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
-
+        async function submitForm(form, url, method, successMsg) {
+            const data = Object.fromEntries(new FormData(form));
             try {
-                const response = await fetch('/api/teknisi/catat-perangkat/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-                    },
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }, 
                     body: JSON.stringify(data)
                 });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    showAlert('Perangkat berhasil dicatat!', 'success');
-                    this.reset();
-                } else {
-                    throw new Error('Failed to record device');
-                }
-            } catch (error) {
-                console.error('Error recording device:', error);
-                showAlert('Gagal mencatat perangkat. Silakan coba lagi.', 'error');
+                if (res.ok) {
+                    alert(successMsg);
+                    initPage(); 
+                } else throw new Error();
+            } catch (e) {
+                alert('Gagal memproses data.');
             }
-        });
-
-        // Fungsi untuk menampilkan alert
-        function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
-
-            const container = document.querySelector('.main-content');
-            container.insertBefore(alertDiv, container.firstChild);
-
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
         }
 
-        // Load data saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', () => {
-            // Ambil ID tugas dari URL
-            const taskId = getTaskIdFromPath();
-            loadTaskDetail(taskId);
-            loadDeviceTypes();
-
-            // Set active navigation on load
-            navigateTo('tasks');
-        });
+        function logout() {
+            if(confirm('Keluar aplikasi?')) window.location.href = '/auth/logout/';
+        }
     </script>
 </body>
 </html>

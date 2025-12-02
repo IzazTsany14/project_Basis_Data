@@ -33,7 +33,7 @@ from django.http import JsonResponse
 
 from .models import (
     Pelanggan, Teknisi, PaketLayanan, Langganan,
-    PemesananJasa, RiwayatTestingWifi, AreaLayanan
+    PemesananJasa, RiwayatTestingWifi, AreaLayanan, Perangkat, PenempatanPerangkat
 )
 from .serializers import (
     PelangganSerializer, PelangganRegistrasiSerializer, TeknisiSerializer,
@@ -518,11 +518,11 @@ def teknisi_tugas(request):
     if not id_teknisi:
         return Response({'error': 'Sesi teknisi tidak ditemukan atau tidak valid'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # Tugas yang sudah ditugaskan ke teknisi
+    # Tugas yang sudah ditugaskan ke teknisi (include all non-completed statuses)
     tugas_aktif = PemesananJasa.objects.filter(
         id_teknisi=id_teknisi
     ).exclude(
-        status_pemesanan='Selesai'
+        status_pemesanan__in=['Selesai', 'Batal']
     ).order_by('-tanggal_pemesanan')
 
     # Tugas yang belum ditugaskan ke teknisi (status 'Menunggu Penugasan')
@@ -1320,6 +1320,82 @@ def admin_teknisi(request, id_teknisi=None):
         except Teknisi.DoesNotExist:
             return Response({'error': 'Teknisi tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
+
+# --- Jenis Perangkat API ---
+@api_view(['GET'])
+def jenis_perangkat_api(request):
+    """API endpoint to get list of device types"""
+    from .models import JenisPerangkat
+    from .serializers import JenisPerangkatSerializer
+
+    jenis_perangkat = JenisPerangkat.objects.all().order_by('nama_jenis')
+    serializer = JenisPerangkatSerializer(jenis_perangkat, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# --- Catat Perangkat API ---
+@api_view(['POST'])
+def catat_perangkat_api(request):
+    """API endpoint to record installed device"""
+    teknisi_id = request.session.get('teknisi_id')
+    if not teknisi_id:
+        return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    data = request.data
+    serial_number = data.get('serial_number')
+    id_jenis_perangkat = data.get('id_perangkat')  # Note: form uses 'id_perangkat' but it's actually id_jenis_perangkat
+    catatan = data.get('catatan', '')
+    id_pemesanan = data.get('id_pesanan')  # We need this to find the langganan
+
+    if not serial_number or not id_jenis_perangkat:
+        return Response({'error': 'Serial number dan jenis perangkat diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Check if device with this serial number already exists
+        if Perangkat.objects.filter(serial_number=serial_number).exists():
+            return Response({'error': 'Perangkat dengan serial number ini sudah terdaftar'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create the device
+        perangkat = Perangkat.objects.create(
+            id_jenis_perangkat_id=id_jenis_perangkat,
+            serial_number=serial_number,
+            merk_model=catatan if catatan else None
+        )
+
+        # If we have id_pemesanan, try to create penempatan_perangkat record
+        if id_pemesanan:
+            try:
+                pemesanan = PemesananJasa.objects.get(id_pemesanan=id_pemesanan)
+                if pemesanan.id_pelanggan:
+                    # Find active langganan for this customer
+                    langganan = Langganan.objects.filter(
+                        id_pelanggan=pemesanan.id_pelanggan,
+                        status_langganan='AKTIF'
+                    ).first()
+
+                    if langganan:
+                        # Create penempatan record
+                        from datetime import date
+                        PenempatanPerangkat.objects.create(
+                            id_langganan=langganan,
+                            id_perangkat=perangkat,
+                            tanggal_pasang=date.today(),
+                            status_perangkat='Aktif'
+                        )
+            except PemesananJasa.DoesNotExist:
+                pass  # Continue without penempatan
+
+        return Response({
+            'message': 'Perangkat berhasil dicatat',
+            'perangkat': {
+                'id_perangkat': perangkat.id_perangkat,
+                'serial_number': perangkat.serial_number,
+                'nama_jenis': perangkat.id_jenis_perangkat.nama_jenis
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # --- Admin Area Layanan API ---
 @api_view(['GET'])

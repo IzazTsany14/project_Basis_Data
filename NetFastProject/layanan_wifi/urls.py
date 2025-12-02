@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/services/<int:service_id>/', views.service_detail_api, name='service_detail_api_alt'),
     path('api/ping-test/', views.ping_test_api, name='ping_test_api'),
     path('api/speed-test-upload/', views.speed_test_upload, name='speed_test_upload'),
+    path('api/jenis-perangkat/', views.jenis_perangkat_api, name='jenis_perangkat_api'),
 
     # User Pemesanan
     path('user/pemesanan/', views.user_pemesanan, name='user_pemesanan'),
