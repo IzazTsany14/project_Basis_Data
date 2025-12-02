@@ -79,11 +79,14 @@
             transition: transform 1s ease-in-out, opacity 1s ease-in-out;
         }
 
-        /* Left Form */
+        /* Left Form (MODIFIKASI) */
         .left-panel {
             width: 50%;
-            padding: 55px 50px;
-
+            padding: 40px 50px; /* Sedikit mengurangi padding atas/bawah */
+            display: flex; /* Aktifkan flex untuk vertikal centering */
+            flex-direction: column;
+            justify-content: center; /* Centering Vertikal */
+            
             opacity: 0;
             transform: translateY(40px);
             transition: transform 1s ease, opacity 1s ease;
@@ -106,7 +109,7 @@
             text-align: center;
             font-family: 'Raleway', sans-serif;
             font-style: italic;
-            margin-bottom: 25px;
+            margin-bottom: 30px; /* Menyesuaikan margin */
             color: #777;
         }
 
@@ -200,6 +203,8 @@
                 padding: 40px 30px;
                 transform: none !important;
                 opacity: 1 !important;
+                /* Hapus centering vertikal di mode tumpukan */
+                justify-content: flex-start; 
             }
 
             .left-panel h2 {
@@ -223,20 +228,6 @@
             .right-panel p {
                 font-size: 1rem;
                 margin: 0 auto;
-            }
-
-            .bubble.b1 {
-                width: 200px;
-                height: 200px;
-                top: -40px;
-                left: -20px;
-            }
-
-            .bubble.b2 {
-                width: 250px;
-                height: 250px;
-                bottom: -60px;
-                right: -50px;
             }
         }
 
@@ -277,20 +268,6 @@
                 padding: 12px;
                 font-size: 0.95rem;
             }
-
-            .bubble.b1 {
-                width: 150px;
-                height: 150px;
-                top: -30px;
-                left: -15px;
-            }
-
-            .bubble.b2 {
-                width: 180px;
-                height: 180px;
-                bottom: -40px;
-                right: -30px;
-            }
         }
     </style>
 </head>
@@ -308,24 +285,16 @@
 
             <div id="alertMessage" class="alert"></div>
 
-            <div class="d-flex justify-content-center gap-3 mb-3">
-                <button type="button" class="btn btn-outline-primary px-3 py-1" id="btnPelanggan">Pelanggan</button>
-                <button type="button" class="btn btn-outline-primary px-3 py-1" id="btnTeknisiAdmin">Teknisi/Admin</button>
-            </div>
-
             <form id="loginForm">
-                <div class="mb-3">
-                    <input type="text" class="form-control" id="login_id" placeholder="Email atau Username" required>
+                <div class="mb-4"> <input type="text" class="form-control" id="login_id" placeholder="Email atau Username" required>
                 </div>
 
-                <div class="mb-3">
-                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                <div class="mb-4"> <input type="password" class="form-control" id="password" placeholder="Password" required>
                 </div>
 
                 <button type="submit" class="btn-login">Masuk</button>
 
-                <div class="text-center mt-3">
-                    Belum punya akun?
+                <div class="text-center mt-4"> Belum punya akun?
                     <a href="{% url 'registrasi_pelanggan' %}">Daftar disini</a>
                 </div>
             </form>
@@ -339,21 +308,22 @@
     </div>
 
     <script>
-        let selectedRole = "Pelanggan";
+        // Variabel 'selectedRole' dan fungsi button dihapus karena button pilihan peran sudah dihapus
+        // let selectedRole = "Pelanggan";
 
-        document.getElementById('btnPelanggan').classList.add('active');
+        // document.getElementById('btnPelanggan').classList.add('active');
 
-        document.getElementById('btnPelanggan').addEventListener('click', function () {
-            selectedRole = "Pelanggan";
-            this.classList.add('active');
-            document.getElementById('btnTeknisiAdmin').classList.remove('active');
-        });
+        // document.getElementById('btnPelanggan').addEventListener('click', function () {
+        //     selectedRole = "Pelanggan";
+        //     this.classList.add('active');
+        //     document.getElementById('btnTeknisiAdmin').classList.remove('active');
+        // });
 
-        document.getElementById('btnTeknisiAdmin').addEventListener('click', function () {
-            selectedRole = "TeknisiAdmin";
-            this.classList.add('active');
-            document.getElementById('btnPelanggan').classList.remove('active');
-        });
+        // document.getElementById('btnTeknisiAdmin').addEventListener('click', function () {
+        //     selectedRole = "TeknisiAdmin";
+        //     this.classList.add('active');
+        //     document.getElementById('btnPelanggan').classList.remove('active');
+        // });
 
         function getCookie(name) {
             let cookieValue = null;
@@ -398,6 +368,9 @@
                 const formData = new FormData();
                 formData.append('login_id', loginId);
                 formData.append('password', password);
+                
+                // TIDAK LAGI MENGIRIM selectedRole, biarkan backend (Django/API) menangani otentikasi
+                // dan pengalihan berdasarkan peran pengguna yang ditemukan.
 
                 const response = await fetch('/auth/login/', {
                     method: 'POST',
@@ -417,6 +390,7 @@
                     wrapper.classList.add('slide-out');
 
                     setTimeout(() => {
+                        // Logika pengalihan dipindahkan ke sisi client berdasarkan respons role dari server
                         if (data && data.user && data.user.role === 'admin') {
                             window.location.href = '/admin/dashboard/';
                         } else if (data && data.user && data.user.role === 'teknisi') {
