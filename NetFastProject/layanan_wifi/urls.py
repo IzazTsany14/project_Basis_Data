@@ -57,6 +57,7 @@ urlpatterns = [
     # Teknisi Endpoints
     path('teknisi/tugas/', views.teknisi_tugas, name='teknisi_tugas'),
     path('api/teknisi/tugas/', views.teknisi_tugas, name='api_teknisi_tugas'),
+    path('api/teknisi/tugas/<int:id_pemesanan>/', views.teknisi_tugas_detail, name='api_teknisi_tugas_detail'),
     path('teknisi/pemesanan/<int:id_pemesanan>/update/', views.teknisi_update_status, name='teknisi_update'),
 
     # Admin Routes
@@ -95,6 +96,7 @@ urlpatterns = [
     # --- Teknisi Pages ---
     path('teknisi/dashboard/', views.teknisi_dashboard_view, name='teknisi_dashboard'),
     path('teknisi/detail-tugas/', views.teknisi_detail_tugas_view, name='teknisi_detail_tugas'),
+    path('api/teknisi/tugas/<int:id_pemesanan>/', views.api_teknisi_detail_tugas, name='api_teknisi_detail_tugas'),
     path('teknisi/edit-profile/', views.teknisi_edit_profile_view, name='teknisi_edit_profile'),
     
     # --- Teknisi API ---

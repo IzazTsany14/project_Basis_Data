@@ -1,3 +1,27 @@
+from django.http import JsonResponse
+from .models import PemesananJasa
+# API untuk detail tugas teknisi
+def api_teknisi_detail_tugas(request, id_pemesanan):
+    try:
+        tugas = PemesananJasa.objects.select_related('id_pelanggan', 'id_jenis_jasa').get(id_pemesanan=id_pemesanan)
+        # Cek apakah tugas sudah ditugaskan ke teknisi yang login
+        # Anda bisa tambahkan filter teknisi di sini jika ada field teknisi
+        data = {
+            'id_pemesanan': tugas.id_pemesanan,
+            'id_pelanggan': {
+                'nama_lengkap': tugas.id_pelanggan.nama_lengkap,
+                'alamat_pemasangan': tugas.id_pelanggan.alamat_pemasangan,
+            },
+            'id_jenis_jasa': {
+                'nama_jasa': tugas.id_jenis_jasa.nama_jasa,
+            },
+            'tanggal_pemesanan': tugas.tanggal_pemesanan,
+            'catatan': tugas.catatan,
+            'status_pemesanan': tugas.status_pemesanan,
+        }
+        return JsonResponse(data)
+    except PemesananJasa.DoesNotExist:
+        return JsonResponse({'message': 'Tidak ada tugas untuk Anda'}, status=404)
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -494,13 +518,52 @@ def teknisi_tugas(request):
     if not id_teknisi:
         return Response({'error': 'Sesi teknisi tidak ditemukan atau tidak valid'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    tugas = PemesananJasa.objects.filter(
+    # Tugas yang sudah ditugaskan ke teknisi
+    tugas_aktif = PemesananJasa.objects.filter(
         id_teknisi=id_teknisi
     ).exclude(
         status_pemesanan='Selesai'
     ).order_by('-tanggal_pemesanan')
 
+    # Tugas yang belum ditugaskan ke teknisi (status 'Menunggu Penugasan')
+    tugas_menunggu = PemesananJasa.objects.filter(
+        id_teknisi__isnull=True,
+        status_pemesanan='Menunggu Penugasan'
+    ).order_by('-tanggal_pemesanan')
+
+    tugas = list(tugas_aktif) + list(tugas_menunggu)
     serializer = PemesananJasaSerializer(tugas, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def teknisi_tugas_detail(request, id_pemesanan):
+    """Return details for a specific PemesananJasa for the logged-in teknisi.
+
+    Access rules:
+    - If the pemesanan has `id_teknisi` equal to the session teknisi, allow.
+    - If the pemesanan has no teknisi assigned and status is 'Menunggu Penugasan', allow (teknisi may view and accept).
+    - Otherwise return 403.
+    """
+    teknisi_id = request.session.get('teknisi_id')
+    if not teknisi_id:
+        return Response({'error': 'Sesi teknisi tidak ditemukan atau tidak valid'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        pemesanan = PemesananJasa.objects.select_related('id_pelanggan', 'id_jenis_jasa', 'id_teknisi').get(id_pemesanan=id_pemesanan)
+    except PemesananJasa.DoesNotExist:
+        return Response({'error': 'Pemesanan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    allowed = False
+    if pemesanan.id_teknisi and getattr(pemesanan.id_teknisi, 'id_teknisi', None) == teknisi_id:
+        allowed = True
+    elif pemesanan.id_teknisi is None and pemesanan.status_pemesanan == 'Menunggu Penugasan':
+        allowed = True
+
+    if not allowed:
+        return Response({'error': 'Anda tidak memiliki izin untuk melihat pemesanan ini'}, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = PemesananJasaSerializer(pemesanan)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 

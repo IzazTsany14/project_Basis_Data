@@ -51,7 +51,7 @@ async function loadTugasTeknisi() {
 
     try {
         // The backend now gets the technician ID from the session
-        const response = await fetch('/teknisi/tugas/', {
+        const response = await fetch('/api/teknisi/tugas/', {
             method: 'GET',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' }
@@ -70,11 +70,17 @@ async function loadTugasTeknisi() {
 
         tasks.forEach(task => {
             const row = document.createElement('tr');
+            // Ambil nama pelanggan dari relasi
+            let namaPelanggan = '-';
+            if (task.id_pelanggan && task.id_pelanggan.nama_lengkap) {
+                namaPelanggan = task.id_pelanggan.nama_lengkap;
+            }
             row.innerHTML = `
                 <td>${task.id_pemesanan}</td>
                 <td>${task.nama_jasa}</td>
-                <td>${task.nama_pelanggan}</td>
+                <td>${namaPelanggan}</td>
                 <td>${task.alamat_pemasangan}</td>
+                <td>${task.tanggal_pemesanan ? new Date(task.tanggal_pemesanan).toLocaleDateString('id-ID') : '-'}</td>
                 <td>${task.status_pemesanan}</td>
                 <td>
                     <a href="/teknisi/detail-tugas/?id=${task.id_pemesanan}" class="btn-detail">Lihat Detail</a>

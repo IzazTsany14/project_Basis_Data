@@ -66,7 +66,7 @@
             </div>
 
             <!-- Loading State -->
-            <div class="loading" id="loading">
+            <div class="loading" id="loading" style="display: none;">
                 <div class="spinner"></div>
                 <p>Memuat detail tugas...</p>
             </div>
@@ -96,7 +96,8 @@
                     </div>
                     <div class="card-content">
                         <p><strong>Status Saat Ini:</strong> <span id="current-status">-</span></p>
-                        <form id="form-update-status">
+                        <div id="teknisi-action-area"></div>
+                        <form id="form-update-status" style="display:none;">
                             <input type="hidden" id="id-pesanan" name="id_pesanan">
                             <div class="form-group">
                                 <label for="status-pemesanan">Update Status</label>
@@ -250,6 +251,35 @@
             else if (task.status_pemesanan === 'Batal') statusElement.classList.add('status-batal');
             else statusElement.classList.add('status-menunggu');
 
+            // Teknisi action logic
+            const actionArea = document.getElementById('teknisi-action-area');
+            const formUpdate = document.getElementById('form-update-status');
+            formUpdate.style.display = 'none';
+            actionArea.innerHTML = '';
+
+            if (task.status_pemesanan === 'Ditugaskan') {
+                // Show accept button
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-success';
+                btn.textContent = 'Terima Pesanan';
+                btn.onclick = function() {
+                    document.getElementById('status-pemesanan').value = 'Dikerjakan';
+                    formUpdate.style.display = 'block';
+                    actionArea.innerHTML = '';
+                };
+                actionArea.appendChild(btn);
+            } else if (task.status_pemesanan === 'Dikerjakan') {
+                // Show form to mark as selesai
+                formUpdate.style.display = 'block';
+                document.getElementById('status-pemesanan').value = 'Selesai';
+            } else if (task.status_pemesanan === 'Menunggu Penugasan') {
+                actionArea.innerHTML = '<span class="text-warning">Menunggu admin menugaskan pesanan...</span>';
+            } else if (task.status_pemesanan === 'Selesai') {
+                actionArea.innerHTML = '<span class="text-success">Pesanan sudah selesai.</span>';
+            } else if (task.status_pemesanan === 'Batal') {
+                actionArea.innerHTML = '<span class="text-danger">Pesanan dibatalkan.</span>';
+            }
+
             // Hide loading and show content
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'grid';
@@ -351,7 +381,9 @@
 
         // Load data saat halaman dimuat
         document.addEventListener('DOMContentLoaded', () => {
-            loadTaskDetail();
+            // Ambil ID tugas dari URL
+            const taskId = getTaskIdFromPath();
+            loadTaskDetail(taskId);
             loadDeviceTypes();
 
             // Set active navigation on load
