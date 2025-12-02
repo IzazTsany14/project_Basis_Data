@@ -85,6 +85,14 @@ urlpatterns = [
     # admin_delete_langganan not implemented; use `user_langganan` as a safe importable fallback
     path('api/admin/langganan/<int:id_langganan>/delete/', views.user_langganan, name='admin_delete_langganan'),
     
+    # Admin Langganan Management (Suspend/Resume)
+    path('api/admin/langganan/<int:id_langganan>/suspend/', views.admin_suspend_langganan, name='admin_suspend_langganan'),
+    path('api/admin/langganan/<int:id_langganan>/resume/', views.admin_resume_langganan, name='admin_resume_langganan'),
+    # Create langganan for a pelanggan (admin)
+    path('api/admin/pelanggan/<int:id_pelanggan>/langganan/create/', views.admin_create_langganan, name='admin_create_langganan'),
+    # Activate all NONAKTIF customers (admin utility)
+    path('api/admin/langganan/activate_all_nonaktif/', views.admin_activate_all_nonaktif, name='admin_activate_all_nonaktif'),
+    
     # Admin Technician Management
     path('api/admin/teknisi/', views.admin_teknisi, name='admin_teknisi'),
     path('api/admin/teknisi/<int:id_teknisi>/', views.admin_teknisi, name='admin_teknisi_detail'),

@@ -20,6 +20,6 @@ def role_required(allowed_roles=[]):
             else:
                 # Role is not allowed, redirect to login page
                 # Optionally, you could redirect to an 'access_denied' page
-                return redirect('login')
+                return redirect('login_page')
         return _wrapped_view
     return decorator

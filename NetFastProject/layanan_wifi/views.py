@@ -441,7 +441,6 @@ def registrasi_pelanggan(request):
     print("Serializer errors:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 @api_view(['GET', 'POST'])
 def user_pemesanan(request):
     if request.method == 'GET':
@@ -635,14 +634,26 @@ def admin_pelanggan(request, id_pelanggan=None):
         for p in pelanggan_qs:
             # find latest langganan for paket aktif
             paket_aktif = None
+            status_langganan = 'NONAKTIF'
+            id_langganan = None
+            can_suspend = False
+            can_resume = False
             try:
                 lang = Langganan.objects.filter(id_pelanggan=p).order_by('-tanggal_mulai').first()
-                if lang and getattr(lang, 'status_langganan', '').upper() == 'AKTIF':
+                if lang:
                     paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
-                elif lang:
-                    # if not active, still show latest paket name
-                    paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
-            except Exception:
+                    status_langganan = getattr(lang, 'status_langganan', 'NONAKTIF')
+                    print(f"DEBUG {p.nama_lengkap}: raw={status_langganan}")
+                    if status_langganan:
+                        status_langganan = status_langganan.strip().upper()
+                    print(f"DEBUG {p.nama_lengkap}: processed={status_langganan}")
+                    id_langganan = getattr(lang, 'id_langganan', None)
+                    # Bisa suspend jika status AKTIF
+                    can_suspend = (status_langganan == 'AKTIF')
+                    # Bisa resume jika status SUSPEND
+                    can_resume = (status_langganan == 'SUSPEND')
+            except Exception as e:
+                print(f"DEBUG ERROR {p.nama_lengkap}: {str(e)}")
                 paket_aktif = None
 
             # best-effort area mapping by substring match on address
@@ -662,6 +673,10 @@ def admin_pelanggan(request, id_pelanggan=None):
                 'tanggal_daftar': p.tanggal_daftar.isoformat() if p.tanggal_daftar else None,
                 'area_layanan': area_name,
                 'paket_aktif': paket_aktif,
+                'status_langganan': status_langganan,
+                'id_langganan': id_langganan,
+                'can_suspend': can_suspend,
+                'can_resume': can_resume,
             })
 
         return Response(results, status=status.HTTP_200_OK)
@@ -674,12 +689,22 @@ def admin_pelanggan(request, id_pelanggan=None):
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
         paket_aktif = None
+        status_langganan = 'NONAKTIF'
+        id_langganan = None
+        can_suspend = False
+        can_resume = False
         try:
             lang = Langganan.objects.filter(id_pelanggan=p).order_by('-tanggal_mulai').first()
-            if lang and getattr(lang, 'status_langganan', '').upper() == 'AKTIF':
+            if lang:
                 paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
-            elif lang:
-                paket_aktif = getattr(lang.id_paket, 'nama_paket', None)
+                status_langganan = getattr(lang, 'status_langganan', 'NONAKTIF')
+                if status_langganan:
+                    status_langganan = status_langganan.strip().upper()
+                id_langganan = getattr(lang, 'id_langganan', None)
+                # Bisa suspend jika status AKTIF
+                can_suspend = (status_langganan == 'AKTIF')
+                # Bisa resume jika status SUSPEND
+                can_resume = (status_langganan == 'SUSPEND')
         except Exception:
             paket_aktif = None
 
@@ -699,6 +724,10 @@ def admin_pelanggan(request, id_pelanggan=None):
             'tanggal_daftar': p.tanggal_daftar.isoformat() if p.tanggal_daftar else None,
             'area_layanan': area_name,
             'paket_aktif': paket_aktif,
+            'status_langganan': status_langganan,
+            'id_langganan': id_langganan,
+            'can_suspend': can_suspend,
+            'can_resume': can_resume,
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -1536,68 +1565,111 @@ def admin_area_layanan(request):
 
 # --- Admin Customer Management API ---
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
-def admin_pelanggan(request, id_pelanggan=None):
-    if request.method == 'GET':
-        if id_pelanggan:
-            try:
-                pelanggan = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
-                serializer = PelangganSerializer(pelanggan)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except Pelanggan.DoesNotExist:
-                return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            pelanggan = Pelanggan.objects.all().order_by('-tanggal_daftar')
-            serializer = PelangganSerializer(pelanggan, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+# --- Admin Langganan Management (Suspend/Resume) ---
+@api_view(['POST'])
+def admin_suspend_langganan(request, id_langganan):
+    """Admin API untuk memberhentikan langganan (suspend) ketika pelanggan telat bayar atau tidak bayar.
+    
+    POST /api/admin/langganan/<id>/suspend/ -> Suspend langganan (AKTIF -> SUSPEND)
+    """
+    try:
+        langganan = Langganan.objects.get(id_langganan=id_langganan)
+    except Langganan.DoesNotExist:
+        return Response({'error': 'Langganan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
-    elif request.method == 'POST':
-        data = request.data.copy()
-        # Handle password setting for new customers
-        if 'password' in data:
-            password = data.pop('password')
-            serializer = PelangganSerializer(data=data)
-            if serializer.is_valid():
-                pelanggan = serializer.save()
-                pelanggan.set_password(password)
-                pelanggan.save()
-                return Response({
-                    'message': 'Pelanggan berhasil dibuat',
-                    'pelanggan': PelangganSerializer(pelanggan).data
-                }, status=status.HTTP_201_CREATED)
-        else:
-            serializer = PelangganSerializer(data=data)
-            if serializer.is_valid():
-                pelanggan = serializer.save()
-                return Response({
-                    'message': 'Pelanggan berhasil dibuat',
-                    'pelanggan': PelangganSerializer(pelanggan).data
-                }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # Update status menjadi SUSPEND
+    langganan.status_langganan = 'SUSPEND'
+    langganan.save()
 
-    elif request.method == 'PUT':
-        if not id_pelanggan:
-            return Response({'error': 'ID pelanggan diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response({
+        'message': 'Langganan berhasil dihentikan (suspend) - Pelanggan tidak dapat menggunakan layanan',
+        'langganan': LanggananSerializer(langganan).data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def admin_resume_langganan(request, id_langganan):
+    """Admin API untuk mengaktifkan kembali langganan yang di-suspend.
+    
+    POST /api/admin/langganan/<id>/resume/ -> Resume langganan (SUSPEND -> AKTIF)
+    """
+    try:
+        langganan = Langganan.objects.get(id_langganan=id_langganan)
+    except Langganan.DoesNotExist:
+        return Response({'error': 'Langganan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Update status kembali menjadi AKTIF
+    langganan.status_langganan = 'AKTIF'
+    langganan.save()
+
+    return Response({
+        'message': 'Langganan berhasil diaktifkan kembali - Pelanggan dapat menggunakan layanan lagi',
+        'langganan': LanggananSerializer(langganan).data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def admin_create_langganan(request, id_pelanggan):
+    """Create a default langganan for a pelanggan and set status to AKTIF.
+
+    POST /api/admin/pelanggan/<id_pelanggan>/langganan/create/
+    """
+    try:
+        pelanggan = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
+    except Pelanggan.DoesNotExist:
+        return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Choose a default paket if available
+    paket = PaketLayanan.objects.first()
+    from datetime import date
+    try:
+        langganan = Langganan.objects.create(
+            id_pelanggan=pelanggan,
+            id_paket=paket,
+            tanggal_mulai=date.today(),
+            status_langganan='AKTIF'
+        )
+        return Response({'message': 'Langganan dibuat dan diaktifkan', 'langganan': LanggananSerializer(langganan).data}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def admin_activate_all_nonaktif(request):
+    """Activate all customers: for each pelanggan, ensure they have an AKTIF langganan.
+
+    POST /api/admin/langganan/activate_all_nonaktif/
+    This will:
+    - For pelanggan with an existing latest langganan: set status_langganan='AKTIF' if not already.
+    - For pelanggan without any langganan: create a default langganan with first PaketLayanan and set AKTIF.
+    """
+    from datetime import date
+    paket = PaketLayanan.objects.first()
+    activated = 0
+    created = 0
+    errors = []
+
+    for p in Pelanggan.objects.all():
         try:
-            pelanggan = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
-        except Pelanggan.DoesNotExist:
-            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+            lang = Langganan.objects.filter(id_pelanggan=p).order_by('-tanggal_mulai').first()
+            if lang:
+                if (getattr(lang, 'status_langganan', '').strip().upper() != 'AKTIF'):
+                    lang.status_langganan = 'AKTIF'
+                    lang.save()
+                    activated += 1
+            else:
+                # create default langganan
+                try:
+                    new_lang = Langganan.objects.create(
+                        id_pelanggan=p,
+                        id_paket=paket,
+                        tanggal_mulai=date.today(),
+                        status_langganan='AKTIF'
+                    )
+                    created += 1
+                except Exception as e:
+                    errors.append({'pelanggan': p.id_pelanggan, 'error': str(e)})
+        except Exception as e:
+            errors.append({'pelanggan': p.id_pelanggan, 'error': str(e)})
 
-        serializer = PelangganSerializer(pelanggan, data=request.data, partial=True)
-        if serializer.is_valid():
-            pelanggan = serializer.save()
-            return Response({
-                'message': 'Pelanggan berhasil diperbarui',
-                'pelanggan': PelangganSerializer(pelanggan).data
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'DELETE':
-        if not id_pelanggan:
-            return Response({'error': 'ID pelanggan diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            pelanggan = Pelanggan.objects.get(id_pelanggan=id_pelanggan)
-            pelanggan.delete()
-            return Response({'message': 'Pelanggan berhasil dihapus'}, status=status.HTTP_200_OK)
-        except Pelanggan.DoesNotExist:
-            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
-            return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+    return Response({'message': 'Aktivasi selesai', 'activated_existing': activated, 'created_new': created, 'errors': errors}, status=status.HTTP_200_OK)
