@@ -1826,8 +1826,6 @@ def admin_area_layanan(request):
     serializer = AreaLayananSerializer(areas, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# --- Admin Customer Management API ---
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
 # --- Admin Langganan Management (Suspend/Resume) ---
 @api_view(['POST'])
 def admin_suspend_langganan(request, id_langganan):

@@ -311,7 +311,7 @@
                     <form id="newServiceForm">
                         <div class="mb-3">
                             <label for="jenis_jasa" class="form-label">Jenis Layanan</label>
-                            <select class="form-select" id="jenis_jasa" required>
+                            <select class="form-select" id="jenis_jasa" required onchange="togglePackageSelection()">
                                 <option value="">Pilih jenis layanan...</option>
                                 <option value="1">Instalasi Baru</option>
                                 <option value="2">Perbaikan Koneksi</option>
@@ -319,6 +319,16 @@
                                 <option value="4">Pindah Lokasi</option>
                                 <option value="5">Lainnya</option>
                             </select>
+                        </div>
+                        <div class="mb-3" id="packageSelectionField" style="display:none;">
+                            <label for="paket_layanan" class="form-label">Pilih Paket Home 3</label>
+                            <select class="form-select" id="paket_layanan">
+                                <option value="">Pilih paket...</option>
+                                <option value="Basic">Home 3 Basic</option>
+                                <option value="Standard">Home 3 Standard</option>
+                                <option value="Pro">Home 3 Pro</option>
+                            </select>
+                            <div class="form-text text-muted">Hanya wajib diisi untuk Instalasi Baru dan Upgrade Paket.</div>
                         </div>
                         <div class="mb-3">
                             <label for="tanggal_pemesanan" class="form-label">Tanggal & Waktu</label>
@@ -428,6 +438,23 @@
 
         // Load service history when page loads
         document.addEventListener('DOMContentLoaded', loadServiceHistory);
+
+        // Function to toggle package selection visibility
+        function togglePackageSelection() {
+            const jenisJasa = document.getElementById('jenis_jasa').value;
+            const packageField = document.getElementById('packageSelectionField');
+            const packageSelect = document.getElementById('paket_layanan');
+
+            // ID 1: Instalasi Baru; ID 3: Upgrade Paket
+            if (jenisJasa === '1' || jenisJasa === '3') {
+                packageField.style.display = 'block';
+                packageSelect.setAttribute('required', 'required'); // Membuat wajib diisi
+            } else {
+                packageField.style.display = 'none';
+                packageSelect.removeAttribute('required'); // Tidak wajib diisi
+                packageSelect.value = ""; // Reset value saat disembunyikan
+            }
+        }
 
         // Logout function
         function logout() {
@@ -624,10 +651,26 @@
                 return;
             }
 
+            const jenisJasa = document.getElementById('jenis_jasa').value;
+            const paketLayanan = document.getElementById('paket_layanan').value;
+            
+            // Validation for required package selection
+            if ((jenisJasa === '1' || jenisJasa === '3') && !paketLayanan) {
+                 showAlert('Mohon pilih paket layanan yang diinginkan.', 'warning');
+                 return;
+            }
+
+            let catatan = document.getElementById('catatan').value;
+            
+            // Optional: Append package name to catatan if it's an upgrade or new install
+            if (paketLayanan) {
+                catatan = (catatan ? catatan + ' | ' : '') + `Permintaan Paket: Home 3 ${paketLayanan}`;
+            }
+
             const formData = {
-                id_jenis_jasa: document.getElementById('jenis_jasa').value,
+                id_jenis_jasa: jenisJasa,
                 tanggal_pemesanan: document.getElementById('tanggal_pemesanan').value,
-                catatan: document.getElementById('catatan').value
+                catatan: catatan
             };
 
             try {

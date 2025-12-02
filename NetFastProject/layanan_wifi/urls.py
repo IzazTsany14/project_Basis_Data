@@ -84,9 +84,9 @@ urlpatterns = [
     path('api/admin/pelanggan/<int:id_pelanggan>/', views.admin_pelanggan, name='admin_pelanggan_detail'),
     path('api/admin/pelanggan/<int:id_pelanggan>/delete/', views.admin_pelanggan, name='admin_pelanggan_delete'),
     # admin_create_langganan function was not present in views; use existing
-    # `user_langganan` view as a safe fallback so URL conf imports cleanly.
+    # user_langganan view as a safe fallback so URL conf imports cleanly.
     path('api/admin/pelanggan/<int:id_pelanggan>/langganan/', views.user_langganan, name='admin_create_langganan'),
-    # admin_delete_langganan not implemented; use `user_langganan` as a safe importable fallback
+    # admin_delete_langganan not implemented; use user_langganan as a safe importable fallback
     path('api/admin/langganan/<int:id_langganan>/delete/', views.user_langganan, name='admin_delete_langganan'),
     
     # Admin Langganan Management (Suspend/Resume)
