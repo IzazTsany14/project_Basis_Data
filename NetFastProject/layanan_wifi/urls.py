@@ -46,6 +46,7 @@ urlpatterns = [
     path('api/user-pemesanan/', views.user_pemesanan, name='api_user_pemesanan'),
     # Create payment for an existing pemesanan
     path('api/user/pemesanan/<int:id_pemesanan>/create-payment/', views.create_payment_for_pesanan, name='api_create_payment_for_pesanan'),
+    path('api/pemesanan/<int:id_pemesanan>/pembayaran/', views.create_payment_for_pesanan, name='api_pembayaran_pemesanan'),
     # Upload payment proof (multipart/form-data with key 'file')
     path('api/user/payments/<int:id_pembayaran>/upload-proof/', views.upload_payment_proof, name='api_upload_payment_proof'),
 

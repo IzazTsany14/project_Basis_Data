@@ -204,6 +204,112 @@
             flex-direction: column;
         }
     }
+
+    /* Notification and Modal Styles */
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .payment-method-option {
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .payment-method-option:hover {
+        border-color: #007bff;
+        background: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .info-box.success {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+
+    .info-box.info {
+        background: #e7f3ff;
+        border-left: 4px solid #007bff;
+    }
+
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 2000;
+        max-width: 400px;
+    }
+
+    .notification h5 {
+        margin: 0 0 10px 0;
+        font-weight: 600;
+    }
+
+    .notification p {
+        margin: 0;
+    }
 </style>
 {% endblock %}
 
@@ -270,6 +376,44 @@
             </div>
         </div>
 
+        <!-- Payment Section -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
+            <h4 style="margin-bottom: 20px; font-weight: 600;">Informasi Pembayaran</h4>
+            <div id="paymentSection" class="card" style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <div class="info-label">Metode Pembayaran</div>
+                        <div class="info-value" id="paymentMethod">-</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Jumlah Pembayaran</div>
+                        <div class="info-value" id="paymentAmount">-</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Status Pembayaran</div>
+                        <div class="info-value" id="paymentStatus">-</div>
+                    </div>
+                    <div>
+                        <div class="info-label">Tanggal Pembayaran</div>
+                        <div class="info-value" id="paymentDate">-</div>
+                    </div>
+                </div>
+
+                <!-- Payment Method Details -->
+                <div id="paymentDetails" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;"></div>
+
+                <!-- Payment Actions -->
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button id="uploadProofBtn" class="btn-primary" style="padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; display: none;">
+                        Unggah Bukti Pembayaran
+                    </button>
+                    <button id="selectMethodBtn" class="btn-primary" style="padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                        Pilih Metode Pembayaran
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Timeline Status -->
         <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #f0f0f0;">
             <h4 style="margin-bottom: 20px; font-weight: 600;">Riwayat Status</h4>
@@ -280,9 +424,113 @@
     </div>
 </div>
 
+<!-- Modal for Payment Method Selection -->
+<div id="paymentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <h3 style="margin-top: 0; margin-bottom: 20px;">Pilih Metode Pembayaran</h3>
+        
+        <!-- Transfer Method -->
+        <div style="border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s;" onclick="selectPaymentMethod('transfer')">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 24px;">💳</div>
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 5px 0; font-weight: 600;">Transfer Bank</h4>
+                    <p style="margin: 0; color: #666; font-size: 14px;">Transfer ke rekening admin (Doni)</p>
+                </div>
+                <div style="font-size: 20px;">→</div>
+            </div>
+        </div>
+
+        <!-- Pay at Location Method -->
+        <div style="border: 2px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s;" onclick="selectPaymentMethod('cash')">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 24px;">💰</div>
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 5px 0; font-weight: 600;">Bayar di Tempat</h4>
+                    <p style="margin: 0; color: #666; font-size: 14px;">Bayar saat teknisi datang ke lokasi</p>
+                </div>
+                <div style="font-size: 20px;">→</div>
+            </div>
+        </div>
+
+        <button onclick="closePaymentModal()" style="width: 100%; padding: 10px; margin-top: 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Batal</button>
+    </div>
+</div>
+
+<!-- Modal for Transfer Payment Details -->
+<div id="transferModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <h3 style="margin-top: 0; margin-bottom: 20px;">Informasi Transfer Bank</h3>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="margin-bottom: 15px;">
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; margin-bottom: 5px;">Nama Penerima</div>
+                <div style="font-size: 16px; font-weight: 600;">Doni</div>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; margin-bottom: 5px;">Nomor Rekening</div>
+                <div style="font-size: 16px; font-weight: 600;" id="adminAccountNumber">-</div>
+                <button onclick="copyToClipboard('adminAccountNumber')" style="margin-top: 8px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Salin Nomor Rekening</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; margin-bottom: 5px;">Bank</div>
+                <div style="font-size: 16px; font-weight: 600;" id="adminBankName">-</div>
+            </div>
+            <div>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; margin-bottom: 5px;">Jumlah yang Harus Dibayar</div>
+                <div style="font-size: 20px; font-weight: 700; color: #007bff;" id="amountToPay">-</div>
+            </div>
+        </div>
+
+        <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #007bff;">
+            <p style="margin: 0; font-size: 14px; color: #004085;">
+                <strong>Instruksi:</strong> Silakan transfer sesuai jumlah di atas ke rekening admin. Setelah transfer, unggah bukti pembayaran untuk verifikasi.
+            </p>
+        </div>
+
+        <button onclick="proceedWithTransfer()" style="width: 100%; padding: 12px; margin-bottom: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Lanjutkan dengan Transfer</button>
+        <button onclick="closeTransferModal()" style="width: 100%; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Batal</button>
+    </div>
+</div>
+
+<!-- Modal for Cash Payment Details -->
+<div id="cashModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <h3 style="margin-top: 0; margin-bottom: 20px;">Pembayaran di Tempat</h3>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <div style="margin-bottom: 15px;">
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; margin-bottom: 5px;">Jumlah Pembayaran</div>
+                <div style="font-size: 20px; font-weight: 700; color: #28a745;" id="amountToPay2">-</div>
+            </div>
+            <div>
+                <div style="color: #666; font-size: 13px; text-transform: uppercase; margin-bottom: 5px;">Deskripsi Layanan</div>
+                <div style="font-size: 14px;" id="serviceDescription">-</div>
+            </div>
+        </div>
+
+        <div style="background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+            <p style="margin: 0; font-size: 14px; color: #155724;">
+                <strong>Informasi:</strong> Anda akan membayar ketika teknisi datang ke lokasi sesuai jadwal yang telah ditentukan. Persiapkan jumlah pembayaran yang sesuai.
+            </p>
+        </div>
+
+        <button onclick="proceedWithCash()" style="width: 100%; padding: 12px; margin-bottom: 10px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Setuju Bayar di Tempat</button>
+        <button onclick="closeCashModal()" style="width: 100%; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Batal</button>
+    </div>
+</div>
+
 <script>
     const serviceId = new URLSearchParams(window.location.search).get('id') || 
                      window.location.pathname.split('/').pop();
+    
+    // Admin payment information
+    const adminPaymentInfo = {
+        name: 'Doni Saputra',
+        accountNumber: '1234567890123',
+        bank: 'Virtual Account BCA',
+        phone: '085111222555'
+    };
 
     async function loadServiceDetail() {
         try {
@@ -298,10 +546,180 @@
 
             const service = await response.json();
             displayServiceDetail(service);
+            displayPaymentInfo(service);
         } catch (error) {
             console.error('Error loading service detail:', error);
             showError('Terjadi kesalahan saat memuat data');
         }
+    }
+    
+    function displayPaymentInfo(service) {
+        // Initialize payment info display
+        const paymentAmount = service.biaya || 0;
+        document.getElementById('amountToPay').textContent = formatCurrency(paymentAmount);
+        document.getElementById('amountToPay2').textContent = formatCurrency(paymentAmount);
+        document.getElementById('adminAccountNumber').textContent = adminPaymentInfo.accountNumber;
+        document.getElementById('adminBankName').textContent = adminPaymentInfo.bank;
+        document.getElementById('serviceDescription').textContent = service.nama_jasa || 'Layanan Internet';
+        
+        // Setup button listeners
+        document.getElementById('selectMethodBtn').addEventListener('click', openPaymentModal);
+    }
+    
+    function openPaymentModal() {
+        document.getElementById('paymentModal').style.display = 'flex';
+    }
+    
+    function closePaymentModal() {
+        document.getElementById('paymentModal').style.display = 'none';
+    }
+    
+    function closeTransferModal() {
+        document.getElementById('transferModal').style.display = 'none';
+    }
+    
+    function closeCashModal() {
+        document.getElementById('cashModal').style.display = 'none';
+    }
+    
+    function selectPaymentMethod(method) {
+        closePaymentModal();
+        if (method === 'transfer') {
+            document.getElementById('transferModal').style.display = 'flex';
+        } else if (method === 'cash') {
+            document.getElementById('cashModal').style.display = 'flex';
+        }
+    }
+    
+    async function proceedWithTransfer() {
+        try {
+            // Create payment record
+            const response = await fetch(`/api/pemesanan/${serviceId}/pembayaran/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    payment_method: 'transfer'
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                closeTransferModal();
+                showSuccessNotification('Transfer Bank', 'Pembayaran transfer bank telah didaftarkan. Silakan transfer ke rekening admin dan unggah bukti pembayaran.');
+                updatePaymentDisplay('transfer', result.pembayaran_id);
+            } else {
+                alert('Gagal membuat pembayaran. Silakan coba lagi.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan. Silakan coba lagi.');
+        }
+    }
+    
+    async function proceedWithCash() {
+        try {
+            // Create payment record
+            const response = await fetch(`/api/pemesanan/${serviceId}/pembayaran/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    payment_method: 'cash'
+                })
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                closeCashModal();
+                showSuccessNotification('Bayar di Tempat', 'Metode pembayaran di tempat telah dipilih. Silakan siapkan pembayaran untuk saat teknisi datang.');
+                updatePaymentDisplay('cash', result.pembayaran_id);
+            } else {
+                alert('Gagal membuat pembayaran. Silakan coba lagi.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan. Silakan coba lagi.');
+        }
+    }
+    
+    function updatePaymentDisplay(method, paymentId) {
+        if (method === 'transfer') {
+            document.getElementById('paymentMethod').textContent = 'Transfer Bank';
+            document.getElementById('paymentStatus').textContent = 'Menunggu Pembayaran';
+            document.getElementById('selectMethodBtn').style.display = 'none';
+            document.getElementById('uploadProofBtn').style.display = 'inline-block';
+        } else if (method === 'cash') {
+            document.getElementById('paymentMethod').textContent = 'Bayar di Tempat';
+            document.getElementById('paymentStatus').textContent = 'Belum Dibayar';
+            document.getElementById('selectMethodBtn').style.display = 'none';
+        }
+    }
+    
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Nomor rekening berhasil disalin!');
+        }).catch(err => {
+            console.error('Gagal menyalin:', err);
+        });
+    }
+    
+    function showSuccessNotification(title, message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-in-out;
+        `;
+        notification.innerHTML = `
+            <h5 style="margin: 0 0 10px 0; font-weight: 600;">${title}</h5>
+            <p style="margin: 0;">${message}</p>
+        `;
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in-out';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount || 0);
     }
 
     function displayServiceDetail(service) {

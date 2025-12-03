@@ -961,7 +961,46 @@ def admin_pesanan_aktif(request):
     ).select_related('id_pelanggan', 'id_jenis_jasa', 'id_teknisi').order_by('-tanggal_pemesanan')
 
     serializer = PemesananJasaSerializer(pemesanan, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    services_data = serializer.data
+    
+    # Augment with payment info from Pembayaran table
+    import re
+    from .models import Pembayaran
+    augmented = []
+    for s in services_data:
+        item = dict(s)
+        cat = item.get('catatan') or ''
+        # find PaymentId marker
+        m = re.search(r"\[PaymentId:(\d+)\]", cat)
+        if m:
+            pid = int(m.group(1))
+            try:
+                pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                if pay:
+                    item['payment_id'] = getattr(pay, 'id_pembayaran', None)
+                    item['payment_status'] = getattr(pay, 'status_pembayaran', None)
+                    item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                    item['payment_date'] = getattr(pay, 'tanggal_bayar', None)
+                    try:
+                        item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
+                    except Exception:
+                        item['payment_method'] = None
+            except Exception:
+                item['payment_id'] = None
+                item['payment_status'] = None
+                item['payment_amount'] = item.get('biaya', None)
+                item['payment_date'] = None
+                item['payment_method'] = None
+        else:
+            item['payment_id'] = None
+            item['payment_status'] = None
+            item['payment_amount'] = item.get('biaya', None)
+            item['payment_date'] = None
+            item['payment_method'] = None
+        
+        augmented.append(item)
+    
+    return Response(augmented, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -1324,7 +1363,8 @@ def service_detail_api(request, service_id):
                     try:
                         item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
                     except Exception:
-                        item['payment_amount'] = None
+                        item['payment_amount'] = item.get('biaya', None)
+                    item['payment_date'] = getattr(pay, 'tanggal_bayar', None)
                     try:
                         item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
                     except Exception:
@@ -1332,7 +1372,9 @@ def service_detail_api(request, service_id):
             else:
                 item['payment_id'] = None
                 item['payment_status'] = None
-                item['payment_amount'] = None
+                # Use biaya from jenis_jasa as the payment amount display
+                item['payment_amount'] = item.get('biaya', None)
+                item['payment_date'] = None
                 item['payment_method'] = None
 
             # clean catatan
@@ -1544,6 +1586,7 @@ def services_history_api(request):
                         item['payment_id'] = getattr(pay, 'id_pembayaran', None)
                         item['payment_status'] = getattr(pay, 'status_pembayaran', None)
                         item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                        item['payment_date'] = getattr(pay, 'tanggal_bayar', None)
                         # try to get metode name
                         try:
                             item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
@@ -1552,10 +1595,16 @@ def services_history_api(request):
                 except Exception:
                     item['payment_id'] = None
                     item['payment_status'] = None
+                    # Still provide payment_amount from biaya even if payment not found
+                    item['payment_amount'] = item.get('biaya', None)
+                    item['payment_date'] = None
+                    item['payment_method'] = None
             else:
                 item['payment_id'] = None
                 item['payment_status'] = None
-                item['payment_amount'] = None
+                # Use biaya from jenis_jasa as the payment amount display
+                item['payment_amount'] = item.get('biaya', None)
+                item['payment_date'] = None
                 item['payment_method'] = None
 
             # clean catatan for display: remove markers

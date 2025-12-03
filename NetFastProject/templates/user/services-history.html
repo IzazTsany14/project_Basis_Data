@@ -359,28 +359,92 @@
         const paymentModalEl = document.createElement('div');
         paymentModalEl.innerHTML = `
         <div class="modal fade" id="servicePaymentModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title"><i class="fas fa-credit-card me-2"></i>Pilih Metode Pembayaran</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <div>
-                            <label><input type="radio" name="svc_payment_method" value="transfer" checked> Transfer Bank</label>
+                        <div class="row">
+                            <!-- Transfer Method -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 payment-option-card" onclick="selectPaymentMethodHistory('transfer')" style="cursor: pointer; border: 2px solid #ddd; transition: all 0.3s;">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-university" style="font-size: 32px; color: #667eea; margin-bottom: 10px;"></i>
+                                        <h6 class="card-title">Transfer Bank</h6>
+                                        <p class="card-text small text-muted">Transfer ke rekening admin</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Cash Method -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 payment-option-card" onclick="selectPaymentMethodHistory('cash')" style="cursor: pointer; border: 2px solid #ddd; transition: all 0.3s;">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-money-bill-wave" style="font-size: 32px; color: #28a745; margin-bottom: 10px;"></i>
+                                        <h6 class="card-title">Bayar di Tempat</h6>
+                                        <p class="card-text small text-muted">Bayar saat teknisi datang</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label><input type="radio" name="svc_payment_method" value="cash"> Tunai (Bayar di Tempat)</label>
+
+                        <!-- Transfer Details (Hidden) -->
+                        <div id="svc-transfer-details" class="d-none mt-4 p-3 bg-light rounded">
+                            <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Detail Pembayaran Transfer</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Nama Penerima</label>
+                                    <p class="fw-bold">Doni Saputra</p>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Bank</label>
+                                    <p class="fw-bold">Virtual Account BCA</p>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Nomor Rekening</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="1234567890123" id="svc-admin-account" readonly>
+                                        <button class="btn btn-outline-secondary" onclick="copyAdminAccount()" type="button">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Jumlah Pembayaran</label>
+                                    <p class="fw-bold text-primary" id="svc-amount-display">Rp -</p>
+                                </div>
+                            </div>
+                            <div class="alert alert-info mt-3" role="alert">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                <strong>Instruksi:</strong> Silakan transfer sesuai jumlah di atas ke rekening admin. Setelah transfer, unggah bukti pembayaran untuk verifikasi.
+                            </div>
                         </div>
-                        <div id="svc-transfer-info" class="mt-3 d-none">
-                            <p><strong>Bank:</strong> BCA</p>
-                            <p><strong>No Rek:</strong> 1234567890</p>
-                            <p><strong>Atas Nama:</strong> PT. NetFast</p>
+
+                        <!-- Cash Details (Hidden) -->
+                        <div id="svc-cash-details" class="d-none mt-4 p-3 bg-light rounded">
+                            <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>Detail Pembayaran di Tempat</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Jumlah Pembayaran</label>
+                                    <p class="fw-bold text-success" id="svc-amount-display-cash">Rp -</p>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="small text-muted">Waktu Pembayaran</label>
+                                    <p class="fw-bold">Saat teknisi tiba</p>
+                                </div>
+                            </div>
+                            <div class="alert alert-success mt-3" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Informasi:</strong> Anda akan membayar ketika teknisi datang ke lokasi sesuai jadwal. Persiapkan uang tunai yang sesuai dengan jumlah pembayaran.
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="button" class="btn btn-primary" id="svc-pay-now-btn">Buat Pembayaran</button>
+                        <button type="button" class="btn btn-primary" id="svc-pay-now-btn" onclick="confirmPaymentHistory()">
+                            <i class="fas fa-check me-2"></i>Pilih Metode Ini
+                        </button>
                     </div>
                 </div>
             </div>
@@ -390,38 +454,62 @@
         const svcPaymentModal = new bootstrap.Modal(document.getElementById('servicePaymentModal'));
 
         let svcCurrentPemesanan = null;
-        function openServicePaymentModal(pemesananId) {
+        let svcCurrentPaymentMethod = null;
+        
+        function openServicePaymentModal(pemesananId, amount) {
             svcCurrentPemesanan = pemesananId;
-            // reset radio
-            document.querySelectorAll('input[name="svc_payment_method"]').forEach(r => r.checked = false);
-            document.querySelector('input[name="svc_payment_method"][value="transfer"]').checked = true;
-            document.getElementById('svc-transfer-info').classList.add('d-none');
+            svcCurrentPaymentMethod = null;
+            // Show amount
+            const amountFormatted = formatCurrency(amount);
+            document.getElementById('svc-amount-display').textContent = amountFormatted;
+            document.getElementById('svc-amount-display-cash').textContent = amountFormatted;
+            // Hide details
+            document.getElementById('svc-transfer-details').classList.add('d-none');
+            document.getElementById('svc-cash-details').classList.add('d-none');
             svcPaymentModal.show();
         }
 
-        document.addEventListener('click', function(e) {
-            if (e.target && e.target.matches('input[name="svc_payment_method"]')) {
-                const v = document.querySelector('input[name="svc_payment_method"]:checked').value;
-                if (v === 'transfer') document.getElementById('svc-transfer-info').classList.remove('d-none');
-                else document.getElementById('svc-transfer-info').classList.add('d-none');
+        function selectPaymentMethodHistory(method) {
+            svcCurrentPaymentMethod = method;
+            document.getElementById('svc-transfer-details').classList.add('d-none');
+            document.getElementById('svc-cash-details').classList.add('d-none');
+            if (method === 'transfer') {
+                document.getElementById('svc-transfer-details').classList.remove('d-none');
+            } else if (method === 'cash') {
+                document.getElementById('svc-cash-details').classList.remove('d-none');
             }
-        });
+        }
 
-        document.getElementById('svc-pay-now-btn').addEventListener('click', async function() {
-            const method = document.querySelector('input[name="svc_payment_method"]:checked').value;
+        function copyAdminAccount() {
+            const el = document.getElementById('svc-admin-account');
+            el.select();
+            document.execCommand('copy');
+            alert('Nomor rekening berhasil disalin!');
+        }
+
+        async function confirmPaymentHistory() {
+            if (!svcCurrentPaymentMethod) {
+                alert('Silakan pilih metode pembayaran terlebih dahulu');
+                return;
+            }
             if (!svcCurrentPemesanan) return alert('ID pesanan tidak tersedia');
             try {
-                const resp = await fetch(`/api/user/pemesanan/${svcCurrentPemesanan}/create-payment/`, {
+                const resp = await fetch(`/api/pemesanan/${svcCurrentPemesanan}/pembayaran/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
                     },
-                    body: JSON.stringify({ payment_method: method })
+                    body: JSON.stringify({ payment_method: svcCurrentPaymentMethod })
                 });
                 const jr = await resp.json();
                 if (resp.ok) {
-                    showAlert('Pembayaran berhasil dibuat. Silakan cek Riwayat Pembayaran untuk mengunggah bukti.', 'success');
+                    // Show success notification
+                    const title = svcCurrentPaymentMethod === 'transfer' ? 'Transfer Bank' : 'Bayar di Tempat';
+                    const msg = svcCurrentPaymentMethod === 'transfer' 
+                        ? 'Pembayaran transfer telah didaftarkan. Silakan transfer ke rekening admin dan unggah bukti pembayaran.'
+                        : 'Metode pembayaran di tempat telah dipilih. Persiapkan pembayaran untuk saat teknisi datang.';
+                    showAlert(`✓ ${title}: ${msg}`, 'success');
                     svcPaymentModal.hide();
                     loadServiceHistory();
                 } else {
@@ -431,7 +519,7 @@
                 console.error('Create payment error', err);
                 showAlert('Terjadi kesalahan saat membuat pembayaran', 'danger');
             }
-        });
+        }
 
         const serviceDetailsModal = new bootstrap.Modal(document.getElementById('serviceDetailsModal'));
         const newServiceModal = new bootstrap.Modal(document.getElementById('newServiceModal'));
@@ -548,7 +636,7 @@
                                             <i class="fas fa-eye me-1"></i>
                                             <span>Detail</span>
                                         </button>
-                                        ${ (!hasPayment && !isPaid) ? `<button class="btn btn-primary btn-sm" onclick="openServicePaymentModal('${service.id_pemesanan}')">
+                                        ${ (!hasPayment && !isPaid) ? `<button class="btn btn-primary btn-sm" onclick="openServicePaymentModal('${service.id_pemesanan}', ${service.payment_amount || 0})">
                                             <i class="fas fa-credit-card me-1"></i>Bayar
                                         </button>` : '' }
                                     </div>
@@ -720,6 +808,14 @@
             setTimeout(() => {
                 alertDiv.classList.add('d-none');
             }, 5000);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount || 0);
         }
     </script>
 </body>

@@ -154,6 +154,7 @@
                                         <th>Pelanggan</th>
                                         <th>Alamat</th>
                                         <th>Jenis Jasa</th>
+                                        <th>Status Pembayaran</th>
                                         <th>Tanggal Pesan</th>
                                         <th>Jadwal</th>
                                         <th>Pilih Teknisi</th>
@@ -168,11 +169,11 @@
                     </div>
                 </div>
 
-                <!-- Active Orders Section -->
-                <div class="card">
+                <!-- Active Orders Section with Payment Info -->
+                <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-gear me-2"></i>Pesanan Dalam Pengerjaan
+                            <i class="bi bi-gear me-2"></i>Pesanan Dalam Pengerjaan & Pembayaran
                         </h5>
                     </div>
                     <div class="card-body">
@@ -184,9 +185,14 @@
                                         <th>Pelanggan</th>
                                         <th>Teknisi</th>
                                         <th>Jenis Jasa</th>
-                                        <th>Status</th>
+                                        <th>Metode Pembayaran</th>
+                                        <th>Jumlah Bayar</th>
+                                        <th>Status Pembayaran</th>
+                                        <th>Tanggal Pembayaran</th>
+                                        <th>Status Pesanan</th>
                                         <th>Tanggal Pesan</th>
                                         <th>Jadwal</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="activeOrdersTableBody">
@@ -210,6 +216,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadPendingOrders();
             loadActiveOrders();
+            loadPaidOrders();
         });
 
         // Load pending orders
@@ -244,6 +251,24 @@
             }
         }
 
+        // Load paid orders
+        async function loadPaidOrders() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/pesanan-aktif/`);
+                if (response.ok) {
+                    const orders = await response.json();
+                    // Filter only orders with payment information
+                    const paidOrders = orders.filter(order => order.payment_id || order.payment_status);
+                    displayPaidOrders(paidOrders);
+                } else {
+                    showAlert('Gagal memuat pesanan yang membayar', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading paid orders:', error);
+                showAlert('Terjadi kesalahan saat memuat data pesanan pembayaran', 'danger');
+            }
+        }
+
         // Load technicians list
         async function loadTechnicians() {
             try {
@@ -266,7 +291,7 @@
             tbody.innerHTML = '';
 
             if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada pesanan menunggu penugasan</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada pesanan menunggu penugasan</td></tr>';
                 return;
             }
 
@@ -285,11 +310,31 @@
                 const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
                 const scheduleDate = order.tanggal_jadwal ? new Date(order.tanggal_jadwal).toLocaleDateString('id-ID') : 'Belum dijadwalkan';
 
+                // Payment status badge
+                let paymentStatusClass = 'bg-secondary';
+                let paymentStatusText = order.payment_status || 'Belum Bayar';
+
+                switch(paymentStatusText.toLowerCase()) {
+                    case 'lunas':
+                    case 'bayar':
+                        paymentStatusClass = 'bg-success';
+                        break;
+                    case 'menunggu verifikasi':
+                    case 'belum bayar':
+                    case 'pending':
+                        paymentStatusClass = 'bg-warning';
+                        break;
+                    case 'batal':
+                        paymentStatusClass = 'bg-danger';
+                        break;
+                }
+
                 row.innerHTML = `
                     <td>${order.id_pemesanan}</td>
                     <td>${customerName}</td>
                     <td>${address}</td>
                     <td>${serviceType}</td>
+                    <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
                     <td>${orderDate}</td>
                     <td>${scheduleDate}</td>
                     <td>
@@ -307,13 +352,13 @@
             });
         }
 
-        // Display active orders
+        // Display active orders with payment info
         function displayActiveOrders(orders) {
             const tbody = document.getElementById('activeOrdersTableBody');
             tbody.innerHTML = '';
 
             if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada pesanan dalam pengerjaan</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" class="text-center">Tidak ada pesanan dalam pengerjaan</td></tr>';
                 return;
             }
 
@@ -339,23 +384,59 @@
                         break;
                 }
 
+                // Payment status badge
+                let paymentStatusClass = 'bg-secondary';
+                let paymentStatusText = order.payment_status || 'Belum Bayar';
+
+                switch(paymentStatusText.toLowerCase()) {
+                    case 'lunas':
+                    case 'bayar':
+                        paymentStatusClass = 'bg-success';
+                        break;
+                    case 'menunggu verifikasi':
+                    case 'belum bayar':
+                    case 'pending':
+                        paymentStatusClass = 'bg-warning';
+                        break;
+                    case 'batal':
+                        paymentStatusClass = 'bg-danger';
+                        break;
+                }
+
                 const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
                 const technicianName = order.id_teknisi?.nama_teknisi || 'Belum ditugaskan';
                 const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
+                const paymentMethod = order.payment_method || '-';
+                const paymentAmount = order.payment_amount ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.payment_amount) : '-';
+                const paymentDate = order.payment_date ? new Date(order.payment_date).toLocaleDateString('id-ID') : '-';
                 const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
                 const scheduleDate = order.tanggal_jadwal ? new Date(order.tanggal_jadwal).toLocaleDateString('id-ID') : 'Belum dijadwalkan';
 
                 row.innerHTML = `
-                    <td>${order.id_pemesanan}</td>
+                    <td><strong>#${order.id_pemesanan}</strong></td>
                     <td>${customerName}</td>
                     <td>${technicianName}</td>
                     <td>${serviceType}</td>
+                    <td>${paymentMethod}</td>
+                    <td class="text-end">${paymentAmount}</td>
+                    <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
+                    <td>${paymentDate}</td>
                     <td><span class="badge ${statusClass}">${statusText}</span></td>
                     <td>${orderDate}</td>
                     <td>${scheduleDate}</td>
-                `;
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="viewPaymentDetail(${order.id_pemesanan})" title="Lihat Detail Pembayaran">
+                            <i class="bi bi-eye me-1"></i>Detail
+                        </button>
+                    </td>
+                `;;
                 tbody.appendChild(row);
             });
+        }
+
+        // Display paid orders (alias untuk compatibility)
+        function displayPaidOrders(orders) {
+            displayActiveOrders(orders);
         }
 
         // Assign technician to order
@@ -401,7 +482,14 @@
         function refreshData() {
             loadPendingOrders();
             loadActiveOrders();
+            loadPaidOrders();
             showAlert('Data berhasil diperbarui', 'info');
+        }
+
+        // View payment detail
+        function viewPaymentDetail(orderId) {
+            alert(`Detail pembayaran untuk pesanan #${orderId}\n\nFitur detail pembayaran akan segera tersedia.`);
+            // Implementasi modal untuk menampilkan detail pembayaran bisa ditambahkan di sini
         }
 
         // Get CSRF token

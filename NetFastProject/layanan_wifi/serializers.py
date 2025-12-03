@@ -98,6 +98,7 @@ class PemesananJasaSerializer(serializers.ModelSerializer):
     id_pelanggan = PelangganSerializer(read_only=True)
     id_teknisi = TeknisiSerializer(read_only=True, allow_null=True)
     nama_jasa = serializers.CharField(source='id_jenis_jasa.nama_jasa', read_only=True)
+    biaya = serializers.DecimalField(source='id_jenis_jasa.biaya', max_digits=10, decimal_places=2, read_only=True, allow_null=True)
     alamat_pemasangan = serializers.CharField(source='id_pelanggan.alamat_pemasangan', read_only=True)
     # Try to provide area info: from pelanggan relation (if present), infer from address, or fallback to teknisi area
     area_layanan = serializers.SerializerMethodField()
@@ -105,7 +106,7 @@ class PemesananJasaSerializer(serializers.ModelSerializer):
     class Meta:
         model = PemesananJasa
         fields = ['id_pemesanan', 'id_pelanggan', 'id_teknisi', 'id_jenis_jasa',
-                  'alamat_pemasangan', 'nama_jasa', 'area_layanan',
+                  'alamat_pemasangan', 'nama_jasa', 'biaya', 'area_layanan',
                   'tanggal_pemesanan', 'tanggal_jadwal', 'status_pemesanan', 'catatan']
         read_only_fields = ['id_pemesanan', 'tanggal_pemesanan']
 
