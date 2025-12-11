@@ -202,6 +202,38 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Completed Orders Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-check-circle me-2"></i>Riwayat Pesanan Selesai
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="completedOrdersTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID Pesanan</th>
+                                        <th>Pelanggan</th>
+                                        <th>Teknisi</th>
+                                        <th>Jenis Jasa</th>
+                                        <th>Metode Pembayaran</th>
+                                        <th>Jumlah Bayar</th>
+                                        <th>Status Pembayaran</th>
+                                        <th>Tanggal Pembayaran</th>
+                                        <th>Status Pesanan</th>
+                                        <th>Tanggal Pesan</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completedOrdersTableBody">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     </div>
@@ -217,6 +249,7 @@
             loadPendingOrders();
             loadActiveOrders();
             loadPaidOrders();
+            loadCompletedOrders();
         });
 
         // Load pending orders
@@ -266,6 +299,22 @@
             } catch (error) {
                 console.error('Error loading paid orders:', error);
                 showAlert('Terjadi kesalahan saat memuat data pesanan pembayaran', 'danger');
+            }
+        }
+
+        // Load completed orders
+        async function loadCompletedOrders() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/pesanan-selesai/`);
+                if (response.ok) {
+                    const orders = await response.json();
+                    displayCompletedOrders(orders);
+                } else {
+                    showAlert('Gagal memuat pesanan selesai', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading completed orders:', error);
+                showAlert('Terjadi kesalahan saat memuat data pesanan selesai', 'danger');
             }
         }
 
@@ -421,7 +470,7 @@
                     <td class="text-end">${paymentAmount}</td>
                     <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
                     <td>${paymentDate}</td>
-                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td><span class="badge ${statusClass}</span>${statusText}</span></td>
                     <td>${orderDate}</td>
                     <td>${scheduleDate}</td>
                     <td>
@@ -429,7 +478,7 @@
                             <i class="bi bi-eye me-1"></i>Detail
                         </button>
                     </td>
-                `;;
+                `;
                 tbody.appendChild(row);
             });
         }
@@ -437,6 +486,75 @@
         // Display paid orders (alias untuk compatibility)
         function displayPaidOrders(orders) {
             displayActiveOrders(orders);
+        }
+
+        // Display completed orders
+        function displayCompletedOrders(orders) {
+            const tbody = document.getElementById('completedOrdersTableBody');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center">Tidak ada pesanan selesai</td></tr>';
+                return;
+            }
+
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+
+                // Status badge class
+                let statusClass = 'bg-secondary';
+                let statusText = order.status_pemesanan;
+
+                switch(order.status_pemesanan) {
+                    case 'Selesai':
+                        statusClass = 'bg-success';
+                        break;
+                    case 'Batal':
+                        statusClass = 'bg-danger';
+                        break;
+                }
+
+                // Payment status badge
+                let paymentStatusClass = 'bg-secondary';
+                let paymentStatusText = order.payment_status || 'Belum Bayar';
+
+                switch(paymentStatusText.toLowerCase()) {
+                    case 'lunas':
+                    case 'bayar':
+                        paymentStatusClass = 'bg-success';
+                        break;
+                    case 'menunggu verifikasi':
+                    case 'belum bayar':
+                    case 'pending':
+                        paymentStatusClass = 'bg-warning';
+                        break;
+                    case 'batal':
+                        paymentStatusClass = 'bg-danger';
+                        break;
+                }
+
+                const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
+                const technicianName = order.id_teknisi?.nama_teknisi || 'Belum ditugaskan';
+                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
+                const paymentMethod = order.payment_method || '-';
+                const paymentAmount = order.payment_amount ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.payment_amount) : '-';
+                const paymentDate = order.payment_date ? new Date(order.payment_date).toLocaleDateString('id-ID') : '-';
+                const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
+
+                row.innerHTML = `
+                    <td><strong>#${order.id_pemesanan}</strong></td>
+                    <td>${customerName}</td>
+                    <td>${technicianName}</td>
+                    <td>${serviceType}</td>
+                    <td>${paymentMethod}</td>
+                    <td class="text-end">${paymentAmount}</td>
+                    <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
+                    <td>${paymentDate}</td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td>${orderDate}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         // Assign technician to order
@@ -468,6 +586,7 @@
                     // Reload data
                     loadPendingOrders();
                     loadActiveOrders();
+                    loadCompletedOrders();
                 } else {
                     const error = await response.json();
                     showAlert(`Gagal menugaskan teknisi: ${error.error || 'Unknown error'}`, 'danger');
