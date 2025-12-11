@@ -697,6 +697,62 @@ def teknisi_tugas(request):
 
 
 @api_view(['GET'])
+def teknisi_riwayat_selesai(request):
+    """API untuk riwayat pesanan yang sudah selesai (teknisi view)"""
+    id_teknisi = request.session.get('teknisi_id')
+    if not id_teknisi:
+        return Response({'error': 'Sesi teknisi tidak ditemukan atau tidak valid'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Pesanan yang sudah selesai dan ditugaskan ke teknisi ini
+    pemesanan = PemesananJasa.objects.filter(
+        id_teknisi=id_teknisi,
+        status_pemesanan__in=['Selesai', 'Batal']
+    ).select_related('id_pelanggan', 'id_jenis_jasa').order_by('-tanggal_pemesanan')
+
+    serializer = PemesananJasaSerializer(pemesanan, many=True)
+    services_data = serializer.data
+
+    # Augment with payment info from Pembayaran table
+    import re
+    from .models import Pembayaran
+    augmented = []
+    for s in services_data:
+        item = dict(s)
+        cat = item.get('catatan') or ''
+        # find PaymentId marker
+        m = re.search(r"\[PaymentId:(\d+)\]", cat)
+        if m:
+            pid = int(m.group(1))
+            try:
+                pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                if pay:
+                    item['payment_id'] = getattr(pay, 'id_pembayaran', None)
+                    item['payment_status'] = getattr(pay, 'status_pembayaran', None)
+                    item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                    item['payment_date'] = getattr(pay, 'tanggal_bayar', None)
+                    try:
+                        item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
+                    except Exception:
+                        item['payment_method'] = None
+            except Exception:
+                item['payment_id'] = None
+                item['payment_status'] = None
+                item['payment_amount'] = item.get('biaya', None)
+                item['payment_date'] = None
+                item['payment_method'] = None
+        else:
+            item['payment_id'] = None
+            item['payment_status'] = None
+            item['payment_amount'] = item.get('biaya', None)
+            item['payment_date'] = None
+            item['payment_method'] = None
+
+        augmented.append(item)
+
+    return Response(augmented, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
 def teknisi_tugas_detail(request, id_pemesanan):
     """Return details for a specific PemesananJasa for the logged-in teknisi.
 
@@ -962,7 +1018,7 @@ def admin_pesanan_aktif(request):
 
     serializer = PemesananJasaSerializer(pemesanan, many=True)
     services_data = serializer.data
-    
+
     # Augment with payment info from Pembayaran table
     import re
     from .models import Pembayaran
@@ -997,9 +1053,59 @@ def admin_pesanan_aktif(request):
             item['payment_amount'] = item.get('biaya', None)
             item['payment_date'] = None
             item['payment_method'] = None
-        
+
         augmented.append(item)
-    
+
+    return Response(augmented, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def admin_pesanan_selesai(request):
+    """API untuk riwayat pesanan yang sudah selesai (admin view)"""
+    pemesanan = PemesananJasa.objects.filter(
+        status_pemesanan__in=['Selesai', 'Batal']
+    ).select_related('id_pelanggan', 'id_jenis_jasa', 'id_teknisi').order_by('-tanggal_pemesanan')
+
+    serializer = PemesananJasaSerializer(pemesanan, many=True)
+    services_data = serializer.data
+
+    # Augment with payment info from Pembayaran table
+    import re
+    from .models import Pembayaran
+    augmented = []
+    for s in services_data:
+        item = dict(s)
+        cat = item.get('catatan') or ''
+        # find PaymentId marker
+        m = re.search(r"\[PaymentId:(\d+)\]", cat)
+        if m:
+            pid = int(m.group(1))
+            try:
+                pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                if pay:
+                    item['payment_id'] = getattr(pay, 'id_pembayaran', None)
+                    item['payment_status'] = getattr(pay, 'status_pembayaran', None)
+                    item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                    item['payment_date'] = getattr(pay, 'tanggal_bayar', None)
+                    try:
+                        item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
+                    except Exception:
+                        item['payment_method'] = None
+            except Exception:
+                item['payment_id'] = None
+                item['payment_status'] = None
+                item['payment_amount'] = item.get('biaya', None)
+                item['payment_date'] = None
+                item['payment_method'] = None
+        else:
+            item['payment_id'] = None
+            item['payment_status'] = None
+            item['payment_amount'] = item.get('biaya', None)
+            item['payment_date'] = None
+            item['payment_method'] = None
+
+        augmented.append(item)
+
     return Response(augmented, status=status.HTTP_200_OK)
 
 
@@ -1624,13 +1730,16 @@ def services_history_api(request):
 def admin_dashboard_stats(request):
     total_pelanggan = Pelanggan.objects.count() # Total customers
     total_teknisi = Teknisi.objects.count() # Total technicians
-    pemesanan_baru = PemesananJasa.objects.count() # All orders as "new orders"
+    # Count all orders that are not completed/cancelled as "new orders"
+    pemesanan_menunggu = PemesananJasa.objects.exclude(
+        status_pemesanan__in=['Selesai', 'Batal']
+    ).count() # Pending orders
     langganan_aktif = Langganan.objects.filter(status_langganan='AKTIF').count() # Active subscriptions
 
     return Response({
         'total_pelanggan': total_pelanggan,
         'total_teknisi': total_teknisi,
-        'pemesanan_menunggu': pemesanan_baru,  # Changed to all orders
+        'pemesanan_menunggu': pemesanan_menunggu,
         'langganan_aktif': langganan_aktif
     }, status=status.HTTP_200_OK)
 

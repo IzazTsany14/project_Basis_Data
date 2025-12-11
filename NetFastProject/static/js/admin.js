@@ -69,20 +69,20 @@ async function loadPesananBaru() {
 
     try {
         const [pesanan, teknisi] = await Promise.all([
-            fetchWithAuth(`${API_BASE_URL}/admin/pesanan/?status=Menunggu Penugasan`),
-            fetchWithAuth(`${API_BASE_URL}/admin/teknisi/`)
+            fetchWithAuth(`${API_BASE_URL}/admin/pesanan-menunggu/`),
+            fetchWithAuth(`${API_BASE_URL}/admin/teknisi/list/`)
         ]);
 
-        const teknisiOptions = teknisi.map(t => `<option value="${t.id_teknisi}">${t.nama}</option>`).join('');
+        const teknisiOptions = teknisi.map(t => `<option value="${t.id_teknisi}">${t.nama_teknisi}</option>`).join('');
 
         pesananBaruList.innerHTML = '';
         pesanan.forEach(p => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${p.id_pemesanan}</td>
-                <td>${p.nama_pelanggan}</td>
-                <td>${p.alamat_pemasangan}</td>
-                <td>${p.jenis_jasa}</td>
+                <td>${p.id_pelanggan ? p.id_pelanggan.nama_lengkap : 'N/A'}</td>
+                <td>${p.id_pelanggan ? p.id_pelanggan.alamat_pemasangan : 'N/A'}</td>
+                <td>${p.id_jenis_jasa ? p.id_jenis_jasa.nama_jasa : 'N/A'}</td>
                 <td>
                     <select id="teknisi-for-${p.id_pemesanan}">
                         <option value="">Pilih Teknisi</option>
@@ -102,7 +102,57 @@ async function loadPesananBaru() {
 }
 
 async function loadPesananDikerjakan() {
-    // Similar to loadPesananBaru, but for ongoing tasks
+    const pesananAktifList = document.getElementById('pesanan-aktif-list');
+    if (!pesananAktifList) return;
+
+    try {
+        const pesanan = await fetchWithAuth(`${API_BASE_URL}/admin/pesanan-aktif/`);
+
+        pesananAktifList.innerHTML = '';
+        pesanan.forEach(p => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${p.id_pemesanan}</td>
+                <td>${p.id_pelanggan ? p.id_pelanggan.nama_lengkap : 'N/A'}</td>
+                <td>${p.id_pelanggan ? p.id_pelanggan.alamat_pemasangan : 'N/A'}</td>
+                <td>${p.id_jenis_jasa ? p.id_jenis_jasa.nama_jasa : 'N/A'}</td>
+                <td>${p.id_teknisi ? p.id_teknisi.nama_teknisi : 'Belum ditugaskan'}</td>
+                <td>${p.status_pemesanan}</td>
+                <td>Rp ${p.payment_amount || 'N/A'}</td>
+            `;
+            pesananAktifList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Failed to load active orders:', error);
+        pesananAktifList.innerHTML = `<tr><td colspan="7">Gagal memuat data.</td></tr>`;
+    }
+}
+
+async function loadPesananSelesai() {
+    const pesananSelesaiList = document.getElementById('pesanan-selesai-list');
+    if (!pesananSelesaiList) return;
+
+    try {
+        const pesanan = await fetchWithAuth(`${API_BASE_URL}/admin/pesanan-selesai/`);
+
+        pesananSelesaiList.innerHTML = '';
+        pesanan.forEach(p => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${p.id_pemesanan}</td>
+                <td>${p.id_pelanggan ? p.id_pelanggan.nama_lengkap : 'N/A'}</td>
+                <td>${p.id_pelanggan ? p.id_pelanggan.alamat_pemasangan : 'N/A'}</td>
+                <td>${p.id_jenis_jasa ? p.id_jenis_jasa.nama_jasa : 'N/A'}</td>
+                <td>${p.id_teknisi ? p.id_teknisi.nama_teknisi : 'N/A'}</td>
+                <td>${p.status_pemesanan}</td>
+                <td>Rp ${p.payment_amount || 'N/A'}</td>
+            `;
+            pesananSelesaiList.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Failed to load completed orders:', error);
+        pesananSelesaiList.innerHTML = `<tr><td colspan="7">Gagal memuat data.</td></tr>`;
+    }
 }
 
 async function assignTeknisi(id_pemesanan) {
@@ -115,16 +165,24 @@ async function assignTeknisi(id_pemesanan) {
     }
 
     try {
-        await fetchWithAuth(`${API_BASE_URL}/admin/penugasan-update/`, {
-            method: 'PUT',
+        await fetchWithAuth(`${API_BASE_URL}/admin/tugaskan-teknisi/`, {
+            method: 'POST',
             body: JSON.stringify({ id_pemesanan, id_teknisi })
         });
         alert('Teknisi berhasil ditugaskan!');
-        loadPesananBaru(); // Refresh the list
+        loadPesananBaru(); // Refresh waiting orders
+        loadPesananDikerjakan(); // Refresh active orders
     } catch (error) {
         console.error('Failed to assign technician:', error);
         alert(`Gagal menugaskan teknisi: ${error.message}`);
     }
+}
+
+// Function to refresh all order data
+async function refreshData() {
+    loadPesananBaru();
+    loadPesananDikerjakan();
+    loadPesananSelesai();
 }
 
 // --- Manajemen Teknisi (CRUD) ---

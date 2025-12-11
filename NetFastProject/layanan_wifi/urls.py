@@ -65,6 +65,7 @@ urlpatterns = [
     path('api/teknisi/tugas/', views.teknisi_tugas, name='api_teknisi_tugas'),
     path('api/teknisi/tugas/<int:id_pemesanan>/', views.teknisi_tugas_detail, name='api_teknisi_tugas_detail'),
     path('api/teknisi/update-status/<int:id_pemesanan>/', views.teknisi_update_status, name='api_teknisi_update_status'),
+    path('api/teknisi/riwayat-selesai/', views.teknisi_riwayat_selesai, name='api_teknisi_riwayat_selesai'),
     path('teknisi/pemesanan/<int:id_pemesanan>/update/', views.teknisi_update_status, name='teknisi_update'),
 
     # Admin Routes
@@ -73,6 +74,7 @@ urlpatterns = [
     # Admin Order Management
     path('api/admin/pesanan-menunggu/', views.admin_pemesanan_menunggu, name='admin_pesanan_menunggu'),
     path('api/admin/pesanan-aktif/', views.admin_pesanan_aktif, name='admin_pesanan_aktif'),
+    path('api/admin/pesanan-selesai/', views.admin_pesanan_selesai, name='admin_pesanan_selesai'),
     path('api/admin/tugaskan-teknisi/', views.admin_tugaskan_teknisi, name='admin_tugaskan_teknisi_api'),
     path('api/admin/teknisi/list/', views.admin_list_teknisi, name='admin_teknisi_list'),
     path('admin/paket/', views.admin_paket_layanan, name='admin_paket'),
