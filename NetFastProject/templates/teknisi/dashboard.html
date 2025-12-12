@@ -163,6 +163,10 @@
             <i class="fas fa-tasks"></i>
             <span>Tugas Saya</span>
         </div>
+        <div class="sidebar-item" onclick="navigateTo('completed')">
+            <i class="fas fa-check-circle"></i>
+            <span>Tugas Selesai</span>
+        </div>
         <div class="sidebar-item" onclick="navigateTo('profile')">
             <i class="fas fa-user"></i>
             <span>Profil</span>
@@ -181,6 +185,10 @@
         <a href="/teknisi/detail-tugas/" class="bottom-nav-item" onclick="navigateTo('tasks'); return false;">
             <i class="fas fa-tasks"></i>
             <span>Tugas</span>
+        </a>
+        <a href="/teknisi/tugas-selesai/" class="bottom-nav-item" onclick="navigateTo('completed'); return false;">
+            <i class="fas fa-check-circle"></i>
+            <span>Selesai</span>
         </a>
         <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
             <i class="fas fa-user"></i>
@@ -220,7 +228,7 @@
                 <div class="card-content">
                     <p><strong>Tugas Aktif (Dikerjakan):</strong> <span id="tugas-aktif">0</span></p>
                     <p><strong>Menunggu (Ditugaskan):</strong> <span id="tugas-menunggu">0</span></p>
-                    <p><strong>Selesai Hari Ini:</strong> <span id="tugas-selesai">0</span></p>
+                    <p><strong>Total Selesai:</strong> <span id="tugas-selesai">0</span></p>
                     <div class="badge badge-primary">Tugas Tersedia</div>
                 </div>
             </div>
@@ -280,6 +288,7 @@
             const urls = {
                 'dashboard': '/teknisi/dashboard/',
                 'tasks': '/teknisi/detail-tugas/',
+                'completed': '/teknisi/tugas-selesai/',
                 'profile': '/teknisi/edit-profile/'
             };
             window.location.href = urls[page] || '/teknisi/dashboard/';
@@ -357,30 +366,25 @@
                 // --- A. Hitung Statistik Tugas ---
                 let activeTasks = 0; // Dikerjakan
                 let pendingTasks = 0; // Ditugaskan
-                let finishedToday = 0; // Selesai hari ini
+                let totalFinished = 0; // Total selesai
                 let finishedThisMonth = 0; // Selesai bulan ini
 
-                const today = new Date().toDateString();
                 const currentMonth = new Date().getMonth();
                 const currentYear = new Date().getFullYear();
 
                 tasks.forEach(task => {
                     const status = task.status_pemesanan;
                     const taskDate = new Date(task.tanggal_pemesanan);
-                    
+
                     if (status === 'Dikerjakan') {
                         activeTasks++;
                     } else if (status === 'Ditugaskan') {
                         pendingTasks++;
                     }
 
-                    // Logika untuk menghitung tugas Selesai hari ini dan bulan ini
+                    // Logika untuk menghitung tugas Selesai
                     if (status === 'Selesai') {
-                        // Cek apakah tanggal selesai sama dengan hari ini (perlu data tanggal selesai yang akurat, di sini menggunakan tanggal pemesanan sebagai placeholder)
-                        // ASUMSI: Jika status 'Selesai', kita cek tanggal pemesanan, atau idealnya, tanggal selesai (jika ada di API)
-                        if (taskDate.toDateString() === today) {
-                            finishedToday++;
-                        }
+                        totalFinished++;
                         if (taskDate.getMonth() === currentMonth && taskDate.getFullYear() === currentYear) {
                              finishedThisMonth++;
                         }
@@ -390,7 +394,7 @@
                 // Isi statistik ke dalam card
                 document.getElementById('tugas-aktif').textContent = activeTasks;
                 document.getElementById('tugas-menunggu').textContent = pendingTasks;
-                document.getElementById('tugas-selesai').textContent = finishedToday;
+                document.getElementById('tugas-selesai').textContent = totalFinished;
                 document.getElementById('tugas-bulan').textContent = finishedThisMonth;
                 
                 // --- B. Tampilkan Daftar Tugas di Tabel ---

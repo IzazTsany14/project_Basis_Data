@@ -10,15 +10,13 @@
     <link href="{% static 'css/teknisi.css' %}" rel="stylesheet">
 </head>
 <body>
-    <!-- Sidebar Overlay for Mobile -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-    <!-- Desktop Sidebar -->
     <aside class="sidebar" id="sidebar">
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
             <i class="fas fa-bars"></i>
         </button>
-        <div class="sidebar-item" onclick="navigateTo('dashboard')">
+        <div class="sidebar-item active" onclick="navigateTo('dashboard')">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </div>
@@ -26,7 +24,11 @@
             <i class="fas fa-tasks"></i>
             <span>Tugas Saya</span>
         </div>
-        <div class="sidebar-item active" onclick="navigateTo('profile')">
+        <div class="sidebar-item" onclick="navigateTo('completed')">
+            <i class="fas fa-check-circle"></i>
+            <span>Tugas Selesai</span>
+        </div>
+        <div class="sidebar-item" onclick="navigateTo('profile')">
             <i class="fas fa-user"></i>
             <span>Profil</span>
         </div>
@@ -36,9 +38,8 @@
         </div>
     </aside>
 
-    <!-- Mobile Bottom Navigation -->
     <nav class="bottom-nav">
-        <a href="/teknisi/dashboard/" class="bottom-nav-item" onclick="navigateTo('dashboard'); return false;">
+        <a href="/teknisi/dashboard/" class="bottom-nav-item active" onclick="navigateTo('dashboard'); return false;">
             <i class="fas fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
@@ -46,7 +47,11 @@
             <i class="fas fa-tasks"></i>
             <span>Tugas</span>
         </a>
-        <a href="/teknisi/edit-profile/" class="bottom-nav-item active" onclick="navigateTo('profile'); return false;">
+        <a href="/teknisi/tugas-selesai/" class="bottom-nav-item" onclick="navigateTo('completed'); return false;">
+            <i class="fas fa-check-circle"></i>
+            <span>Selesai</span>
+        </a>
+        <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
             <i class="fas fa-user"></i>
             <span>Profil</span>
         </a>
@@ -121,6 +126,28 @@
 
     <script src="{% static 'js/teknisi.js' %}"></script>
     <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function navigateTo(page) {
+            if (page === 'tasks') {
+                window.history.pushState({}, '', '/teknisi/edit-profile/');
+                initPage();
+            } else {
+                const urls = {
+                    'dashboard': '/teknisi/dashboard/',
+                    'completed': '/teknisi/tugas-selesai/',
+                    'profile': '/teknisi/edit-profile/'
+                };
+                window.location.href = urls[page] || '/teknisi/dashboard/';
+            }
+        }
+
+        function goBackToList() {
+            window.history.pushState({}, '', '/teknisi/edit-profile/');
+            initPage();
+        }
         // Load profile data on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadProfileData();
@@ -195,6 +222,9 @@
                     break;
                 case 'tasks':
                     window.location.href = '/teknisi/detail-tugas/';
+                    break;
+                case 'completed':
+                    window.location.href = '/teknisi/tugas-selesai/';
                     break;
                 case 'profile':
                     window.location.href = '/teknisi/edit-profile/';

@@ -75,6 +75,7 @@ urlpatterns = [
     path('api/admin/pesanan-menunggu/', views.admin_pemesanan_menunggu, name='admin_pesanan_menunggu'),
     path('api/admin/pesanan-aktif/', views.admin_pesanan_aktif, name='admin_pesanan_aktif'),
     path('api/admin/pesanan-selesai/', views.admin_pesanan_selesai, name='admin_pesanan_selesai'),
+    path('api/admin/pesanan-semua/', views.admin_pesanan_semua, name='admin_pesanan_semua'),
     path('api/admin/tugaskan-teknisi/', views.admin_tugaskan_teknisi, name='admin_tugaskan_teknisi_api'),
     path('api/admin/teknisi/list/', views.admin_list_teknisi, name='admin_teknisi_list'),
     path('admin/paket/', views.admin_paket_layanan, name='admin_paket'),
@@ -117,6 +118,7 @@ urlpatterns = [
     # --- Teknisi Pages ---
     path('teknisi/dashboard/', views.teknisi_dashboard_view, name='teknisi_dashboard'),
     path('teknisi/detail-tugas/', views.teknisi_detail_tugas_view, name='teknisi_detail_tugas'),
+    path('teknisi/tugas-selesai/', views.teknisi_tugas_selesai_view, name='teknisi_tugas_selesai'),
     path('api/teknisi/tugas/<int:id_pemesanan>/', views.api_teknisi_detail_tugas, name='api_teknisi_detail_tugas'),
     path('teknisi/edit-profile/', views.teknisi_edit_profile_view, name='teknisi_edit_profile'),
     
