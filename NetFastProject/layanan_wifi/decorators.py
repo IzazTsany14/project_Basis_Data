@@ -11,7 +11,7 @@ def role_required(allowed_roles=[]):
         def _wrapped_view(request, *args, **kwargs):
             # Check if user_role is in session
             if 'user_role' not in request.session:
-                return redirect('login')
+                return redirect('login_page')
 
             user_role = request.session.get('user_role')
             if user_role in allowed_roles:

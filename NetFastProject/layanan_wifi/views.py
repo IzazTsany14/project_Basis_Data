@@ -172,6 +172,22 @@ def teknisi_detail_tugas_view(request):
     return render(request, 'teknisi/detail-tugas.html')
 
 @role_required(allowed_roles=['teknisi', 'admin'])
+def teknisi_tugas_selesai_view(request):
+    """Render halaman tugas selesai untuk teknisi.
+    Template: templates/teknisi/tugas-selesai.html
+    """
+    teknisi_id = request.session.get('teknisi_id')
+    if not teknisi_id:
+        return redirect('login_page')
+
+    try:
+        teknisi = Teknisi.objects.get(id_teknisi=teknisi_id)
+    except Teknisi.DoesNotExist:
+        return redirect('login_page')
+
+    return render(request, 'teknisi/tugas-selesai.html')
+
+@role_required(allowed_roles=['teknisi', 'admin'])
 def teknisi_edit_profile_view(request):
     """Render halaman edit profil untuk teknisi.
     Template: templates/teknisi/edit-profile.html
@@ -179,12 +195,12 @@ def teknisi_edit_profile_view(request):
     teknisi_id = request.session.get('teknisi_id')
     if not teknisi_id:
         return redirect('login_page')
-    
+
     try:
         teknisi = Teknisi.objects.get(id_teknisi=teknisi_id)
     except Teknisi.DoesNotExist:
         return redirect('login_page')
-    
+
     context = {
         'user': {
             'nama': teknisi.nama_teknisi,
@@ -1065,6 +1081,54 @@ def admin_pesanan_selesai(request):
     pemesanan = PemesananJasa.objects.filter(
         status_pemesanan__in=['Selesai', 'Batal']
     ).select_related('id_pelanggan', 'id_jenis_jasa', 'id_teknisi').order_by('-tanggal_pemesanan')
+
+    serializer = PemesananJasaSerializer(pemesanan, many=True)
+    services_data = serializer.data
+
+    # Augment with payment info from Pembayaran table
+    import re
+    from .models import Pembayaran
+    augmented = []
+    for s in services_data:
+        item = dict(s)
+        cat = item.get('catatan') or ''
+        # find PaymentId marker
+        m = re.search(r"\[PaymentId:(\d+)\]", cat)
+        if m:
+            pid = int(m.group(1))
+            try:
+                pay = Pembayaran.objects.filter(id_pembayaran=pid).first()
+                if pay:
+                    item['payment_id'] = getattr(pay, 'id_pembayaran', None)
+                    item['payment_status'] = getattr(pay, 'status_pembayaran', None)
+                    item['payment_amount'] = float(getattr(pay, 'jumlah_bayar', 0) or 0)
+                    item['payment_date'] = getattr(pay, 'tanggal_bayar', None)
+                    try:
+                        item['payment_method'] = pay.id_metode_bayar.nama_metode if pay.id_metode_bayar else None
+                    except Exception:
+                        item['payment_method'] = None
+            except Exception:
+                item['payment_id'] = None
+                item['payment_status'] = None
+                item['payment_amount'] = item.get('biaya', None)
+                item['payment_date'] = None
+                item['payment_method'] = None
+        else:
+            item['payment_id'] = None
+            item['payment_status'] = None
+            item['payment_amount'] = item.get('biaya', None)
+            item['payment_date'] = None
+            item['payment_method'] = None
+
+        augmented.append(item)
+
+    return Response(augmented, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def admin_pesanan_semua(request):
+    """API untuk semua pesanan tanpa filter status (admin view)"""
+    pemesanan = PemesananJasa.objects.select_related('id_pelanggan', 'id_jenis_jasa', 'id_teknisi').order_by('-tanggal_pemesanan')
 
     serializer = PemesananJasaSerializer(pemesanan, many=True)
     services_data = serializer.data

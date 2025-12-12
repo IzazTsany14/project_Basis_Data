@@ -1,0 +1,354 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tugas Selesai - NetFast</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/fontawesome.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/solid.min.css" rel="stylesheet">
+    <link href="{% static 'css/teknisi.css' %}" rel="stylesheet">
+
+    <style>
+        /* --- 1. GAYA UMUM & WARNA AKSEN --- */
+
+        /* Header Utama - Ungu Gradient */
+        .welcome-header {
+            background: linear-gradient(135deg, #7b5afc 0%, #a078ff 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .welcome-header h1 { font-size: 1.8rem; margin: 0; }
+        .welcome-header p { font-size: 1rem; margin: 0; opacity: 0.8; }
+
+        /* Card Header - Ungu Gradient */
+        .card-header, .task-list-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            /* Gradient Ungu */
+            background: linear-gradient(135deg, #7b5afc 0%, #a078ff 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .card-header .icon {
+            font-size: 1.5rem;
+            margin-right: 0.75rem;
+        }
+
+        /* Tombol Aksi - Ungu Solid */
+        .btn {
+            background-color: #7b5afc; /* Ungu Solid */
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #6a4ce0; /* Sedikit lebih gelap saat hover */
+            color: white;
+        }
+
+        /* --- 2. GAYA LIST VIEW --- */
+
+        .task-list-container {
+            display: block;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        /* Item List (Baris Data) */
+        .task-list-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .task-list-item:hover {
+            background-color: #f7fafc;
+        }
+        .task-list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Struktur Konten Baris */
+        .task-id {
+            font-weight: bold;
+            color: #64748b;
+            font-size: 0.9rem;
+            min-width: 60px;
+        }
+        .task-info-main {
+            flex-grow: 1;
+            padding: 0 1.5rem;
+        }
+        .task-customer {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0;
+        }
+        .task-address {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 0;
+        }
+        .task-info-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            min-width: 300px;
+            justify-content: flex-end;
+        }
+        .task-date {
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        .badge-custom {
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            border-radius: 0.375rem;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Status Badge Styles */
+        .status-badge {
+            display: inline-block;
+            padding: 0.3em 0.6em;
+            border-radius: 0.375rem;
+            font-weight: 700;
+            color: white;
+        }
+        .status-selesai { background-color: #10b981; }
+        .status-batal { background-color: #ef4444; }
+
+        /* Media Query untuk Tampilan Mobile (Daftar) */
+        @media (max-width: 768px) {
+            .task-list-header, .task-list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1rem;
+            }
+            .task-info-main {
+                padding: 0;
+                margin-top: 0.5rem;
+            }
+            .task-info-meta {
+                justify-content: flex-start;
+                margin-top: 0.5rem;
+                min-width: auto;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+            .task-id {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+        <aside class="sidebar" id="sidebar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="sidebar-item" onclick="navigateTo('dashboard')">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('tasks')">
+                <i class="fas fa-tasks"></i>
+                <span>Tugas Saya</span>
+            </div>
+            <div class="sidebar-item active" onclick="navigateTo('completed')">
+                <i class="fas fa-check-circle"></i>
+                <span>Tugas Selesai</span>
+            </div>
+            <div class="sidebar-item" onclick="navigateTo('profile')">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </div>
+            <div class="sidebar-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </div>
+        </aside>
+        <nav class="bottom-nav">
+            <a href="/teknisi/dashboard/" class="bottom-nav-item" onclick="navigateTo('dashboard'); return false;">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/teknisi/detail-tugas/" class="bottom-nav-item" onclick="navigateTo('tasks'); return false;">
+                <i class="fas fa-tasks"></i>
+                <span>Tugas</span>
+            </a>
+            <a href="/teknisi/tugas-selesai/" class="bottom-nav-item active" onclick="navigateTo('completed'); return false;">
+                <i class="fas fa-check-circle"></i>
+                <span>Selesai</span>
+            </a>
+            <a href="/teknisi/edit-profile/" class="bottom-nav-item" onclick="navigateTo('profile'); return false;">
+                <i class="fas fa-user"></i>
+                <span>Profil</span>
+            </a>
+            <a href="#" class="bottom-nav-item" onclick="logout(); return false;">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
+        <div class="main-content">
+            <div class="welcome-header">
+                <h1 id="page-title">Tugas Selesai</h1>
+                <p id="page-subtitle">Riwayat tugas yang telah diselesaikan</p>
+            </div>
+
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Memuat data...</p>
+            </div>
+
+            <div id="list-view" style="display: none;">
+
+                <div class="task-list-header d-none d-sm-flex">
+                    <span style="min-width: 60px;">ID</span>
+                    <span style="flex-grow: 1; padding: 0 1.5rem;">Pelanggan & Lokasi</span>
+                    <span style="min-width: 100px; text-align: center;">Tanggal</span>
+                    <span style="min-width: 100px; text-align: center;">Status</span>
+                    <span style="min-width: 50px;"></span>
+                </div>
+
+                <div id="task-list-container" class="task-list-container">
+                    </div>
+
+                <div id="empty-state" style="display:none; text-align:center; margin-top:3rem; color:#94a3b8;">
+                    <i class="fas fa-check-circle fa-3x mb-3"></i>
+                    <p>Belum ada tugas yang selesai.</p>
+                </div>
+            </div>
+
+            <footer>
+                <p>&copy; 2025 NetFast - Sistem Manajemen Layanan Internet</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. NAVIGASI & UI DASAR ---
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function navigateTo(page) {
+            const urls = {
+                'dashboard': '/teknisi/dashboard/',
+                'tasks': '/teknisi/detail-tugas/',
+                'completed': '/teknisi/tugas-selesai/',
+                'profile': '/teknisi/edit-profile/'
+            };
+            window.location.href = urls[page] || '/teknisi/dashboard/';
+        }
+
+        // --- 2. LOGIKA UTAMA (INIT) ---
+        document.addEventListener('DOMContentLoaded', initPage);
+
+        function initPage() {
+            // Reset Tampilan
+            document.getElementById('list-view').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            // Mode List (Daftar Tugas Selesai)
+            document.getElementById('page-title').textContent = "Tugas Selesai";
+            document.getElementById('page-subtitle').textContent = "Riwayat tugas yang telah diselesaikan";
+            loadCompletedTasks();
+        }
+
+        // --- 3. FETCH API DAFTAR TUGAS SELESAI ---
+        async function loadCompletedTasks() {
+            try {
+                // Ganti dengan endpoint API tugas selesai yang sebenarnya
+                const response = await fetch('/api/teknisi/riwayat-selesai/');
+                if (response.ok) {
+                    const tasks = await response.json();
+                    renderCompletedTasks(tasks);
+                } else {
+                    throw new Error('Gagal mengambil daftar tugas selesai');
+                }
+            } catch (error) {
+                console.error(error);
+                document.getElementById('task-list-container').innerHTML = '<p class="text-danger p-3">Gagal memuat daftar tugas selesai.</p>';
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('list-view').style.display = 'block';
+            }
+        }
+
+        function renderCompletedTasks(tasks) {
+            const container = document.getElementById('task-list-container');
+            const emptyState = document.getElementById('empty-state');
+            container.innerHTML = '';
+
+            if (tasks.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            tasks.forEach(task => {
+                let badgeClass = 'bg-success';
+                let statusText = task.status_pemesanan;
+                if(task.status_pemesanan === 'Batal') {
+                    badgeClass = 'bg-danger';
+                }
+
+                const card = document.createElement('div');
+                card.className = `task-list-item status-${task.status_pemesanan.toLowerCase()}`;
+
+                // Menyusun ulang konten agar menjadi baris horizontal
+                card.innerHTML = `
+                    <span class="task-id">#${task.id_pemesanan}</span>
+                    <div class="task-info-main">
+                        <div class="task-customer">${task.id_pelanggan?.nama_lengkap || 'Tanpa Nama'}</div>
+                        <p class="task-address"><i class="fas fa-map-marker-alt me-2"></i>${task.id_pelanggan?.alamat_pemasangan || '-'}</p>
+                    </div>
+                    <div class="task-info-meta">
+                        <span class="task-date d-none d-sm-block">${new Date(task.tanggal_pemesanan).toLocaleDateString('id-ID')}</span>
+                        <span class="badge ${badgeClass} badge-custom">${statusText}</span>
+                        <small class="text-primary d-none d-sm-block"><i class="fas fa-info-circle ms-1"></i></small>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function logout() {
+            if(confirm('Keluar aplikasi?')) {
+                 // Asumsi endpoint logout POST /auth/logout/
+                fetch('/auth/logout/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' }
+                }).then(() => {
+                    window.location.href = '/';
+                }).catch(err => {
+                    console.error('Logout error:', err);
+                    window.location.href = '/'; // Fallback
+                });
+            }
+        }
+    </script>
+</body>
+</html>
