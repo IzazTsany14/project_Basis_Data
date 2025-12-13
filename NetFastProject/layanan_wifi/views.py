@@ -1004,9 +1004,62 @@ def admin_pelanggan(request, id_pelanggan=None):
         except Pelanggan.DoesNotExist:
             return Response({'error': 'Pelanggan tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = PelangganSerializer(p, data=request.data, partial=True)
+        # Extract Pelanggan fields only
+        pelanggan_data = {
+            'nama_lengkap': request.data.get('nama_lengkap'),
+            'email': request.data.get('email'),
+            'no_telepon': request.data.get('no_telepon'),
+            'alamat_pemasangan': request.data.get('alamat_pemasangan'),
+        }
+        # Remove None values
+        pelanggan_data = {k: v for k, v in pelanggan_data.items() if v is not None}
+
+        # Handle password update
+        password = request.data.get('password')
+        if password:
+            p.set_password(password)
+
+        serializer = PelangganSerializer(p, data=pelanggan_data, partial=True)
         if serializer.is_valid():
             p = serializer.save()
+
+            # Handle paket_aktif and status_langganan updates
+            paket_aktif = request.data.get('paket_aktif')
+            status_langganan = request.data.get('status_langganan')
+            id_paket = request.data.get('id_paket')
+
+            if paket_aktif or status_langganan or id_paket:
+                # Find or create langganan for this pelanggan
+                langganan = Langganan.objects.filter(id_pelanggan=p).order_by('-tanggal_mulai').first()
+
+                if not langganan:
+                    # Create new langganan if none exists
+                    if id_paket:
+                        try:
+                            paket = PaketLayanan.objects.get(id_paket=id_paket)
+                            from datetime import date
+                            langganan = Langganan.objects.create(
+                                id_pelanggan=p,
+                                id_paket=paket,
+                                tanggal_mulai=date.today(),
+                                status_langganan=status_langganan or 'AKTIF'
+                            )
+                        except PaketLayanan.DoesNotExist:
+                            pass
+                else:
+                    # Update existing langganan
+                    if id_paket:
+                        try:
+                            paket = PaketLayanan.objects.get(id_paket=id_paket)
+                            langganan.id_paket = paket
+                        except PaketLayanan.DoesNotExist:
+                            pass
+
+                    if status_langganan:
+                        langganan.status_langganan = status_langganan.upper()
+
+                    langganan.save()
+
             return Response(PelangganSerializer(p).data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

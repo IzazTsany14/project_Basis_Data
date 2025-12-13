@@ -11,6 +11,67 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{% static 'css/admin.css' %}" rel="stylesheet">
+    <style>
+        /* Custom Styles */
+        .table-container {
+            min-height: 200px;
+            position: relative;
+        }
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        .order-detail-img {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .detail-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .no-data-row td {
+            padding: 40px !important;
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        /* Tabs styling */
+        .nav-tabs .nav-link {
+            color: #495057;
+            font-weight: 500;
+            border: none;
+            padding: 10px 20px;
+        }
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            border-bottom: 3px solid #0d6efd;
+            background-color: transparent;
+        }
+        .nav-tabs .nav-link:hover {
+            color: #0d6efd;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -129,8 +190,8 @@
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Manajemen Pesanan</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-primary" onclick="refreshData()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        <button type="button" class="btn btn-primary" onclick="refreshAllData()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Semua
                         </button>
                     </div>
                 </div>
@@ -138,103 +199,234 @@
                 <!-- Alert Messages -->
                 <div id="alertContainer"></div>
 
-                <!-- Pending Orders Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-clock-history me-2"></i>Pesanan Menunggu Penugasan
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="pendingOrdersTable">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>ID Pesanan</th>
-                                        <th>Pelanggan</th>
-                                        <th>Alamat</th>
-                                        <th>Jenis Jasa</th>
-                                        <th>Status Pembayaran</th>
-                                        <th>Tanggal Pesan</th>
-                                        <th>Jadwal</th>
-                                        <th>Pilih Teknisi</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="pendingOrdersTableBody">
-                                    <!-- Data will be loaded here -->
-                                </tbody>
-                            </table>
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-4" id="ordersTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                            <i class="bi bi-clock-history me-1"></i>Menunggu Penugasan
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="active-tab" data-bs-toggle="tab" data-bs-target="#active" type="button" role="tab">
+                            <i class="bi bi-gear me-1"></i>Dalam Pengerjaan & Pembayaran
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
+                            <i class="bi bi-check-circle me-1"></i>Riwayat Selesai
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="ordersTabContent">
+                    
+                    <!-- Tab 1: Pending Orders -->
+                    <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-clock-history me-2"></i>Pesanan Menunggu Penugasan
+                                </h5>
+                            </div>
+                            <div class="card-body table-container">
+                                <div class="loading-spinner" id="pendingLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>ID Pesanan</th>
+                                                <th>Pelanggan</th>
+                                                <th>Alamat</th>
+                                                <th>Jenis Jasa</th>
+                                                <th>Status Pembayaran</th>
+                                                <th>Tanggal Pesan</th>
+                                                <th>Jadwal</th>
+                                                <th>Pilih Teknisi</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pendingOrdersTableBody">
+                                            <!-- Data akan dimuat di sini -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Active Orders Section with Payment Info -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-gear me-2"></i>Pesanan Dalam Pengerjaan & Pembayaran
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="activeOrdersTable">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>ID Pesanan</th>
-                                        <th>Pelanggan</th>
-                                        <th>Teknisi</th>
-                                        <th>Jenis Jasa</th>
-                                        <th>Metode Pembayaran</th>
-                                        <th>Jumlah Bayar</th>
-                                        <th>Status Pembayaran</th>
-                                        <th>Tanggal Pembayaran</th>
-                                        <th>Status Pesanan</th>
-                                        <th>Tanggal Pesan</th>
-                                        <th>Jadwal</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="activeOrdersTableBody">
-                                    <!-- Data will be loaded here -->
-                                </tbody>
-                            </table>
+                    <!-- Tab 2: Active Orders -->
+                    <div class="tab-pane fade" id="active" role="tabpanel">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-gear me-2"></i>Pesanan Dalam Pengerjaan & Pembayaran
+                                </h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="showAllOrders" checked>
+                                    <label class="form-check-label" for="showAllOrders">Tampilkan Semua</label>
+                                </div>
+                            </div>
+                            <div class="card-body table-container">
+                                <div class="loading-spinner" id="activeLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>ID Pesanan</th>
+                                                <th>Pelanggan</th>
+                                                <th>Teknisi</th>
+                                                <th>Jenis Jasa</th>
+                                                <th>Total</th>
+                                                <th>Status Pembayaran</th>
+                                                <th>Status Pesanan</th>
+                                                <th>Tanggal Pesan</th>
+                                                <th>Jadwal</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="activeOrdersTableBody">
+                                            <!-- Data akan dimuat di sini -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Completed Orders Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-check-circle me-2"></i>Riwayat Pesanan Selesai
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="completedOrdersTable">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>ID Pesanan</th>
-                                        <th>Pelanggan</th>
-                                        <th>Teknisi</th>
-                                        <th>Jenis Jasa</th>
-                                        <th>Metode Pembayaran</th>
-                                        <th>Jumlah Bayar</th>
-                                        <th>Status Pembayaran</th>
-                                        <th>Tanggal Pembayaran</th>
-                                        <th>Status Pesanan</th>
-                                        <th>Tanggal Pesan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="completedOrdersTableBody">
-                                    <!-- Data will be loaded here -->
-                                </tbody>
-                            </table>
+                    <!-- Tab 3: Completed Orders -->
+                    <div class="tab-pane fade" id="completed" role="tabpanel">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-check-circle me-2"></i>Riwayat Pesanan Selesai
+                                </h5>
+                            </div>
+                            <div class="card-body table-container">
+                                <div class="loading-spinner" id="completedLoading">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>ID Pesanan</th>
+                                                <th>Pelanggan</th>
+                                                <th>Teknisi</th>
+                                                <th>Jenis Jasa</th>
+                                                <th>Total</th>
+                                                <th>Status Pembayaran</th>
+                                                <th>Tanggal Pesan</th>
+                                                <th>Tanggal Selesai</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="completedOrdersTableBody">
+                                            <!-- Data akan dimuat di sini -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Modal Detail Pemesanan -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="orderDetailModalLabel">
+                        <i class="bi bi-clipboard-check me-2"></i>Detail Pesanan #<span id="detailOrderId"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="detailLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Memuat detail pesanan...</p>
+                    </div>
+                    <div id="detailContent" style="display: none;">
+                        <!-- Detail akan dimuat di sini -->
+                    </div>
+                    <div id="detailError" style="display: none;" class="text-center py-5">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Gagal memuat detail pesanan. Silakan coba lagi.
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="retryLoadDetail()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" onclick="printOrderDetail()" id="printDetailBtn" style="display: none;">
+                        <i class="bi bi-printer me-1"></i>Cetak
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Assign Technician -->
+    <div class="modal fade" id="assignTechnicianModal" tabindex="-1" aria-labelledby="assignTechnicianModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignTechnicianModalLabel">
+                        <i class="bi bi-person-plus me-2"></i>Tugaskan Teknisi
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="assignLoading" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data teknisi...</p>
+                    </div>
+                    <div id="assignContent" style="display: none;">
+                        <p>Pilih teknisi untuk pesanan <strong id="assignOrderId"></strong>:</p>
+                        <div class="mb-3">
+                            <label for="technicianSelect" class="form-label">Pilih Teknisi:</label>
+                            <select class="form-select" id="technicianSelect">
+                                <option value="">Pilih Teknisi</option>
+                                <!-- Options will be loaded here -->
+                            </select>
+                        </div>
+                        <div id="selectedTechnicianInfo" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>Informasi Teknisi:</strong>
+                                <p class="mb-1" id="techName"></p>
+                                <p class="mb-1" id="techPhone"></p>
+                                <p class="mb-0" id="techSpecialization"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmAssignTechnician()" id="confirmAssignBtn" disabled>
+                        <i class="bi bi-check-circle me-1"></i>Tugaskan
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -243,331 +435,488 @@
 
     <script>
         const API_BASE_URL = '/api/admin';
+        let currentOrderId = null;
+        let currentAssignOrderId = null;
+        let techniciansList = [];
+        let activeOrdersData = [];
 
         // Load data on page load
         document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            
+            // Setup event listeners
+            document.getElementById('showAllOrders').addEventListener('change', function() {
+                const showAll = this.checked;
+                filterAndDisplayActiveOrders(showAll);
+            });
+            
+            // Load technicians for dropdown
+            loadTechnicians();
+            
+            // Setup technician select change event
+            document.getElementById('technicianSelect').addEventListener('change', function() {
+                const techId = this.value;
+                const confirmBtn = document.getElementById('confirmAssignBtn');
+                confirmBtn.disabled = !techId;
+                
+                if (techId) {
+                    const technician = techniciansList.find(t => t.id_teknisi == techId || t.id == techId);
+                    if (technician) {
+                        document.getElementById('selectedTechnicianInfo').style.display = 'block';
+                        document.getElementById('techName').textContent = `Nama: ${technician.nama_teknisi || technician.name}`;
+                        document.getElementById('techPhone').textContent = `Telepon: ${technician.no_telepon || technician.phone || '-'}`;
+                        document.getElementById('techSpecialization').textContent = `Spesialisasi: ${technician.specialization || technician.specialty || 'Umum'}`;
+                    }
+                } else {
+                    document.getElementById('selectedTechnicianInfo').style.display = 'none';
+                }
+            });
+        });
+
+        // Load all data
+        function loadAllData() {
             loadPendingOrders();
             loadActiveOrders();
-            loadPaidOrders();
             loadCompletedOrders();
-        });
+        }
+
+        // Load technicians
+        async function loadTechnicians() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/teknisi/`);
+                if (response.ok) {
+                    techniciansList = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading technicians:', error);
+            }
+        }
 
         // Load pending orders
         async function loadPendingOrders() {
             try {
+                showLoading('pendingLoading', true);
+                
                 const response = await fetch(`${API_BASE_URL}/pesanan-menunggu/`);
+                const tbody = document.getElementById('pendingOrdersTableBody');
+                
                 if (response.ok) {
                     const orders = await response.json();
-                    displayPendingOrders(orders);
+                    
+                    if (!orders || orders.length === 0) {
+                        tbody.innerHTML = `
+                            <tr class="no-data-row">
+                                <td colspan="9">
+                                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                                    <p class="mt-2">Tidak ada pesanan menunggu penugasan</p>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        displayPendingOrdersTable(orders);
+                    }
                 } else {
-                    showAlert('Gagal memuat pesanan menunggu', 'danger');
+                    throw new Error('Response not OK');
                 }
             } catch (error) {
                 console.error('Error loading pending orders:', error);
-                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+                const tbody = document.getElementById('pendingOrdersTableBody');
+                tbody.innerHTML = `
+                    <tr class="no-data-row">
+                        <td colspan="9">
+                            <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                            <p class="mt-2">Gagal memuat data pesanan</p>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadPendingOrders()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                showLoading('pendingLoading', false);
             }
         }
 
         // Load active orders
         async function loadActiveOrders() {
             try {
+                showLoading('activeLoading', true);
+                
                 const response = await fetch(`${API_BASE_URL}/pesanan-aktif/`);
+                
                 if (response.ok) {
-                    const orders = await response.json();
-                    displayActiveOrders(orders);
+                    activeOrdersData = await response.json();
+                    
+                    if (!activeOrdersData || activeOrdersData.length === 0) {
+                        const tbody = document.getElementById('activeOrdersTableBody');
+                        tbody.innerHTML = `
+                            <tr class="no-data-row">
+                                <td colspan="10">
+                                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                                    <p class="mt-2">Tidak ada pesanan dalam pengerjaan</p>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        const showAll = document.getElementById('showAllOrders').checked;
+                        filterAndDisplayActiveOrders(showAll);
+                    }
                 } else {
-                    showAlert('Gagal memuat pesanan aktif', 'danger');
+                    throw new Error('Response not OK');
                 }
             } catch (error) {
                 console.error('Error loading active orders:', error);
-                showAlert('Terjadi kesalahan saat memuat data', 'danger');
-            }
-        }
-
-        // Load paid orders
-        async function loadPaidOrders() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/pesanan-aktif/`);
-                if (response.ok) {
-                    const orders = await response.json();
-                    // Filter only orders with payment information
-                    const paidOrders = orders.filter(order => order.payment_id || order.payment_status);
-                    displayPaidOrders(paidOrders);
-                } else {
-                    showAlert('Gagal memuat pesanan yang membayar', 'danger');
-                }
-            } catch (error) {
-                console.error('Error loading paid orders:', error);
-                showAlert('Terjadi kesalahan saat memuat data pesanan pembayaran', 'danger');
+                const tbody = document.getElementById('activeOrdersTableBody');
+                tbody.innerHTML = `
+                    <tr class="no-data-row">
+                        <td colspan="10">
+                            <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                            <p class="mt-2">Gagal memuat data pesanan</p>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadActiveOrders()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                showLoading('activeLoading', false);
             }
         }
 
         // Load completed orders
         async function loadCompletedOrders() {
             try {
+                showLoading('completedLoading', true);
+                
                 const response = await fetch(`${API_BASE_URL}/pesanan-selesai/`);
+                const tbody = document.getElementById('completedOrdersTableBody');
+                
                 if (response.ok) {
                     const orders = await response.json();
-                    displayCompletedOrders(orders);
+                    
+                    if (!orders || orders.length === 0) {
+                        tbody.innerHTML = `
+                            <tr class="no-data-row">
+                                <td colspan="9">
+                                    <i class="bi bi-inbox fs-1 text-muted"></i>
+                                    <p class="mt-2">Tidak ada riwayat pesanan selesai</p>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        displayCompletedOrdersTable(orders);
+                    }
                 } else {
-                    showAlert('Gagal memuat pesanan selesai', 'danger');
+                    throw new Error('Response not OK');
                 }
             } catch (error) {
                 console.error('Error loading completed orders:', error);
-                showAlert('Terjadi kesalahan saat memuat data pesanan selesai', 'danger');
+                const tbody = document.getElementById('completedOrdersTableBody');
+                tbody.innerHTML = `
+                    <tr class="no-data-row">
+                        <td colspan="9">
+                            <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                            <p class="mt-2">Gagal memuat riwayat pesanan</p>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadCompletedOrders()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                showLoading('completedLoading', false);
             }
         }
 
-        // Load technicians list
-        async function loadTechnicians() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/teknisi/`);
-                if (response.ok) {
-                    return await response.json();
-                }
-                return [];
-            } catch (error) {
-                console.error('Error loading technicians:', error);
-                return [];
-            }
-        }
-
-        // Display pending orders
-        async function displayPendingOrders(orders) {
+        // Display pending orders table
+        function displayPendingOrdersTable(orders) {
             const tbody = document.getElementById('pendingOrdersTableBody');
-            const technicians = await loadTechnicians();
-
             tbody.innerHTML = '';
 
-            if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada pesanan menunggu penugasan</td></tr>';
-                return;
-            }
-
             orders.forEach(order => {
+                // Format data
+                const orderId = order.id_pemesanan || order.id || 'N/A';
+                const customerName = order.id_pelanggan?.nama_lengkap || order.nama_pelanggan || order.customer_name || 'N/A';
+                const customerPhone = order.id_pelanggan?.no_telepon || order.no_telepon || order.phone || '';
+                const address = order.id_pelanggan?.alamat_pemasangan || order.alamat_pelanggan || order.address || 'N/A';
+                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || order.service_type || 'N/A';
+                const orderDate = formatDate(order.tanggal_pemesanan || order.created_at || order.order_date);
+                const scheduleDate = order.tanggal_jadwal ? 
+                    formatDate(order.tanggal_jadwal) : 
+                    '<span class="text-warning">Belum dijadwalkan</span>';
+                
+                // Payment status
+                const paymentStatus = getPaymentStatusInfo(order.payment_status || order.status_pembayaran || 'Belum Bayar');
+
                 const row = document.createElement('tr');
-
-                // Create technician select dropdown
-                let teknisiOptions = '<option value="">Pilih Teknisi</option>';
-                technicians.forEach(teknisi => {
-                    teknisiOptions += `<option value="${teknisi.id_teknisi}">${teknisi.nama_teknisi}</option>`;
-                });
-
-                const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
-                const address = order.id_pelanggan?.alamat_pemasangan || 'N/A';
-                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
-                const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
-                const scheduleDate = order.tanggal_jadwal ? new Date(order.tanggal_jadwal).toLocaleDateString('id-ID') : 'Belum dijadwalkan';
-
-                // Payment status badge
-                let paymentStatusClass = 'bg-secondary';
-                let paymentStatusText = order.payment_status || 'Belum Bayar';
-
-                switch(paymentStatusText.toLowerCase()) {
-                    case 'lunas':
-                    case 'bayar':
-                        paymentStatusClass = 'bg-success';
-                        break;
-                    case 'menunggu verifikasi':
-                    case 'belum bayar':
-                    case 'pending':
-                        paymentStatusClass = 'bg-warning';
-                        break;
-                    case 'batal':
-                        paymentStatusClass = 'bg-danger';
-                        break;
-                }
-
                 row.innerHTML = `
-                    <td>${order.id_pemesanan}</td>
-                    <td>${customerName}</td>
-                    <td>${address}</td>
-                    <td>${serviceType}</td>
-                    <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
+                    <td><strong class="cursor-pointer" onclick="viewOrderDetail(${orderId})" title="Klik untuk melihat detail">#${orderId}</strong></td>
+                    <td>
+                        <div class="fw-medium">${escapeHtml(customerName)}</div>
+                        <small class="text-muted">${escapeHtml(customerPhone)}</small>
+                    </td>
+                    <td>${escapeHtml(address)}</td>
+                    <td>${escapeHtml(serviceType)}</td>
+                    <td><span class="badge ${paymentStatus.class}">${paymentStatus.text}</span></td>
                     <td>${orderDate}</td>
                     <td>${scheduleDate}</td>
                     <td>
-                        <select class="form-select form-select-sm teknisi-select" data-order-id="${order.id_pemesanan}">
-                            ${teknisiOptions}
+                        <select class="form-select form-select-sm teknisi-select" data-order-id="${orderId}" onchange="updateTechnicianSelect(${orderId})">
+                            <option value="">Pilih Teknisi</option>
+                            ${generateTechnicianOptions()}
                         </select>
                     </td>
                     <td>
-                        <button class="btn btn-success btn-sm" onclick="assignTechnician(${order.id_pemesanan})">
-                            <i class="bi bi-check-circle me-1"></i>Tugaskan
-                        </button>
+                        <div class="action-buttons">
+                            <button class="btn btn-info btn-sm" onclick="viewOrderDetail(${orderId})" title="Lihat Detail">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="showAssignModal(${orderId})" title="Tugaskan Teknisi">
+                                <i class="bi bi-person-plus"></i>
+                            </button>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        // Display active orders with payment info
-        function displayActiveOrders(orders) {
+        // Filter and display active orders
+        function filterAndDisplayActiveOrders(showAll) {
+            if (!activeOrdersData || activeOrdersData.length === 0) {
+                return;
+            }
+            
+            let filteredOrders = activeOrdersData;
+            if (!showAll) {
+                filteredOrders = activeOrdersData.filter(order => {
+                    const status = order.status_pemesanan || order.status || '';
+                    return status !== 'Selesai' && status !== 'Batal' && status !== 'Canceled';
+                });
+            }
+            
+            displayActiveOrdersTable(filteredOrders);
+        }
+
+        // Display active orders table
+        function displayActiveOrdersTable(orders) {
             const tbody = document.getElementById('activeOrdersTableBody');
             tbody.innerHTML = '';
 
             if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" class="text-center">Tidak ada pesanan dalam pengerjaan</td></tr>';
+                const message = document.getElementById('showAllOrders').checked ? 
+                    'Tidak ada pesanan aktif' : 
+                    'Tidak ada pesanan dalam pengerjaan atau pembayaran';
+                
+                tbody.innerHTML = `
+                    <tr class="no-data-row">
+                        <td colspan="10">
+                            <i class="bi bi-inbox fs-1 text-muted"></i>
+                            <p class="mt-2">${message}</p>
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
             orders.forEach(order => {
+                // Get status info
+                const orderStatus = getOrderStatusInfo(order.status_pemesanan || order.status);
+                const paymentStatus = getPaymentStatusInfo(order.payment_status || order.status_pembayaran || 'Belum Bayar');
+                
+                // Format data
+                const orderId = order.id_pemesanan || order.id || 'N/A';
+                const customerName = order.id_pelanggan?.nama_lengkap || order.nama_pelanggan || order.customer_name || 'N/A';
+                const customerPhone = order.id_pelanggan?.no_telepon || order.no_telepon || order.phone || '';
+                const technicianName = order.id_teknisi?.nama_teknisi || order.nama_teknisi || order.technician_name || 'Belum ditugaskan';
+                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || order.service_type || 'N/A';
+                const totalAmount = order.total_harga || order.payment_amount || order.total_amount || 0;
+                const orderDate = formatDate(order.tanggal_pemesanan || order.created_at || order.order_date);
+                const scheduleDate = order.tanggal_jadwal ? 
+                    formatDate(order.tanggal_jadwal) : 
+                    '<span class="text-warning">-</span>';
+                
+                // Format currency
+                const formattedTotal = formatCurrency(totalAmount);
+
                 const row = document.createElement('tr');
-
-                // Status badge class
-                let statusClass = 'bg-secondary';
-                let statusText = order.status_pemesanan;
-
-                switch(order.status_pemesanan) {
-                    case 'Ditugaskan':
-                        statusClass = 'bg-info';
-                        break;
-                    case 'Dikerjakan':
-                        statusClass = 'bg-warning';
-                        break;
-                    case 'Selesai':
-                        statusClass = 'bg-success';
-                        break;
-                    case 'Batal':
-                        statusClass = 'bg-danger';
-                        break;
-                }
-
-                // Payment status badge
-                let paymentStatusClass = 'bg-secondary';
-                let paymentStatusText = order.payment_status || 'Belum Bayar';
-
-                switch(paymentStatusText.toLowerCase()) {
-                    case 'lunas':
-                    case 'bayar':
-                        paymentStatusClass = 'bg-success';
-                        break;
-                    case 'menunggu verifikasi':
-                    case 'belum bayar':
-                    case 'pending':
-                        paymentStatusClass = 'bg-warning';
-                        break;
-                    case 'batal':
-                        paymentStatusClass = 'bg-danger';
-                        break;
-                }
-
-                const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
-                const technicianName = order.id_teknisi?.nama_teknisi || 'Belum ditugaskan';
-                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
-                const paymentMethod = order.payment_method || '-';
-                const paymentAmount = order.payment_amount ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.payment_amount) : '-';
-                const paymentDate = order.payment_date ? new Date(order.payment_date).toLocaleDateString('id-ID') : '-';
-                const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
-                const scheduleDate = order.tanggal_jadwal ? new Date(order.tanggal_jadwal).toLocaleDateString('id-ID') : 'Belum dijadwalkan';
-
                 row.innerHTML = `
-                    <td><strong>#${order.id_pemesanan}</strong></td>
-                    <td>${customerName}</td>
-                    <td>${technicianName}</td>
-                    <td>${serviceType}</td>
-                    <td>${paymentMethod}</td>
-                    <td class="text-end">${paymentAmount}</td>
-                    <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
-                    <td>${paymentDate}</td>
-                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td><strong class="cursor-pointer" onclick="viewOrderDetail(${orderId})" title="Klik untuk melihat detail">#${orderId}</strong></td>
+                    <td>
+                        <div class="fw-medium">${escapeHtml(customerName)}</div>
+                        <small class="text-muted">${escapeHtml(customerPhone)}</small>
+                    </td>
+                    <td>${escapeHtml(technicianName)}</td>
+                    <td>${escapeHtml(serviceType)}</td>
+                    <td class="text-end fw-bold">${formattedTotal}</td>
+                    <td><span class="badge ${paymentStatus.class}">${paymentStatus.text}</span></td>
+                    <td><span class="badge ${orderStatus.class}">${orderStatus.text}</span></td>
                     <td>${orderDate}</td>
                     <td>${scheduleDate}</td>
                     <td>
-                        <button class="btn btn-info btn-sm" onclick="viewPaymentDetail(${order.id_pemesanan})" title="Lihat Detail Pembayaran">
-                            <i class="bi bi-eye me-1"></i>Detail
-                        </button>
+                        <div class="action-buttons">
+                            <button class="btn btn-info btn-sm" onclick="viewOrderDetail(${orderId})" title="Lihat Detail">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${orderStatus.text !== 'Selesai' && orderStatus.text !== 'Batal' ? `
+                            <button class="btn btn-warning btn-sm" onclick="updateOrderStatus(${orderId})" title="Update Status">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            ` : ''}
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        // Display paid orders (alias untuk compatibility)
-        function displayPaidOrders(orders) {
-            const ordersWithPayment = orders.filter(order => order.payment_id || order.payment_status);
-            displayActiveOrders(ordersWithPayment);
-        }
-
-        // Display completed orders
-        function displayCompletedOrders(orders) {
+        // Display completed orders table
+        function displayCompletedOrdersTable(orders) {
             const tbody = document.getElementById('completedOrdersTableBody');
             tbody.innerHTML = '';
 
-            if (orders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" class="text-center">Tidak ada pesanan selesai</td></tr>';
-                return;
-            }
-
             orders.forEach(order => {
+                // Get status info
+                const paymentStatus = getPaymentStatusInfo(order.payment_status || order.status_pembayaran || 'Belum Bayar');
+                
+                // Format data
+                const orderId = order.id_pemesanan || order.id || 'N/A';
+                const customerName = order.id_pelanggan?.nama_lengkap || order.nama_pelanggan || order.customer_name || 'N/A';
+                const customerPhone = order.id_pelanggan?.no_telepon || order.no_telepon || order.phone || '';
+                const technicianName = order.id_teknisi?.nama_teknisi || order.nama_teknisi || order.technician_name || '-';
+                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || order.service_type || 'N/A';
+                const totalAmount = order.total_harga || order.payment_amount || order.total_amount || 0;
+                const orderDate = formatDate(order.tanggal_pemesanan || order.created_at || order.order_date);
+                
+                // Fixed: Tanggal selesai dengan berbagai kemungkinan field
+                const completedDate = formatDate(
+                    order.tanggal_selesai || 
+                    order.completed_at || 
+                    order.finished_at || 
+                    order.updated_at
+                );
+                
+                // Format currency
+                const formattedTotal = formatCurrency(totalAmount);
+
                 const row = document.createElement('tr');
-
-                // Status badge class
-                let statusClass = 'bg-secondary';
-                let statusText = order.status_pemesanan;
-
-                switch(order.status_pemesanan) {
-                    case 'Selesai':
-                        statusClass = 'bg-success';
-                        break;
-                    case 'Batal':
-                        statusClass = 'bg-danger';
-                        break;
-                }
-
-                // Payment status badge
-                let paymentStatusClass = 'bg-secondary';
-                let paymentStatusText = order.payment_status || 'Belum Bayar';
-
-                switch(paymentStatusText.toLowerCase()) {
-                    case 'lunas':
-                    case 'bayar':
-                        paymentStatusClass = 'bg-success';
-                        break;
-                    case 'menunggu verifikasi':
-                    case 'belum bayar':
-                    case 'pending':
-                        paymentStatusClass = 'bg-warning';
-                        break;
-                    case 'batal':
-                        paymentStatusClass = 'bg-danger';
-                        break;
-                }
-
-                const customerName = order.id_pelanggan?.nama_lengkap || 'N/A';
-                const technicianName = order.id_teknisi?.nama_teknisi || 'Belum ditugaskan';
-                const serviceType = order.nama_jasa || order.id_jenis_jasa?.nama_jasa || 'N/A';
-                const paymentMethod = order.payment_method || '-';
-                const paymentAmount = order.payment_amount ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(order.payment_amount) : '-';
-                const paymentDate = order.payment_date ? new Date(order.payment_date).toLocaleDateString('id-ID') : '-';
-                const orderDate = new Date(order.tanggal_pemesanan).toLocaleDateString('id-ID');
-
                 row.innerHTML = `
-                    <td><strong>#${order.id_pemesanan}</strong></td>
-                    <td>${customerName}</td>
-                    <td>${technicianName}</td>
-                    <td>${serviceType}</td>
-                    <td>${paymentMethod}</td>
-                    <td class="text-end">${paymentAmount}</td>
-                    <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
-                    <td>${paymentDate}</td>
-                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td><strong class="cursor-pointer" onclick="viewOrderDetail(${orderId})" title="Klik untuk melihat detail">#${orderId}</strong></td>
+                    <td>
+                        <div class="fw-medium">${escapeHtml(customerName)}</div>
+                        <small class="text-muted">${escapeHtml(customerPhone)}</small>
+                    </td>
+                    <td>${escapeHtml(technicianName)}</td>
+                    <td>${escapeHtml(serviceType)}</td>
+                    <td class="text-end fw-bold">${formattedTotal}</td>
+                    <td><span class="badge ${paymentStatus.class}">${paymentStatus.text}</span></td>
                     <td>${orderDate}</td>
+                    <td>${completedDate}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-info btn-sm" onclick="viewOrderDetail(${orderId})" title="Lihat Detail">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        // Assign technician to order
-        async function assignTechnician(orderId) {
-            const selectElement = document.querySelector(`select[data-order-id="${orderId}"]`);
-            const teknisiId = selectElement.value;
+        // Show assign technician modal
+        function showAssignModal(orderId) {
+            currentAssignOrderId = orderId;
+            const modal = new bootstrap.Modal(document.getElementById('assignTechnicianModal'));
+            
+            // Reset modal
+            document.getElementById('assignOrderId').textContent = orderId;
+            document.getElementById('assignLoading').style.display = 'block';
+            document.getElementById('assignContent').style.display = 'none';
+            document.getElementById('selectedTechnicianInfo').style.display = 'none';
+            document.getElementById('confirmAssignBtn').disabled = true;
+            
+            // Populate technician select
+            const select = document.getElementById('technicianSelect');
+            select.innerHTML = '<option value="">Pilih Teknisi</option>' + generateTechnicianOptions();
+            
+            // Show modal after short delay
+            setTimeout(() => {
+                document.getElementById('assignLoading').style.display = 'none';
+                document.getElementById('assignContent').style.display = 'block';
+                modal.show();
+            }, 500);
+        }
 
-            if (!teknisiId) {
+        // Confirm assign technician
+        async function confirmAssignTechnician() {
+            const select = document.getElementById('technicianSelect');
+            const techId = select.value;
+            
+            if (!techId || !currentAssignOrderId) {
                 showAlert('Silakan pilih teknisi terlebih dahulu', 'warning');
                 return;
             }
+            
+            const technician = techniciansList.find(t => t.id_teknisi == techId || t.id == techId);
+            const techName = technician ? technician.nama_teknisi || technician.name : 'Teknisi';
+            
+            if (!confirm(`Tugaskan ${techName} ke pesanan #${currentAssignOrderId}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/tugaskan-teknisi/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        id_pemesanan: currentAssignOrderId,
+                        id_teknisi: techId
+                    })
+                });
+                
+                if (response.ok) {
+                    showAlert('Teknisi berhasil ditugaskan', 'success');
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('assignTechnicianModal'));
+                    modal.hide();
+                    
+                    // Refresh data
+                    loadPendingOrders();
+                    loadActiveOrders();
+                } else {
+                    const error = await response.json();
+                    showAlert(`Gagal menugaskan teknisi: ${error.error || 'Terjadi kesalahan'}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error assigning technician:', error);
+                showAlert('Terjadi kesalahan saat menugaskan teknisi', 'danger');
+            }
+        }
 
+        // Update technician select
+        function updateTechnicianSelect(orderId) {
+            const selectElement = document.querySelector(`select[data-order-id="${orderId}"]`);
+            const techId = selectElement.value;
+            
+            if (techId) {
+                const technician = techniciansList.find(t => t.id_teknisi == techId || t.id == techId);
+                if (technician) {
+                    if (confirm(`Tugaskan ${technician.nama_teknisi || technician.name} ke pesanan #${orderId}?`)) {
+                        assignTechnician(orderId, techId);
+                    } else {
+                        selectElement.value = '';
+                    }
+                }
+            }
+        }
+
+        // Assign technician (old method)
+        async function assignTechnician(orderId, techId) {
             try {
                 const response = await fetch(`${API_BASE_URL}/tugaskan-teknisi/`, {
                     method: 'POST',
@@ -577,20 +926,17 @@
                     },
                     body: JSON.stringify({
                         id_pemesanan: orderId,
-                        id_teknisi: teknisiId
+                        id_teknisi: techId
                     })
                 });
-
+                
                 if (response.ok) {
-                    const result = await response.json();
                     showAlert('Teknisi berhasil ditugaskan', 'success');
-                    // Reload data
                     loadPendingOrders();
                     loadActiveOrders();
-                    loadCompletedOrders();
                 } else {
                     const error = await response.json();
-                    showAlert(`Gagal menugaskan teknisi: ${error.error || 'Unknown error'}`, 'danger');
+                    showAlert(`Gagal menugaskan teknisi: ${error.error || 'Terjadi kesalahan'}`, 'danger');
                 }
             } catch (error) {
                 console.error('Error assigning technician:', error);
@@ -598,28 +944,444 @@
             }
         }
 
-        // Refresh data
-        function refreshData() {
-            loadPendingOrders();
-            loadActiveOrders();
-            loadPaidOrders();
-            loadAllOrders();
-            showAlert('Data berhasil diperbarui', 'info');
+        // View order detail
+        async function viewOrderDetail(orderId) {
+            try {
+                currentOrderId = orderId;
+                const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+                
+                // Reset modal content
+                document.getElementById('detailOrderId').textContent = orderId;
+                document.getElementById('detailLoading').style.display = 'block';
+                document.getElementById('detailContent').style.display = 'none';
+                document.getElementById('detailError').style.display = 'none';
+                document.getElementById('printDetailBtn').style.display = 'none';
+                
+                // Setup timeout
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout loading detail')), 10000)
+                );
+                
+                // Fetch order detail
+                const fetchPromise = fetch(`${API_BASE_URL}/pesanan/${orderId}/`);
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
+                
+                if (!response.ok) {
+                    throw new Error('Response not OK');
+                }
+                
+                const order = await response.json();
+                
+                // Show content
+                document.getElementById('detailLoading').style.display = 'none';
+                document.getElementById('detailContent').style.display = 'block';
+                document.getElementById('printDetailBtn').style.display = 'block';
+                
+                displayOrderDetail(order);
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error viewing order detail:', error);
+                
+                document.getElementById('detailLoading').style.display = 'none';
+                document.getElementById('detailError').style.display = 'block';
+                
+                try {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('orderDetailModal'));
+                    if (!modal) {
+                        new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+                    }
+                } catch (e) {
+                    showAlert('Gagal memuat detail pesanan. Silakan coba lagi.', 'danger');
+                }
+            }
         }
 
-        // View payment detail
-        function viewPaymentDetail(orderId) {
-            alert(`Detail pembayaran untuk pesanan #${orderId}\n\nFitur detail pembayaran akan segera tersedia.`);
-            // Implementasi modal untuk menampilkan detail pembayaran bisa ditambahkan di sini
+        // Retry load detail
+        function retryLoadDetail() {
+            if (currentOrderId) {
+                viewOrderDetail(currentOrderId);
+            }
         }
 
-        // Get CSRF token
+        // Display order detail in modal
+        function displayOrderDetail(order) {
+            const detailContent = document.getElementById('detailContent');
+            
+            // Format dates
+            const orderDate = formatDate(order.tanggal_pemesanan || order.created_at, true);
+            const scheduleDate = order.tanggal_jadwal ? 
+                formatDate(order.tanggal_jadwal, true) : 
+                'Belum dijadwalkan';
+            
+            // Fixed: Tanggal selesai dengan berbagai kemungkinan
+            const completedDate = formatDate(
+                order.tanggal_selesai || 
+                order.completed_at || 
+                order.finished_at || 
+                order.updated_at
+            );
+            
+            // Status badges
+            const orderStatus = getOrderStatusInfo(order.status_pemesanan || order.status);
+            const paymentStatus = getPaymentStatusInfo(order.payment_status || order.status_pembayaran || 'Belum Bayar');
+            
+            // Format amounts
+            const totalAmount = order.total_harga || order.payment_amount || order.total_amount || 0;
+            const formattedTotal = formatCurrency(totalAmount);
+            
+            // Build detail HTML
+            let detailHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="bi bi-person me-2"></i>Informasi Pelanggan
+                            </h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td width="40%" class="text-muted">Nama</td>
+                                    <td><strong>${escapeHtml(order.id_pelanggan?.nama_lengkap || order.nama_pelanggan || order.customer_name || 'N/A')}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">No. Telepon</td>
+                                    <td>${escapeHtml(order.id_pelanggan?.no_telepon || order.no_telepon || order.phone || 'N/A')}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Email</td>
+                                    <td>${escapeHtml(order.id_pelanggan?.email || order.email || 'N/A')}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Alamat</td>
+                                    <td>${escapeHtml(order.id_pelanggan?.alamat_pemasangan || order.alamat_pelanggan || order.address || 'N/A')}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="bi bi-wrench me-2"></i>Informasi Teknisi
+                            </h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td width="40%" class="text-muted">Nama Teknisi</td>
+                                    <td><strong>${escapeHtml(order.id_teknisi?.nama_teknisi || order.nama_teknisi || order.technician_name || 'Belum ditugaskan')}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">No. Telepon</td>
+                                    <td>${escapeHtml(order.id_teknisi?.no_telepon || order.no_telepon_teknisi || order.technician_phone || 'N/A')}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Spesialisasi</td>
+                                    <td>${escapeHtml(order.id_teknisi?.specialization || order.specialization || order.technician_specialty || 'Umum')}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="bi bi-clipboard-check me-2"></i>Informasi Pesanan
+                            </h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td width="40%" class="text-muted">ID Pesanan</td>
+                                    <td><strong>#${order.id_pemesanan || order.id || 'N/A'}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Jenis Layanan</td>
+                                    <td>${escapeHtml(order.nama_jasa || order.id_jenis_jasa?.nama_jasa || order.service_type || 'N/A')}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Deskripsi</td>
+                                    <td>${escapeHtml(order.deskripsi_masalah || order.description || order.problem_description || '-')}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Tanggal Pesan</td>
+                                    <td>${orderDate}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Jadwal</td>
+                                    <td>${scheduleDate}</td>
+                                </tr>
+                                ${completedDate ? `
+                                <tr>
+                                    <td class="text-muted">Tanggal Selesai</td>
+                                    <td>${completedDate}</td>
+                                </tr>
+                                ` : ''}
+                                <tr>
+                                    <td class="text-muted">Status Pesanan</td>
+                                    <td><span class="badge ${orderStatus.class}">${orderStatus.text}</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6 class="fw-bold mb-3 border-bottom pb-2">
+                                <i class="bi bi-credit-card me-2"></i>Informasi Pembayaran
+                            </h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td width="40%" class="text-muted">Total Pesanan</td>
+                                    <td class="fw-bold">${formattedTotal}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Status Pembayaran</td>
+                                    <td><span class="badge ${paymentStatus.class}">${paymentStatus.text}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Metode</td>
+                                    <td>${escapeHtml(order.payment_method || order.metode_pembayaran || order.payment_type || 'Transfer Bank')}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Tanggal Bayar</td>
+                                    <td>${order.payment_date ? formatDate(order.payment_date) : '-'}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Tambahkan bukti pembayaran jika ada
+            const paymentProof = order.bukti_pembayaran || order.payment_proof || order.payment_image;
+            if (paymentProof) {
+                detailHTML += `
+                    <div class="detail-section mt-3">
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">
+                            <i class="bi bi-receipt me-2"></i>Bukti Pembayaran
+                        </h6>
+                        <div class="text-center">
+                            <img src="${paymentProof}" alt="Bukti Pembayaran" 
+                                 class="order-detail-img cursor-pointer" 
+                                 onclick="window.open('${paymentProof}', '_blank')" 
+                                 title="Klik untuk melihat ukuran penuh">
+                            <p class="text-muted mt-2 small">Klik gambar untuk melihat ukuran penuh</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            detailContent.innerHTML = detailHTML;
+        }
+
+        // Update order status
+        async function updateOrderStatus(orderId) {
+            const newStatus = prompt(
+                `Update status pesanan #${orderId}:\n\n` +
+                `Pilihan status:\n` +
+                `- Ditugaskan\n` +
+                `- Dikerjakan\n` +
+                `- Selesai\n` +
+                `- Batal\n\n` +
+                `Masukkan status baru:`
+            );
+            
+            if (!newStatus || !newStatus.trim()) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/update-status-pesanan/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        id_pemesanan: orderId,
+                        status: newStatus.trim()
+                    })
+                });
+                
+                if (response.ok) {
+                    showAlert('Status pesanan berhasil diperbarui', 'success');
+                    loadActiveOrders();
+                    loadCompletedOrders();
+                } else {
+                    showAlert('Gagal memperbarui status pesanan', 'danger');
+                }
+            } catch (error) {
+                console.error('Error updating order status:', error);
+                showAlert('Terjadi kesalahan saat memperbarui status', 'danger');
+            }
+        }
+
+        // Refresh all data
+        function refreshAllData() {
+            loadAllData();
+            showAlert('Semua data berhasil diperbarui', 'success');
+        }
+
+        // Print order detail
+        function printOrderDetail() {
+            const printContent = document.getElementById('detailContent').innerHTML;
+            const orderId = document.getElementById('detailOrderId').textContent;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="id">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Detail Pesanan #${orderId} - NetFast</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        body { padding: 20px; font-family: Arial, sans-serif; }
+                        .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+                        .detail-section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+                        table { width: 100%; }
+                        .badge { padding: 0.25em 0.5em; font-size: 0.875em; }
+                        @media print {
+                            .no-print { display: none; }
+                            body { padding: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h2>NetFast - Detail Pesanan</h2>
+                        <h3>Pesanan #${orderId}</h3>
+                        <p>Tanggal cetak: ${new Date().toLocaleDateString('id-ID', { 
+                            day: '2-digit', 
+                            month: 'long', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</p>
+                    </div>
+                    <div class="container">
+                        ${printContent}
+                    </div>
+                    <div class="no-print text-center mt-4">
+                        <button onclick="window.print()" class="btn btn-primary">Print</button>
+                        <button onclick="window.close()" class="btn btn-secondary">Tutup</button>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // Helper functions
+        function generateTechnicianOptions() {
+            if (!techniciansList || techniciansList.length === 0) {
+                return '<option value="">Tidak ada teknisi tersedia</option>';
+            }
+            
+            let options = '';
+            techniciansList.forEach(tech => {
+                const techId = tech.id_teknisi || tech.id;
+                const techName = tech.nama_teknisi || tech.name;
+                const techSpecialty = tech.specialization || tech.specialty || 'Umum';
+                options += `<option value="${techId}">${escapeHtml(techName)} - ${escapeHtml(techSpecialty)}</option>`;
+            });
+            return options;
+        }
+
+        function showLoading(elementId, show) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.style.display = show ? 'block' : 'none';
+            }
+        }
+
+        function formatDate(dateString, includeTime = false) {
+            if (!dateString) return '-';
+            
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return '-';
+                
+                if (includeTime) {
+                    return date.toLocaleDateString('id-ID', {
+                        weekday: 'long',
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } else {
+                    return date.toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                }
+            } catch (e) {
+                return '-';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function getOrderStatusInfo(status) {
+            if (!status) return { class: 'bg-secondary', text: 'Unknown' };
+            
+            const statusText = status.toString();
+            let statusClass = 'bg-secondary';
+            
+            if (statusText.toLowerCase().includes('tugasan') || statusText.toLowerCase().includes('assign')) {
+                statusClass = 'bg-info';
+            } else if (statusText.toLowerCase().includes('kerja') || statusText.toLowerCase().includes('process')) {
+                statusClass = 'bg-warning';
+            } else if (statusText.toLowerCase().includes('selesai') || statusText.toLowerCase().includes('complete')) {
+                statusClass = 'bg-success';
+            } else if (statusText.toLowerCase().includes('batal') || statusText.toLowerCase().includes('cancel')) {
+                statusClass = 'bg-danger';
+            } else if (statusText.toLowerCase().includes('tunggu') || statusText.toLowerCase().includes('waiting') || statusText.toLowerCase().includes('pending')) {
+                statusClass = 'bg-secondary';
+            }
+            
+            return { class: statusClass, text: statusText };
+        }
+
+        function getPaymentStatusInfo(status) {
+            if (!status) return { class: 'bg-secondary', text: 'Belum Bayar' };
+            
+            const statusText = status.toString();
+            let statusClass = 'bg-secondary';
+            
+            if (statusText.toLowerCase().includes('lunas') || statusText.toLowerCase().includes('paid') || statusText.toLowerCase().includes('bayar')) {
+                statusClass = 'bg-success';
+            } else if (statusText.toLowerCase().includes('verifikasi') || statusText.toLowerCase().includes('pending') || statusText.toLowerCase().includes('waiting')) {
+                statusClass = 'bg-warning';
+            } else if (statusText.toLowerCase().includes('batal') || statusText.toLowerCase().includes('failed')) {
+                statusClass = 'bg-danger';
+            }
+            
+            return { class: statusClass, text: statusText };
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function getCSRFToken() {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
             return csrfToken ? csrfToken.value : '';
         }
 
-        // Show alert
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alertContainer');
             const alert = document.createElement('div');
@@ -632,7 +1394,9 @@
 
             // Auto remove after 5 seconds
             setTimeout(() => {
-                alert.remove();
+                if (alert.parentNode === alertContainer) {
+                    alert.remove();
+                }
             }, 5000);
         }
 
