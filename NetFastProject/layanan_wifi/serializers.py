@@ -56,12 +56,17 @@ class PelangganRegistrasiSerializer(serializers.ModelSerializer):
 
 
 class TeknisiSerializer(serializers.ModelSerializer):
-    area_layanan = serializers.CharField(source='id_area_layanan.nama_area', read_only=True, allow_null=True)
-    
+    area_layanan = serializers.SerializerMethodField()
+
     class Meta:
         model = Teknisi
         fields = ['id_teknisi', 'nama_teknisi', 'username', 'no_telepon', 'role_akses', 'id_area_layanan', 'area_layanan']
         read_only_fields = ['id_teknisi']
+
+    def get_area_layanan(self, obj):
+        if obj.id_area_layanan:
+            return obj.id_area_layanan.nama_area
+        return None
 
 
 class PaketLayananSerializer(serializers.ModelSerializer):
