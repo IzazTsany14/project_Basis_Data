@@ -234,38 +234,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- All Orders Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="bi bi-list-ul me-2"></i>Semua Pesanan
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="allOrdersTable">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>ID Pesanan</th>
-                                        <th>Pelanggan</th>
-                                        <th>Teknisi</th>
-                                        <th>Jenis Jasa</th>
-                                        <th>Metode Pembayaran</th>
-                                        <th>Jumlah Bayar</th>
-                                        <th>Status Pembayaran</th>
-                                        <th>Tanggal Pembayaran</th>
-                                        <th>Status Pesanan</th>
-                                        <th>Tanggal Pesan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="allOrdersTableBody">
-                                    <!-- Data will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </main>
         </div>
     </div>
@@ -282,7 +250,6 @@
             loadActiveOrders();
             loadPaidOrders();
             loadCompletedOrders();
-            loadAllOrders();
         });
 
         // Load pending orders
@@ -503,7 +470,7 @@
                     <td class="text-end">${paymentAmount}</td>
                     <td><span class="badge ${paymentStatusClass}">${paymentStatusText}</span></td>
                     <td>${paymentDate}</td>
-                    <td><span class="badge ${statusClass}</span>${statusText}</span></td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
                     <td>${orderDate}</td>
                     <td>${scheduleDate}</td>
                     <td>
@@ -518,7 +485,8 @@
 
         // Display paid orders (alias untuk compatibility)
         function displayPaidOrders(orders) {
-            displayActiveOrders(orders);
+            const ordersWithPayment = orders.filter(order => order.payment_id || order.payment_status);
+            displayActiveOrders(ordersWithPayment);
         }
 
         // Display completed orders
@@ -620,7 +588,6 @@
                     loadPendingOrders();
                     loadActiveOrders();
                     loadCompletedOrders();
-                    loadAllOrders();
                 } else {
                     const error = await response.json();
                     showAlert(`Gagal menugaskan teknisi: ${error.error || 'Unknown error'}`, 'danger');
