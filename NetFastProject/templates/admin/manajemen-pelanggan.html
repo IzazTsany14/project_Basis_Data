@@ -319,9 +319,7 @@
                                 <label for="areaLayanan" class="form-label">Area Layanan *</label>
                                 <select class="form-select" id="areaLayanan" name="area_layanan" required>
                                     <option value="">Pilih Area Layanan</option>
-                                    <option value="SUrabaya Pusat">Surabaya Pusat</option>
-                                    <option value="Jakarta Selatan">Jakarta Selatan</option>
-                                    <option value="Bandung Kota">Bandung Kota</option>
+                                    <!-- Options will be populated by JavaScript -->
                                 </select>
                             </div>
                         </div>
@@ -363,11 +361,13 @@
     <script>
         const API_BASE_URL = '/api/admin/pelanggan';
         const PAKET_API_URL = '/api/admin/paket/';
+        const AREA_API_URL = '/api/admin/area/';
 
-        // Load customers and paket on page load
+        // Load customers, paket, and area on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadCustomers();
             loadPaketLayanan();
+            loadAreaLayanan();
         });
 
         // Load customers function
@@ -403,6 +403,23 @@
             }
         }
 
+        // Load area layanan function
+        async function loadAreaLayanan() {
+            try {
+                const response = await fetch(AREA_API_URL);
+                if (response.ok) {
+                    const areaList = await response.json();
+                    populateAreaOptions(areaList);
+                } else {
+                    console.warn('Gagal memuat daftar area, menggunakan fallback');
+                    populateAreaOptions([]);
+                }
+            } catch (error) {
+                console.error('Error loading area:', error);
+                populateAreaOptions([]);
+            }
+        }
+
         // Populate paket options
         function populatePaketOptions(paketList) {
             const selectElement = document.getElementById('paketAktif');
@@ -432,6 +449,40 @@
                     option.value = paket.nama_paket;
                     option.textContent = `${paket.nama_paket} - Rp${paket.harga_bulanan.toLocaleString('id-ID')}/bulan`;
                     option.dataset.id = paket.id_paket;
+                    selectElement.appendChild(option);
+                });
+            }
+        }
+
+        // Populate area options
+        function populateAreaOptions(areaList) {
+            const selectElement = document.getElementById('areaLayanan');
+            
+            // Kosongkan options kecuali option pertama
+            selectElement.innerHTML = '<option value="">Pilih Area Layanan</option>';
+            
+            if (!areaList || areaList.length === 0) {
+                // Fallback jika API tidak tersedia - HANYA 3 AREA yang Anda sebutkan
+                const fallbackArea = [
+                    { id_area_layanan: 1, nama_area: 'Jakarta Selatan', kode_pos: '12110' },
+                    { id_area_layanan: 2, nama_area: 'Surabaya Pusat', kode_pos: '60171' },
+                    { id_area_layanan: 3, nama_area: 'Bandung Kota', kode_pos: '40111' }
+                ];
+                
+                fallbackArea.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.nama_area;
+                    option.textContent = `${area.nama_area} (${area.kode_pos})`;
+                    option.dataset.id = area.id_area_layanan;
+                    selectElement.appendChild(option);
+                });
+            } else {
+                // Gunakan data dari API
+                areaList.forEach(area => {
+                    const option = document.createElement('option');
+                    option.value = area.nama_area;
+                    option.textContent = `${area.nama_area} (${area.kode_pos || '-'})`;
+                    option.dataset.id = area.id_area_layanan;
                     selectElement.appendChild(option);
                 });
             }
@@ -604,8 +655,13 @@
 
             // Tambahkan id_paket dari option yang dipilih
             const paketSelect = document.getElementById('paketAktif');
-            const selectedOption = paketSelect.options[paketSelect.selectedIndex];
-            data.id_paket = selectedOption.dataset.id || '';
+            const selectedPaketOption = paketSelect.options[paketSelect.selectedIndex];
+            data.id_paket = selectedPaketOption.dataset.id || '';
+
+            // Tambahkan id_area_layanan dari option yang dipilih
+            const areaSelect = document.getElementById('areaLayanan');
+            const selectedAreaOption = areaSelect.options[areaSelect.selectedIndex];
+            data.id_area_layanan = selectedAreaOption.dataset.id || '';
 
             // Remove password if empty for edit
             if (isEdit && !data.password) {
