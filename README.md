@@ -72,7 +72,7 @@ jika belum silahkan clone dengan command
 git clone --depth=1 https://github.com/IzazTsany14/project-basis-data
 
 # masuk kedalam folder clone
-cd project-basis-data
+cd project_basis_data
 
 # buat virtual environment python
 python -m venv .venv
